@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Timer;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.*;
 
 /**
@@ -30,7 +31,6 @@ public class NetMgr {
     public NetMgr(String ip, int port) {
         this.ip = ip;
         this.port = port;
-        initConn();
     }
 
     public static NetMgr getInstance(String ip, int port) {
@@ -152,7 +152,6 @@ public class NetMgr {
         try {
             LOGGER.log(Level.FINE, "Receving Message...");
             String receivedMsg = in.readLine();
-            LOGGER.info("Before if: ");
             if(receivedMsg != null && receivedMsg.length() > 0) {
                 LOGGER.info("Received in receive(): " + receivedMsg);
                 return receivedMsg;
@@ -180,23 +179,28 @@ public class NetMgr {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        // String ip = "192.168.9.9";
-        String ip = "127.0.0.1";
+        String ip = "192.168.9.9";
+//        String ip = "127.0.0.1";
         int port = 1273;
         String data;
         NetMgr netMgr = new NetMgr(ip, port);
-        while(netMgr.msgCounter <= 10){
+        netMgr.initConn();
+
+        while(true){
             //String msg = Command.FORWARD.toString();
-            String msg = "AW";
-            netMgr.send(msg);
-//            data = netMgr.receive();
-//            if(data == null) {
-//                LOGGER.info("Null string received.");
-//            }
-            Thread.sleep(1000);
+            do {
+                data = netMgr.receive();
+            } while(data == null);
+
+            System.out.println("\nReceived: " + data);
+            String msg = "AW3|D|W3|D|W3|D|W3|D|";
+            if (data.equals("checklist")) {
+                netMgr.send(msg);
+            }
+            //TimeUnit.MILLISECONDS.sleep(1000);
+
+//            netMgr.closeConn();
         }
-        netMgr.closeConn();
-        return;
 
     }
 

@@ -42,6 +42,10 @@ public class Simulator extends Application {
 
     private MapDescriptor mapDescriptor = new MapDescriptor();
 
+    private final static String ip = "192.168.9.9";
+    private final static int port = 1273;
+    private static final NetMgr netMgr = NetMgr.getInstance(ip, port);
+
     private boolean setObstacle = false;
     private boolean setWaypoint = false;
     private boolean setRobot = false;
@@ -201,7 +205,7 @@ public class Simulator extends Application {
 
         // Button ActionListeners
         resetMapBtn.setOnMouseClicked(resetMapBtnClick);
-//        startBtn.setOnMouseClicked(startBtnClick);    // to be uncommented after the class is uncommented
+        startBtn.setOnMouseClicked(startBtnClick);    // to be uncommented after the class is uncommented
         setRobotBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
             public void handle(MouseEvent e) {
                 setRobot = !setRobot;
@@ -579,23 +583,23 @@ public class Simulator extends Application {
     }
 
     // Event Handler for StartButton
-//    private EventHandler<MouseEvent> startBtnClick = new EventHandler<MouseEvent>() {
-//
-//        public void handle(MouseEvent event) {
-//
-//            String selectedMode = modeCB.getSelectionModel().getSelectedItem();
-//            boolean isFastestPath = fastPathRB.isSelected();
-//            switch (selectedMode) {
-//                case REAL:
-//                    // to be added later
-//                    break;
-//                    netMgr.startConn();
+    private EventHandler<MouseEvent> startBtnClick = new EventHandler<MouseEvent>() {
+
+        public void handle(MouseEvent event) {
+
+            String selectedMode = modeCB.getSelectionModel().getSelectedItem();
+            boolean isFastestPath = fastPathRB.isSelected();
+            switch (selectedMode) {
+                case REAL:
+                    // to be added later
+                    break;
+//                    netMgr.initConn();
 //                    sim = false;
 //                    robot.setSim(false);
 //
 //                    if (isFastestPath) { //if fastest path is selected
 //                        System.out.println("RF Here");
-//                        exploredMap.removePaths();
+//                        exploredMap.removeAllPaths();
 //                        expMapDraw = true;
 //                        fastTask = new Thread(new FastTask());
 //                        fastTask.start();
@@ -607,32 +611,32 @@ public class Simulator extends Application {
 //                        expTask.start();
 //                    }
 //                    break;
-//                case SIM:
-//                    sim = true;
-//                    expMapDraw = true;
-//                    if (isFastestPath) { //if fastest path is selected
-//                        robot.setFastSense(true);
-//                        System.out.println("SF Here");
-//                        exploredMap.removePaths();
-//                        fastTask = new Thread(new FastTask());
-//                        fastTask.start();
-//                    } else {
-//                        System.out.println("SE Here");
-//                        robot.sense(exploredMap, map);
-//                        expMapDraw = true;
-//                        expTask = new Thread(new ExplorationTask());
-//                        expTask.start();
-//                    }
-//                    break;
-//            }
-//        }
-//    };
+                case SIM:
+                    sim = true;
+                    expMapDraw = true;
+                    if (isFastestPath) { //if fastest path is selected
+                        robot.setFindingFP(true);
+                        System.out.println("SF Here");
+                        exploredMap.removeAllPaths();
+                        fastTask = new Thread(new FastTask());
+                        fastTask.start();
+                    } else {
+                        System.out.println("SE Here");
+                        robot.sense(exploredMap, map);
+                        expMapDraw = true;
+                        expTask = new Thread(new ExplorationTask());
+                        expTask.start();
+                    }
+                    break;
+            }
+        }
+    };
 
-//    class ExplorationTask extends Task<Integer> {
-//        @Override
-//        protected Integer call() throws Exception {
-//            String msg = null;
-//            Command c;
+    class ExplorationTask extends Task<Integer> {
+        @Override
+        protected Integer call() throws Exception {
+            String msg = null;
+            Command c;
 //            // Wait for Start Command
 //            if (!sim) {
 //                do {
@@ -673,28 +677,28 @@ public class Simulator extends Application {
 //                    }
 //                } while (c != Command.START_EXP);
 //            } // end of if
-//            robot.sense(exploredMap, map);
-//            System.out.println("coverage: " + coverageLimitSB.getValue());
-//            System.out.println("time: " + timeLimitSB.getValue());
-//            double coverageLimit = (int) (coverageLimitSB.getValue());
-//            int timeLimit = (int) (timeLimitSB.getValue() * 1000);
-//            int steps = (int) (stepsSB.getValue());
-//            // Limits not set
-//            if (coverageLimit == 0) {
-//                coverageLimit = 100;
-//                coverageLimitTxt.setText("" + (int) coverageLimit + " s");
-//            }
-//            if (timeLimit == 0) {
-//                timeLimit = 240000;
-//                timeLimitTxt.setText("" + (int) timeLimit + " s");
-//            }
-//            if (steps == 0) {
-//                steps = 5;
-//                stepsTxt.setText("" + (int) steps + " s");
-//            }
-//
-//            Exploration explore = new Exploration(exploredMap, map, robot, coverageLimit, timeLimit, steps, sim);
-//            explore.exploration(new Point(MapConstants.STARTZONE_COL, MapConstants.STARTZONE_COL));
+            robot.sense(exploredMap, map);
+            System.out.println("coverage: " + coverageLimitSB.getValue());
+            System.out.println("time: " + timeLimitSB.getValue());
+            double coverageLimit = (int) (coverageLimitSB.getValue());
+            int timeLimit = (int) (timeLimitSB.getValue() * 1000);
+            int steps = (int) (stepsSB.getValue());
+            // Limits not set
+            if (coverageLimit == 0) {
+                coverageLimit = 100;
+                coverageLimitTxt.setText("" + (int) coverageLimit + " s");
+            }
+            if (timeLimit == 0) {
+                timeLimit = 240000;
+                timeLimitTxt.setText("" + (int) timeLimit + " s");
+            }
+            if (steps == 0) {
+                steps = 5;
+                stepsTxt.setText("" + (int) steps + " s");
+            }
+
+            Exploration explore = new Exploration(exploredMap, map, robot, coverageLimit, timeLimit, steps, sim);
+            explore.exploration(new Point(MapConstants.STARTZONE_COL, MapConstants.STARTZONE_COL));
 //            if (!sim) {
 //                netMgr.send("Alg|And|DONE|"+exploredMap.detectedImgToString());
 //                netMgr.send("Alg|And|" + Command.ENDEXP + "|");
@@ -712,11 +716,11 @@ public class Simulator extends Application {
 //                    }
 //                } while (com != Command.START_FAST);
 //            }
-//
-//            return 1;
-//        }
-//    }
-//
+
+            return 1;
+        }
+    }
+
 //    //Normal
 //    public void senseAndAlign() {
 //        String msg = null;
@@ -738,82 +742,88 @@ public class Simulator extends Application {
 //            netMgr.receive();
 //        }
 //    }
-//
-//
-//    class FastTask extends Task<Integer> {
-//        @Override
-//        protected Integer call() throws Exception {
-//            robot.setFastSense(true);
-//            double startT = System.currentTimeMillis();
-//            double endT = 0;
-//            FastestPath fp = new FastestPath(exploredMap, robot, sim);
-//            ArrayList<Cell> path;
-////			if (wayPoint.distance(MapConstants.GOALZONE) != 0) {
-//            path = fp.run(new Point(robot.getPos().x, robot.getPos().y), wayPoint, robot.getDir());
-//            path.addAll(fp.run(wayPoint, MapConstants.GOALZONE, robot.getDir()));
-////			} else
-////				path = fp.run(new Point(robot.getPos().x, robot.getPos().y), MapConstants.GOALZONE,
-////						robot.getDir());
-//
-//            fp.displayFastestPath(path, true);
-//            ArrayList<Command> commands = fp.getPathCommands(path);
-//
-//            int steps = (int) (stepsSB.getValue());
-//            // Limits not set
-//            if (steps == 0)
-//                steps = 5;
-//
-//            int moves = 0;
-//            System.out.println(commands);
-//            Command c = null;
-//            for (int i = 0; i < commands.size(); i++) {
-//                c = commands.get(i);
-//                if (sim) {
-//                    try {
-//                        TimeUnit.MILLISECONDS.sleep(RobotConstants.MOVE_SPEED / steps);
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//
-//                }
-////				System.out.println("c:"+commands.get(i)+" Condition:"+(commands.get(i)==Command.FORWARD|| commands.get(i) == Command.BACKWARD));
-////				System.out.println("index: "+i+" condition: "+(i==(commands.size()-1)));
-//                if (c == Command.FORWARD && moves<9) {
-//                    // System.out.println("moves "+moves);
-//                    moves++;
-//                    // If last command
-//                    if (i == (commands.size() - 1)) {
-//                        robot.move(c, moves, exploredMap);
-//                        netMgr.receive();
-//                        //robot.sense(exploredMap, Map);
-//                    }
-//                } else {
-//
-//                    if (moves > 0) {
-//                        System.out.println("Moving Forwards "+moves+" steps.");
-//                        robot.move(Command.FORWARD, moves, exploredMap);
-//                        netMgr.receive();
-////						robot.sense(exploredMap, Map);
-//                    }
-//                    robot.move(c, RobotConstants.MOVE_STEPS, exploredMap);
-//                    netMgr.receive();
-////					robot.sense(exploredMap, Map);
-//                    moves = 0;
-//                }
-//            }
-//
+
+
+    class FastTask extends Task<Integer> {
+        @Override
+        protected Integer call() throws Exception {
+            robot.setFindingFP(true);
+            double startT = System.currentTimeMillis();
+            double endT = 0;
+            FastestPath fp = new FastestPath(exploredMap, robot, sim);
+            ArrayList<Cell> path;
+//			if (wayPoint.distance(MapConstants.GOALZONE) != 0) {
+            path = fp.runAStar(new Point(robot.getPos().x, robot.getPos().y), wayPoint, robot.getDir());
+            path.addAll(fp.runAStar(wayPoint, new Point(MapConstants.GOALZONE_COL, MapConstants.GOALZONE_ROW), robot.getDir()));
+//			} else
+//				path = fp.run(new Point(robot.getPos().x, robot.getPos().y), MapConstants.GOALZONE,
+//						robot.getDir());
+
+            fp.displayFastestPath(path, true);
+            ArrayList<Command> commands = fp.getPathCommands(path);
+
+            int steps = (int) (stepsSB.getValue());
+            // Limits not set
+            if (steps == 0)
+                steps = 5;
+
+            int moves = 0;
+            System.out.println(commands);
+            Command c = null;
+            for (int i = 0; i < commands.size(); i++) {
+                c = commands.get(i);
+                if (sim) {
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / steps);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+//				System.out.println("c:"+commands.get(i)+" Condition:"+(commands.get(i)==Command.FORWARD|| commands.get(i) == Command.BACKWARD));
+//				System.out.println("index: "+i+" condition: "+(i==(commands.size()-1)));
+                if (c == Command.FORWARD && moves<9) {
+                    // System.out.println("moves "+moves);
+                    moves++;
+                    // If last command
+                    if (i == (commands.size() - 1)) {
+                        robot.move(c, moves, exploredMap);
+                        //netMgr.receive();
+                        //robot.sense(exploredMap, Map);
+                    }
+                } else {
+
+                    if (moves > 0) {
+                        System.out.println("Moving Forwards "+moves+" steps.");
+                        robot.move(Command.FORWARD, moves, exploredMap);
+                        netMgr.receive();
+//						robot.sense(exploredMap, Map);
+                    }
+
+                    if(c == Command.TURN_RIGHT || c == Command.TURN_LEFT) {
+                        robot.turn(c);
+                    }
+                    else {
+                        robot.move(c, RobotConstants.MOVE_STEPS, exploredMap);
+                    }
+                    //netMgr.receive();
+//					robot.sense(exploredMap, Map);
+                    moves = 0;
+                }
+            }
+
 //            if (!sim) {
-//                netMgr.send("Alg|Ard|"+RobotConstants.Command.ALIGN_FRONT.ordinal()+"|");
-//                netMgr.send("Alg|And|" + RobotConstants.Command.ENDFAST+"|");
+//                netMgr.send("Alg|Ard|"+Command.ALIGN_FRONT.ordinal()+"|");
+//                netMgr.send("Alg|And|" + Command.ENDFAST+"|");
 //            }
-//
-//            endT = System.currentTimeMillis();
-//            int seconds = (int)((endT - startT)/1000%60);
-//            int minutes = (int)((endT - startT)/1000/60);
-//            System.out.println("Total Time: "+minutes+"mins "+seconds+"seconds");
-//            return 1;
-//        }
-//    }
+
+            endT = System.currentTimeMillis();
+            int seconds = (int)((endT - startT)/1000%60);
+            int minutes = (int)((endT - startT)/1000/60);
+            System.out.println("Total Time: "+minutes+"mins "+seconds+"seconds");
+            return 1;
+        }
+    }
 
     // Event Handler for resetMapBtn
     private EventHandler<MouseEvent> resetMapBtnClick = new EventHandler<MouseEvent>() {

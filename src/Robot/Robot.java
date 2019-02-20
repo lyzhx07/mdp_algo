@@ -167,23 +167,12 @@ public class Robot {
 
     }
 
-    /**
-     * Set sensor position when robot starting position is set
-     * sensor direction is assumed to be UP
-     */
-    private void setSensorPos() {
-        int col = pos.x, row = pos.y;
-        // front
-        sensorMap.get("SF1").setPos(row + 1, col - 1);
-        sensorMap.get("SF2").setPos(row + 1, col);
-        sensorMap.get("SF3").setPos(row + 1, col + 1);
-        // right
-        sensorMap.get("SR1").setPos(row + 1, col + 1);
-        sensorMap.get("SR2").setPos(row - 1, col + 1);
-        // left
-        sensorMap.get("LL1").setPos(row + 1, col - 1);
-        if (dir != Direction.UP) {
-            rotateSensors(dir);
+    private void setSensorPos(int rowDiff, int colDiff) {
+        int row, col;
+        Sensor s;
+        for (String sname: sensorList) {
+            s = sensorMap.get(sname);
+            s.setPos(s.getRow() + rowDiff, s.getCol() + colDiff);
         }
     }
 
@@ -285,23 +274,27 @@ public class Robot {
                 colInc *= -1;
                 break;
             default:
-                status = "Invalid command! No movement executed.\n";
+                status = String.format("Invalid command: %s! No movement executed.\n", cmd.toString());
                 LOGGER.warning(status);
                 return;
         }
 
         int newRow = pos.y + rowInc * steps;
         int newCol = pos.x + colInc * steps;
-       // if(exploredMap.checkValidMove(newRow, newCol)) {
+
+        if(exploredMap.checkValidMove(newRow, newCol)) {
             this.setPosition(newRow, newCol);
-//            if(!findingFP) {
-//                for (int i = 0; i < steps; i++) {
-//                    exploredMap.setPassThru(pos.y - rowInc * i, pos.x - colInc * i);
-//                }
-//            }
-       // }
+            if(!findingFP) {
+                for (int i = 0; i < steps; i++) {
+                    exploredMap.setPassThru(pos.y - rowInc * i, pos.x - colInc * i);
+                }
+            }
+        }
         preMove = cmd;
         status = String.format("%s for %d steps\n", cmd.toString(), steps);
+        LOGGER.info(status);
+        LOGGER.info(pos.toString());
+//        logSensorInfo();
     }
 
     /**
@@ -326,6 +319,9 @@ public class Robot {
         }
         preMove = cmd;
         status = cmd.toString() + "\n";
+        LOGGER.info(status);
+        LOGGER.info(pos.toString());
+//        logSensorInfo();
     }
 
     /**
@@ -352,8 +348,10 @@ public class Robot {
      * @param row
      */
     public void setPosition(int row, int col) {
+        int colDiff = col - pos.x;
+        int rowDiff = row - pos.y;
         pos.setLocation(col, row);
-        setSensorPos();
+        setSensorPos(rowDiff, colDiff);
     }
 
     public void logSensorInfo() {
@@ -436,9 +434,10 @@ public class Robot {
                 if(exploredMap.checkValidCell(row, col)) {
                     exploredMap.getCell(row, col).setExplored(true);
 
-                    if(j == obsBlock && !exploredMap.getCell(row, col).isMoveThru()) {      // why checking move through?
+                    if(j == obsBlock && !exploredMap.getCell(row, col).isMoveThru()) {
                         exploredMap.getCell(row, col).setObstacle(true);
                         exploredMap.setVirtualWall(exploredMap.getCell(row, col));
+                        break;
                     }
                 }
                 else {
@@ -469,9 +468,9 @@ public class Robot {
         LOGGER.info(robot.status);
         LOGGER.info(robot.toString());
         robot.move(Command.FORWARD, 1, null);
-        robot.logSensorInfo();
-        LOGGER.info(robot.status);
-        LOGGER.info(robot.toString());
+//        robot.logSensorInfo();
+//        LOGGER.info(robot.status);
+//        LOGGER.info(robot.toString());
 
     }
 

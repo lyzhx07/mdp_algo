@@ -1,6 +1,7 @@
 package Map;
 
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Map {
@@ -20,7 +21,7 @@ public class Map {
                 grid[row][col] = new Cell(new Point(col, row));
 
                 // Init virtual wall
-                if (row == 0 || col == 0 || row == MapConstants.MAP_HEIGHT || col == MapConstants.MAP_WIDTH) {
+                if (row == 0 || col == 0 || row == MapConstants.MAP_HEIGHT - 1 || col == MapConstants.MAP_WIDTH - 1) {
                     grid[row][col].setVirtualWall(true);
                 }
             }
@@ -64,6 +65,7 @@ public class Map {
     }
 
     public double getExploredPercentage() {
+        updateExploredPercentage();
         return this.exploredPercentage;
     }
 
@@ -71,7 +73,7 @@ public class Map {
         this.exploredPercentage = percentage;
     }
 
-    public void setExploredPercentage() {
+    private void updateExploredPercentage() {
         double total = MapConstants.MAP_HEIGHT * MapConstants.MAP_WIDTH;
         double explored = 0;
 
@@ -156,9 +158,9 @@ public class Map {
      * @param c cell of current position
      * @return neighbours HashMap<Direction, Cell>
      */
-    public HashMap<Direction, Cell> getNeighbours(Cell c) {
+    public ArrayList<Cell> getNeighbours(Cell c) {
 
-        HashMap<Direction, Cell> neighbours = new HashMap<Direction, Cell>();
+        ArrayList<Cell> neighbours = new ArrayList<Cell>();
 
         Point up = new Point(c.getPos().x , c.getPos().y + 1);
         Point down = new Point(c.getPos().x , c.getPos().y - 1);
@@ -167,22 +169,22 @@ public class Map {
 
         // UP
         if (checkValidMove(up.y, up.x)){
-            neighbours.put(Direction.UP, getCell(up));
+            neighbours.add(getCell(up));
         }
 
         // DOWN
         if (checkValidMove(down.y, down.x)){
-            neighbours.put(Direction.DOWN, getCell(down));
+            neighbours.add(getCell(down));
         }
 
         // LEFT
         if (checkValidMove(left.y, left.x)){
-            neighbours.put(Direction.LEFT, getCell(left));
+            neighbours.add(getCell(left));
         }
 
         // RIGHT
         if (checkValidMove(right.y, right.x)){
-            neighbours.put(Direction.RIGHT, getCell(right));
+            neighbours.add(getCell(right));
         }
 
         return neighbours;
@@ -198,18 +200,30 @@ public class Map {
         return checkValidCell(row, col) && !getCell(row, col).isVirtualWall() && !getCell(row, col).isObstacle();
     }
 
+    // TODO clean this
+    //Make sure the robot can move to the row, and col
+    public boolean clearForRobot(int row, int col) {
+        for(int r=row-1; r<= row+1; r++) {
+            for(int c=col-1; c<=col+1; c++) {
+                if(!checkValidCell(r,c)||!grid[r][c].isExplored()||grid[r][c].isObstacle())
+                    return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Return the nearest unexplored cell from a location
-     * @param loc   Point location
+     * @param loc Point location
      * @return nearest unexplored Cell, null if there isnt one
      */
     public Cell nearestUnexplored(Point loc) {
-        double dist = 100, tempDist;
+        double dist = 1000, tempDist;
         Cell nearest = null, tempCell;
 
         for (int row = 0; row < MapConstants.MAP_HEIGHT; row++) {
             for (int col = 0; col < MapConstants.MAP_WIDTH; col++) {
-                tempCell = getCell(row, col);
+                tempCell = grid[row][col];
                 tempDist = loc.distance(tempCell.getPos());
                 if ((!tempCell.isExplored()) && (tempDist < dist)) {
                     nearest = tempCell;
@@ -218,5 +232,47 @@ public class Map {
             }
         }
         return nearest;
+    }
+
+    //TODO Returns the nearest explored cell to the loc
+    public Cell nearestExplored(Point loc, Point botLoc) {
+        Cell cell, nearest = null;
+        double distance = 1000;
+
+        //Check for nearest unexplored
+        for (int row = 0; row < MapConstants.MAP_HEIGHT; row++) {
+            for (int col = 0; col < MapConstants.MAP_WIDTH; col++) {
+                cell = grid[row][col];
+                if(checkValidMove(row,col) && clearForRobot(row,col) && areaMoveThru(row,col))
+//				if(checkValidMove(row,col) && clearForRobot(row,col) && moveThru(row,col))
+                {
+                    if((distance > loc.distance(cell.getPos())&& cell.getPos().distance(botLoc)>0)){
+                        nearest = cell;
+                        distance = loc.distance(cell.getPos());
+                    }
+                }
+            }
+        }
+        return nearest;
+    }
+
+    //TODO Check if the entire area is moveThru
+    public boolean areaMoveThru(int row, int col) {
+        for(int r=row-1; r<= row+1; r++) {
+            for(int c=col-1; c<=col+1; c++) {
+                if(!grid[r][c].isMoveThru())
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    //Remove existing cells with path
+    public void removeAllPaths() {
+        for(int r=0; r<MapConstants.MAP_HEIGHT; r++) {
+            for(int c=0; c<MapConstants.MAP_WIDTH; c++) {
+                grid[r][c].setPath(false);
+            }
+        }
     }
 }
