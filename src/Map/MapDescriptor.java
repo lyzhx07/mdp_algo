@@ -1,9 +1,58 @@
 package Map;
 
+import java.io.*;
+import java.util.logging.*;
+
 public class MapDescriptor {
 
-    public MapDescriptor() {
+    private static final Logger LOGGER = Logger.getLogger(MapDescriptor.class.getName());
 
+    private String hexMapStr1;
+    private String hexMapStr2;
+    private String filename;
+
+    /**
+     * Construct Map descriptor for when there is no input real Map text file
+     */
+    public MapDescriptor() {
+        hexMapStr1 = "";
+        hexMapStr2 = "";
+        filename = "";
+    }
+
+    /**
+     * Construct Map descriptor with given real Map text file
+     */
+    public MapDescriptor(String filename) throws IOException {
+        setHexMapStr(filename);
+    }
+
+    public String getHexMapStr1() {
+        return hexMapStr1;
+    }
+
+    public String getHexMapStr2() {
+        return hexMapStr2;
+    }
+
+    public String getFilename() {
+        return filename;
+    }
+
+    public void setFilename(String filename) {
+        this.filename = filename;
+    }
+
+    public void setHexMapStr(String filename) throws IOException {
+        this.filename = filename;
+
+        FileReader file = new FileReader(filename);
+        BufferedReader buf = new BufferedReader(file);
+
+        hexMapStr1 = buf.readLine();
+        hexMapStr2 = buf.readLine();
+
+        buf.close();
     }
 
     /**
@@ -15,8 +64,8 @@ public class MapDescriptor {
         int check = biStr.length() % 8;
         if (check != 0) {
             int to_pad = 8 - check;
-            System.out.println("Length of binary string not divisible by 8.");
-            System.out.printf("Length of string: %d, Right Padding: %d\n", biStr.length(), to_pad);
+            LOGGER.log(Level.FINER, "Length of binary string not divisible by 8.");
+            LOGGER.log(Level.FINER, "Length of string: {0}, Right Padding: {1}", new Object[]{biStr.length(), to_pad});
             StringBuilder padding = new StringBuilder();
             for (int i = 0; i < to_pad; i++) {
                 padding.append('0');
@@ -35,8 +84,8 @@ public class MapDescriptor {
         int check = biStr.length() % 4;
         if (check != 0) {
             int to_pad = 4 - check;
-            System.out.println("Length of binary string not divisible by 4.");
-            System.out.printf("Length of string: %d, Left Padding: %d\n", biStr.length(), to_pad);
+            LOGGER.log(Level.FINEST, "Length of binary string not divisible by 4.");
+            LOGGER.log(Level.FINEST, "Length of string: {0}, Left Padding: {1}", new Object[]{biStr.length(), to_pad});
             StringBuilder padding = new StringBuilder();
             for (int i = 0; i < to_pad; i++) {
                 padding.append('0');
@@ -63,7 +112,7 @@ public class MapDescriptor {
 
     /**
      * Convert the entire hex string to binary string
-     * @param biStr
+     * @param hexStr
      * @return
      */
     private String hexToBi(String hexStr) {
@@ -125,7 +174,12 @@ public class MapDescriptor {
 
     }
 
-    public void loadMDFString1(String MDFstr1, Map map) {
+    /**
+     * Load the explored arena in the Map
+     * @param MDFstr1
+     * @param map initialized empty Map
+     */
+    private void loadMDFString1(String MDFstr1, Map map) {
         String expStr = hexToBi(MDFstr1);
         int index = 2;
         for (int r = 0; r < MapConstants.MAP_HEIGHT; r++) {
@@ -136,7 +190,6 @@ public class MapDescriptor {
                 index++;
             }
         }
-        System.out.println("index: " + index);
     }
 
     public void loadMDFString2(String MDFstr2, Map map) {
@@ -157,6 +210,52 @@ public class MapDescriptor {
         }
     }
 
+
+    /**
+     * Load real Map for simulator
+     * @param map initialized empty
+     */
+    public void loadRealMap(Map map) {
+        if(filename == "") {
+            LOGGER.warning("No MDF found! Map not loaded!\n");
+        }
+        else {
+            loadMDFString1(this.hexMapStr1, map);
+            loadMDFString2(this.hexMapStr2, map);
+        }
+    }
+
+    public void loadRealMap(Map map, String filename) {
+        this.filename = filename;
+        try {
+            setHexMapStr(filename);
+        } catch (IOException e) {
+            LOGGER.warning("IOException");
+            e.printStackTrace();
+        }
+        loadMDFString1(this.hexMapStr1, map);
+        loadMDFString2(this.hexMapStr2, map);
+    }
+
+    public void saveRealMap(Map map, String filename) {
+        try {
+
+            FileWriter file = new FileWriter(filename);
+
+            BufferedWriter buf = new BufferedWriter(file);
+            String mapDes = generateMDFString1(map);
+            buf.write(mapDes);
+            buf.newLine();
+
+            mapDes = generateMDFString2(map);
+            buf.write(mapDes);
+            buf.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
     // MDF Testing
     public static void main(String[] args) {
         Map m = new Map();
@@ -170,10 +269,10 @@ public class MapDescriptor {
         String str1_test = mdfCoverter.generateMDFString1(m);
         String str2_test = mdfCoverter.generateMDFString2(m);
 
-        System.out.println(str1);
-        System.out.println(str1_test);
-        System.out.println(str2);
-        System.out.println(str2_test);
+        LOGGER.info(str1);
+        LOGGER.info(str1_test);
+        LOGGER.info(str2);
+        LOGGER.info(str2_test);
 
 
     }

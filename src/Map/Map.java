@@ -51,6 +51,18 @@ public class Map {
         }
     }
 
+    /**
+     * Set the moveThru variable for all cells
+     * @param moveThru
+     */
+    public void setAllMoveThru(boolean moveThru) {
+        for (int row = 0; row < MapConstants.MAP_HEIGHT; row++) {
+            for (int col = 0; col < MapConstants.MAP_WIDTH; col++) {
+                grid[row][col].setMoveThru(moveThru);
+            }
+        }
+    }
+
     public double getExploredPercentage() {
         return this.exploredPercentage;
     }
@@ -93,7 +105,7 @@ public class Map {
     }
 
     /**
-     * Check if the row and col is within the map
+     * Check if the row and col is within the Map
      * @param row
      * @param col
      * @return
@@ -176,5 +188,35 @@ public class Map {
         return neighbours;
     }
 
+    /**
+     * Check if wayPoint is valid to move there cannot move to virtual wall
+     * @param row
+     * @param col
+     * @return true if the way point is not a virtual wall or obstacle (unreachable)
+     */
+    public boolean wayPointClear(int row, int col) {
+        return checkValidCell(row, col) && !getCell(row, col).isVirtualWall() && !getCell(row, col).isObstacle();
+    }
 
+    /**
+     * Return the nearest unexplored cell from a location
+     * @param loc   Point location
+     * @return nearest unexplored Cell, null if there isnt one
+     */
+    public Cell nearestUnexplored(Point loc) {
+        double dist = 100, tempDist;
+        Cell nearest = null, tempCell;
+
+        for (int row = 0; row < MapConstants.MAP_HEIGHT; row++) {
+            for (int col = 0; col < MapConstants.MAP_WIDTH; col++) {
+                tempCell = getCell(row, col);
+                tempDist = loc.distance(tempCell.getPos());
+                if ((!tempCell.isExplored()) && (tempDist < dist)) {
+                    nearest = tempCell;
+                    dist = tempDist;
+                }
+            }
+        }
+        return nearest;
+    }
 }

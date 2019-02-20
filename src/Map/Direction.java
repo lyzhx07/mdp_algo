@@ -6,7 +6,7 @@ public enum Direction {
     UP, LEFT, DOWN, RIGHT;
 
     /**
-     * Get the new direction when the robot turns anti-clockwise
+     * Get the anti-clockwise direction of robot's current direction
      * @param curDirection
      * @return
      */
@@ -15,7 +15,7 @@ public enum Direction {
     }
 
     /**
-     * Get the new direction when the robot turns anti-clockwise
+     * et the clockwise direction of robot's current direction
      * @param curDirection
      * @return
      */

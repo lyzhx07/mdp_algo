@@ -1,14 +1,17 @@
-package NetWork;
+package Network;
 
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Timer;
+import java.util.logging.*;
 
 /**
  * Socket client class to connect to RPI
  */
 public class NetMgr {
+
+    private static final Logger LOGGER = Logger.getLogger(NetMgr.class.getName());
 
     private String ip;
     private int port;
@@ -59,25 +62,25 @@ public class NetMgr {
      */
     public boolean initConn() {
         if(isConnect()) {
-            System.out.println("Already connected with RPI");
+            LOGGER.info("Already connected with RPI");
             return true;
         }
         else {
             try {
-                System.out.println("Initiating Connection with RPI...");
+                LOGGER.info("Initiating Connection with RPI...");
                 socket = new Socket(ip, port);
                 out = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
                 in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
-                System.out.println("Connection with RPI established!");
+                LOGGER.info("Connection with RPI established!");
                 return true;
             } catch (UnknownHostException e) {
-                System.out.println("Connection Failed: UnknownHostException\n" + e.toString());
+                LOGGER.warning("Connection Failed: UnknownHostException\n" + e.toString());
                 return false;
             } catch (IOException e) {
-                System.out.println("Connection Failed: IOException\n" + e.toString());
+                LOGGER.warning("Connection Failed: IOException\n" + e.toString());
                 return false;
             } catch (Exception e) {
-                System.out.println("Connection Failed!\n" + e.toString());
+                LOGGER.warning("Connection Failed!\n" + e.toString());
                 e.printStackTrace();
                 return false;
             }
@@ -89,20 +92,20 @@ public class NetMgr {
      * @return True if there is no more connection with RPI
      */
     public boolean closeConn() {
+        LOGGER.info("Closing connection... ");
         if(!isConnect()) {
-            System.out.println("No connection with RPI");
+            LOGGER.warning("No connection with RPI");
             return true;
         }
         else {
             try {
-                System.out.println("Closing connection... ");
                 socket.close();
                 out.close();
                 in.close();
                 socket = null;
                 return true;
             } catch (IOException e) {
-                System.out.println("Unable to close connection: IOException\n" + e.toString());
+                LOGGER.warning("Unable to close connection: IOException\n" + e.toString());
                 e.printStackTrace();
                 return false;
             }
@@ -116,22 +119,22 @@ public class NetMgr {
      */
     public boolean send(String msg) {
         try {
-            System.out.println("Sending Message...");
+            LOGGER.log(Level.FINE, "Sending Message...");
             out.write(msg);
             out.newLine();
             out.flush();
             msgCounter++;
-            System.out.println(msgCounter +" Message Sent: " + msg);
+            LOGGER.info(msgCounter +" Message Sent: " + msg);
             prevMsg = msg;
             return true;
         } catch (IOException e) {
-            System.out.println("Sending Message Failed (IOException)!");
+            LOGGER.info("Sending Message Failed (IOException)!");
             if(socket.isConnected())
-                System.out.println("Connection still Established!");
+                LOGGER.info("Connection still Established!");
             else {
                 while(true)
                 {
-                    System.out.println("Connection disrupted! Trying to Reconnect!");
+                    LOGGER.info("Connection disrupted! Trying to Reconnect!");
                     if(netMgr.initConn()) {
                         break;
                     }
@@ -139,7 +142,7 @@ public class NetMgr {
             }
             return netMgr.send(msg);
         } catch (Exception e) {
-            System.out.println("Sending Message Failed!");
+            LOGGER.info("Sending Message Failed!");
             e.printStackTrace();
             return false;
         }
@@ -147,17 +150,17 @@ public class NetMgr {
 
     public String receive() {
         try {
-            System.out.println("Receving Message...");
+            LOGGER.log(Level.FINE, "Receving Message...");
             String receivedMsg = in.readLine();
-            System.out.println("Before if: ");
+            LOGGER.info("Before if: ");
             if(receivedMsg != null && receivedMsg.length() > 0) {
-                System.out.println("Received in receive(): " + receivedMsg);
+                LOGGER.info("Received in receive(): " + receivedMsg);
                 return receivedMsg;
             }
         } catch(IOException e) {
-            System.out.println("Receiving Message Failed (IOException)!");
+            LOGGER.info("Receiving Message Failed (IOException)!");
         } catch(Exception e) {
-            System.out.println("Receiving Message Failed!");
+            LOGGER.info("Receiving Message Failed!");
             e.printStackTrace();
         }
         return null;
@@ -176,18 +179,21 @@ public class NetMgr {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
+        // String ip = "192.168.9.9";
         String ip = "127.0.0.1";
-        int port = 8080;
+        int port = 1273;
         String data;
         NetMgr netMgr = new NetMgr(ip, port);
         while(netMgr.msgCounter <= 10){
-            netMgr.send(Integer.toString(netMgr.msgCounter));
-            data = netMgr.receive();
-            if(data == null) {
-                System.out.println("Null string received.");
-
-            }
+            //String msg = Command.FORWARD.toString();
+            String msg = "AW";
+            netMgr.send(msg);
+//            data = netMgr.receive();
+//            if(data == null) {
+//                LOGGER.info("Null string received.");
+//            }
+            Thread.sleep(1000);
         }
         netMgr.closeConn();
         return;
