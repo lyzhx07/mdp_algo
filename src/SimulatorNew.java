@@ -140,6 +140,9 @@ public class SimulatorNew extends Application {
                 drawMap(expMapDraw);
                 drawRobot();
                 //When the application starts, they just keep calling this timer function
+                if (robot.getStatus() != null) {
+                    debugOutput.setText(robot.getStatus() + "\n" + robot.toString());
+                }
             }
         },100,100);
 
@@ -424,6 +427,9 @@ public class SimulatorNew extends Application {
                         drawMap(expMapDraw);
                         drawRobot();
                         //When the appliation starts, they just keep calling this timer function
+                        if (robot.getStatus() != null) {
+                            debugOutput.setText(robot.getStatus() + "\n" + robot.toString());
+                        }
                     }
                 },100,100);
             }
@@ -444,6 +450,9 @@ public class SimulatorNew extends Application {
                         drawMap(expMapDraw);
                         drawRobot();
                         //When the appliation starts, they just keep calling this timer function
+                        if (robot.getStatus() != null) {
+                            debugOutput.setText(robot.getStatus() + "\n" + robot.toString());
+                        }
                     }
                 },100,100);
             }
