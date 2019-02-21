@@ -297,7 +297,7 @@ public class Robot {
         }
         preMove = cmd;
         status = String.format("%s for %d steps\n", cmd.toString(), steps);
-        printer.setText(printer.getText() + status + "\n" + pos.toString() + "\n");
+        //printer.setText(printer.getText() + status + "\n" + pos.toString() + "\n");
         LOGGER.info(status);
         LOGGER.info(pos.toString());
 //        logSensorInfo();
@@ -326,7 +326,7 @@ public class Robot {
         }
         preMove = cmd;
         status = cmd.toString() + "\n";
-        printer.setText(printer.getText() + status + "\n" + pos.toString() + "\n");
+        //printer.setText(printer.getText() + status + "\n" + pos.toString() + "\n");
         LOGGER.info(status);
         LOGGER.info(pos.toString());
 //        logSensorInfo();

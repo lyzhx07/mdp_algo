@@ -68,6 +68,7 @@ public class Simulator extends Application {
     private RadioButton expRB, fastPathRB, simRB, realRB;
     private ToggleGroup mode, task;
     private TextArea debugOutput;
+    private PrintManager printer;
     private ScrollBar timeLimitSB, coverageLimitSB, stepsSB;
     private TextField timeLimitTxt, coverageLimitTxt, stepsTxt;
     private Label timeLimitLbl, coverageLimitLbl, stepsLbl, modeChoiceLbl, taskChoiceLbl;
@@ -169,6 +170,9 @@ public class Simulator extends Application {
 
         // TextArea
         debugOutput = new TextArea();
+
+        // PrintManager
+        printer = new PrintManager();
 
         // File Chooser
         fileChooser = new FileChooser();

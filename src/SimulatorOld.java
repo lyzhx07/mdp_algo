@@ -30,7 +30,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 
-public class Simulator extends Application {
+public class SimulatorOld extends Application {
 
     // Program Variables
     private Map map; // Used to hold loaded Map for sim

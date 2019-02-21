@@ -48,6 +48,7 @@ public class SimulatorNew extends Application {
     private boolean expMapDraw = true;
 
     private MapDescriptor mapDescriptor = new MapDescriptor();
+    private String defaultMapPath = "defaultMap.txt";
 
     private final static String ip = "192.168.9.9";
     private final static int port = 1273;
@@ -167,7 +168,7 @@ public class SimulatorNew extends Application {
 
         mapChoiceLbl = new Label("Map File: ");
         mapTxt = new TextField();
-        mapTxt.setText("defaultMap.txt");
+        mapTxt.setText(defaultMapPath);
         mapTxt.setDisable(true);
         mapTxt.setMaxWidth(MAX_WIDTH);
 
@@ -310,22 +311,13 @@ public class SimulatorNew extends Application {
 //        });
         loadMapBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
             public void handle(MouseEvent e) {
-                if (setObstacle) {
-                    fileChooser.setTitle("Choose file to load Map from");
-                    File file = fileChooser.showOpenDialog(primaryStage);
-                    if (file != null) {
-                        mapDescriptor.loadRealMap(map, file.getAbsolutePath());
-                    }
-                    expMapDraw = false;
-                } else {
-                    fileChooser.setTitle("Choose file to load ExploredMap to");
-                    File file = fileChooser.showOpenDialog(primaryStage);
-                    if (file != null) {
-                        mapDescriptor.loadRealMap(exploredMap, file.getAbsolutePath());
-                    }
-                    expMapDraw = true;
+                fileChooser.setTitle("Choose file to load Map from");
+                File file = fileChooser.showOpenDialog(primaryStage);
+                if (file != null) {
+                    mapDescriptor.loadRealMap(map, file.getAbsolutePath());
+                    mapDescriptor.saveRealMap(map, defaultMapPath);
                 }
-
+                expMapDraw = false;
             }
         });
 //        saveMapBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {

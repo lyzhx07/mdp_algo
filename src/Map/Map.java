@@ -161,7 +161,6 @@ public class Map {
     public ArrayList<Cell> getNeighbours(Cell c) {
 
         ArrayList<Cell> neighbours = new ArrayList<Cell>();
-
         Point up = new Point(c.getPos().x , c.getPos().y + 1);
         Point down = new Point(c.getPos().x , c.getPos().y - 1);
         Point left = new Point(c.getPos().x - 1 , c.getPos().y );
@@ -173,7 +172,7 @@ public class Map {
         }
 
         // DOWN
-        if (checkValidMove(down.y, down.x)){
+        if (checkValidMove(down.y, down.x)) {
             neighbours.add(getCell(down));
         }
 

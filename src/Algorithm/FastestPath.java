@@ -60,10 +60,10 @@ public class FastestPath {
         Direction curDir = initDir;
 
         while(!toVisit.isEmpty()) {
-
             cur = getMinCostCell(toVisit, goal);
-            if (prevCellMap.containsKey(cur))
-                curDir = getCellDir(prevCellMap.get(cur).getPos(),cur.getPos());
+            if (prevCellMap.containsKey(cur)) {
+                curDir = getCellDir(prevCellMap.get(cur).getPos(), cur.getPos());
+            }
             visited.add(cur);
             toVisit.remove(cur);
 
