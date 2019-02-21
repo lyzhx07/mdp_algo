@@ -30,9 +30,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.stage.FileChooser;
-import javafx.stage.Stage;
-import javafx.util.Duration;
+import javafx.stage.*;
 
 import java.awt.*;
 import java.io.File;
@@ -51,11 +49,15 @@ public class SimulatorNew extends Application {
     // Program Variables
     private Map map; // Used to hold loaded Map for sim
     private Map exploredMap;
+    private Map newExploredMap;
     private Point wayPoint = new Point(MapConstants.GOALZONE_COL, MapConstants.GOALZONE_ROW);
     private Point startPos = new Point(1, 1);
     private Robot robot;
     private boolean sim = true;
     private boolean expMapDraw = true;
+    private boolean newExpMapDraw = true;
+    private Timer timer1;
+    private Timer timer2;
 
     private MapDescriptor mapDescriptor = new MapDescriptor();
     private String defaultMapPath = "defaultMap.txt";
@@ -78,10 +80,15 @@ public class SimulatorNew extends Application {
     // GUI Components
     private Canvas mapGrid;
     private GraphicsContext gc;
+    private Scene dialogScene;
+    private Stage dialog;
+
+    private Canvas newMapGrid;
+    private GraphicsContext newGC;
 
     // UI components
     private Button loadMapBtn, newMapBtn, showMapBtn, resetMapBtn, startBtn, connectBtn, setWaypointBtn, setRobotBtn,
-            setObstacleBtn, startExpBtn, startFPBtn;
+            setObstacleBtn, startExpBtn, startFPBtn, cancelBtn, confirmBtn;
     private RadioButton expRB, fastPathRB, simRB, realRB, upRB, downRB, leftRB, rightRB;
     private ToggleGroup mode, task, startDir;
     private TextArea debugOutput;
@@ -97,6 +104,7 @@ public class SimulatorNew extends Application {
     public void start(Stage primaryStage) {
         // Init for Map and Robot
         map = new Map();
+        newExploredMap = new Map();
         // Set to all explored for loading and saving Map
         map.setAllExplored(true);
         exploredMap = new Map();
@@ -129,7 +137,8 @@ public class SimulatorNew extends Application {
         gc = mapGrid.getGraphicsContext2D();
 //        expMapDraw = !setObstacle;
 
-        new Timer().scheduleAtFixedRate(new TimerTask() {
+        timer1 = new Timer();
+        timer1.scheduleAtFixedRate(new TimerTask() {
             public void run() {
                 drawMap(expMapDraw);
                 drawRobot();
@@ -140,6 +149,7 @@ public class SimulatorNew extends Application {
 
         // Canvas MouseEvent
         mapGrid.setOnMouseClicked(MapClick);
+        mapGrid.setUserData("Main_Map");
 
         // Lbl Init
         genSetLbl = new Label("General Settings");
@@ -200,7 +210,12 @@ public class SimulatorNew extends Application {
         setWaypointBtn.setMaxWidth(MAX_WIDTH);
         setRobotBtn = new Button("Reset Starting Position");
         setRobotBtn.setMaxWidth(MAX_WIDTH);
-//        setObstacleBtn = new Button("Set Obstacles");
+        setObstacleBtn = new Button("Set Obstacles");
+        cancelBtn = new Button("Cancel");
+        cancelBtn.setMaxWidth(MAX_WIDTH);
+        confirmBtn = new Button("Confirm");
+        confirmBtn.setMaxWidth(MAX_WIDTH);
+
         loadMapBtn.setMaxWidth(MAX_WIDTH);
         showMapBtn.setMaxWidth(MAX_WIDTH);
         newMapBtn.setMaxWidth(MAX_WIDTH);
@@ -323,6 +338,70 @@ public class SimulatorNew extends Application {
 //                setObstacle = false;
             }
         });
+        newMapBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent e) {
+                dialog = new Stage();
+                timer1.cancel();
+                dialog.initModality(Modality.APPLICATION_MODAL);
+                dialog.initOwner(primaryStage);
+
+                newMapGrid = new Canvas(MapConstants.MAP_CELL_SZ * MapConstants.MAP_WIDTH + 1 + MapConstants.MAP_OFFSET,
+                        MapConstants.MAP_CELL_SZ * MapConstants.MAP_HEIGHT + 1 + MapConstants.MAP_OFFSET);
+                newGC = newMapGrid.getGraphicsContext2D();
+
+                // Grid Settings for new map
+                GridPane newGridForMap = new GridPane();
+                GridPane buttonGrid = new GridPane();
+                buttonGrid.setAlignment(Pos.CENTER);
+                buttonGrid.setHgap(5);
+                buttonGrid.setVgap(5);
+                newGridForMap.setAlignment(Pos.CENTER);
+                newGridForMap.setHgap(5);
+                newGridForMap.setVgap(5);
+                newGridForMap.setPadding(new Insets(5, 5, 5, 5));
+
+
+                VBox vBox = new VBox();
+                vBox.setPrefWidth(100);
+
+                cancelBtn.setMinWidth(vBox.getPrefWidth());
+                confirmBtn.setMinWidth(vBox.getPrefWidth());
+
+                vBox.getChildren().addAll(cancelBtn, confirmBtn);
+
+                buttonGrid.add(cancelBtn, 3, 1);
+                buttonGrid.add(confirmBtn, 4, 1);
+
+                ColumnConstraints col1 = new ColumnConstraints();
+                col1.setPercentWidth(0);
+                ColumnConstraints col2 = new ColumnConstraints();
+                col2.setPercentWidth(10);
+                buttonGrid.getColumnConstraints().setAll(col1, col2);
+
+                newGridForMap.add(newMapGrid, 0, 0);
+                newGridForMap.add(buttonGrid, 0, 1);
+                dialogScene = new Scene(newGridForMap, 600, 600);
+
+
+                setRobot = false;
+                setWaypoint = false;
+                Boolean alreadyExplored = false;
+                timer2 = new Timer();
+                timer2.scheduleAtFixedRate(new TimerTask() {
+                    public void run() {
+                        drawNewMap(alreadyExplored);
+                        //When the appliation starts, they just keep calling this timer function
+                    }
+                },100,100);
+
+                // Canvas MouseEvent
+                newMapGrid.setOnMouseClicked(NewMapClick);
+                newMapGrid.setUserData("New_Map");
+                dialog.setScene(dialogScene);
+                dialog.show();
+            }
+        });
         setWaypointBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
             public void handle(MouseEvent e) {
                 exploredMap.resetMap();
@@ -334,6 +413,27 @@ public class SimulatorNew extends Application {
                     setWaypointBtn.setText("Reet Waypoint");
 //                setObstacle = false;
                 setRobot = false;
+            }
+        });
+        cancelBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            public void handle(MouseEvent e) {
+                dialog.close();
+                timer2.cancel();
+                timer1 = new Timer();
+
+                timer1.scheduleAtFixedRate(new TimerTask() {
+                    public void run() {
+                        drawMap(expMapDraw);
+                        drawRobot();
+                        //When the appliation starts, they just keep calling this timer function
+                    }
+                },100,100);
+            }
+        });
+        confirmBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            public void handle(MouseEvent e) {
+                mapDescriptor.saveRealMap(newExploredMap, defaultMapPath);
+                dialog.close();
             }
         });
 //        setObstacleBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
@@ -539,7 +639,7 @@ public class SimulatorNew extends Application {
         // Basic Init for the Cells
         gc.setStroke(MapConstants.CW_COLOR);
         gc.setLineWidth(2);
-
+        System.out.println("HN DEBUG drawMap");
         // Draw the Cells on the Map Canvas
         for (int row = 0; row < MapConstants.MAP_HEIGHT; row++) {
             for (int col = 0; col < MapConstants.MAP_WIDTH; col++) {
@@ -549,9 +649,11 @@ public class SimulatorNew extends Application {
                 else if (row >= MapConstants.GOALZONE_ROW - 1 && col >= MapConstants.GOALZONE_COL - 1)
                     gc.setFill(MapConstants.GZ_COLOR);
                 else {
+
                     if (explored) {
-                        if (exploredMap.getCell(row, col).isObstacle())
+                        if (exploredMap.getCell(row, col).isObstacle()) {
                             gc.setFill(MapConstants.OB_COLOR);
+                        }
                         else if (exploredMap.getCell(row, col).isPath())
                             gc.setFill(MapConstants.PH_COLOR);
                         else if (exploredMap.getCell(row, col).isMoveThru())
@@ -561,10 +663,12 @@ public class SimulatorNew extends Application {
                         else
                             gc.setFill(MapConstants.UE_COLOR);
                     } else {
-                        if (map.getCell(row, col).isObstacle())
+                        if (exploredMap.getCell(row, col).isObstacle()) {
                             gc.setFill(MapConstants.OB_COLOR);
-                        else
+                        }
+                        else {
                             gc.setFill(MapConstants.EX_COLOR);
+                        }
                     }
                 }
 
@@ -597,6 +701,75 @@ public class SimulatorNew extends Application {
         }
     }
 
+
+    private void drawNewMap(boolean alreadyExplored) {
+        // Basic Init for the Cells
+        newGC.setStroke(MapConstants.CW_COLOR);
+        newGC.setLineWidth(2);
+        System.out.println("HN DEBUG drawNewMap");
+
+        // Draw the Cells on the Map Canvas
+        for (int row = 0; row < MapConstants.MAP_HEIGHT; row++) {
+            for (int col = 0; col < MapConstants.MAP_WIDTH; col++) {
+                // Select Color of the Cells
+                if (row <= MapConstants.STARTZONE_ROW + 1 && col <= MapConstants.STARTZONE_COL + 1)
+                    newGC.setFill(MapConstants.SZ_COLOR);
+                else if (row >= MapConstants.GOALZONE_ROW - 1 && col >= MapConstants.GOALZONE_COL - 1)
+                    newGC.setFill(MapConstants.GZ_COLOR);
+                else {
+                    if (alreadyExplored) {
+                        if (newExploredMap.getCell(row, col).isObstacle()) {
+                            newGC.setFill(MapConstants.OB_COLOR);
+                        }
+                        else if (newExploredMap.getCell(row, col).isPath())
+                            newGC.setFill(MapConstants.PH_COLOR);
+                        else if (newExploredMap.getCell(row, col).isMoveThru())
+                            newGC.setFill(MapConstants.THRU_COLOR);
+                        else if (newExploredMap.getCell(row, col).isExplored()) {
+                            newGC.setFill(MapConstants.EX_COLOR);
+                        }
+                        else
+                            newGC.setFill(MapConstants.UE_COLOR);
+                    } else {
+
+                        if (newExploredMap.getCell(row, col).isObstacle()) {
+                            newGC.setFill(MapConstants.OB_COLOR);
+                        }
+                        else {
+                            newGC.setFill(MapConstants.EX_COLOR);
+                        }
+                    }
+                }
+
+                // Draw the Cell on the Map based on the Position Indicated
+                newGC.strokeRect(col * MapConstants.MAP_CELL_SZ + MapConstants.MAP_OFFSET / 2,
+                        (MapConstants.MAP_CELL_SZ - 1) * MapConstants.MAP_HEIGHT - row * MapConstants.MAP_CELL_SZ
+                                + MapConstants.MAP_OFFSET / 2,
+                        MapConstants.MAP_CELL_SZ, MapConstants.MAP_CELL_SZ);
+                newGC.fillRect(col * MapConstants.MAP_CELL_SZ + MapConstants.MAP_OFFSET / 2,
+                        (MapConstants.MAP_CELL_SZ - 1) * MapConstants.MAP_HEIGHT - row * MapConstants.MAP_CELL_SZ
+                                + MapConstants.MAP_OFFSET / 2,
+                        MapConstants.MAP_CELL_SZ, MapConstants.MAP_CELL_SZ);
+            }
+
+            // Draw waypoint on the Map
+            if (wayPoint != null) {
+                newGC.setFill(MapConstants.WP_COLOR);
+                newGC.fillRect(wayPoint.getX() * MapConstants.MAP_CELL_SZ + MapConstants.MAP_OFFSET / 2,
+                        (MapConstants.MAP_CELL_SZ - 1) * MapConstants.MAP_HEIGHT
+                                - wayPoint.getY() * MapConstants.MAP_CELL_SZ + MapConstants.MAP_OFFSET / 2,
+                        MapConstants.MAP_CELL_SZ, MapConstants.MAP_CELL_SZ);
+                newGC.setFill(Color.BLACK);
+                newGC.fillText("W",
+                        wayPoint.getX() * MapConstants.MAP_CELL_SZ + MapConstants.MAP_OFFSET / 2
+                                + MapConstants.CELL_CM / 2,
+                        (MapConstants.MAP_CELL_SZ - 1) * MapConstants.MAP_HEIGHT
+                                - (wayPoint.getY() - 1) * MapConstants.MAP_CELL_SZ + MapConstants.MAP_OFFSET / 2
+                                - MapConstants.CELL_CM / 2);
+            }
+        }
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
@@ -604,55 +777,85 @@ public class SimulatorNew extends Application {
     // Mouse Event Handler for clicking and detecting Location
     private EventHandler<MouseEvent> MapClick = new EventHandler<MouseEvent>() {
         public void handle(MouseEvent event) {
+
             double mouseX = event.getX();
             double mouseY = event.getY();
+            Boolean isMainMap = false;
 
             int selectedCol = (int) ((mouseX - MapConstants.MAP_OFFSET / 2) / MapConstants.MAP_CELL_SZ);
             int selectedRow = (int) (MapConstants.MAP_HEIGHT
                     - (mouseY - MapConstants.MAP_OFFSET / 2) / MapConstants.MAP_CELL_SZ);
             // Debug Text
-            System.out.println(exploredMap.getCell(selectedRow, selectedCol).toString() + " validMove:"
-                    + exploredMap.checkValidMove(selectedRow, selectedCol));
+            System.out.println(map.getCell(selectedRow, selectedCol).toString() + " validMove:"
+                    + map.checkValidMove(selectedRow, selectedCol));
 
-            if (setWaypoint) {
-                System.out.println(setWayPoint(selectedRow, selectedCol)
-                        ? "New WayPoint set at row: " + selectedRow + " col: " + selectedCol
-                        : "Unable to put waypoint at obstacle or virtual wall!");
-            }
-            if (setRobot)
-                System.out.println(setRobotLocation(selectedRow, selectedCol) ? "Robot Position has changed"
-                        : "Unable to put Robot at obstacle or virtual wall!");
+                if (setWaypoint) {
+                    System.out.println(setWayPoint(selectedRow, selectedCol)
+                            ? "New WayPoint set at row: " + selectedRow + " col: " + selectedCol
+                            : "Unable to put waypoint at obstacle or virtual wall!");
+                }
+                if (setRobot)
+                    System.out.println(setRobotLocation(selectedRow, selectedCol) ? "Robot Position has changed"
+                            : "Unable to put Robot at obstacle or virtual wall!");
 
-//            if (setObstacle) {
-//                if (event.getButton() == MouseButton.PRIMARY)
-//                    System.out.println(setObstacle(selectedRow, selectedCol)
-//                            ? "New Obstacle Added at row: " + selectedRow + " col: " + selectedCol
-//                            : "Obstacle at location alredy exists!");
-//                else
-//                    System.out.println(removeObstacle(selectedRow, selectedCol)
-//                            ? "Obstacle removed at row: " + selectedRow + " col: " + selectedCol
-//                            : "Obstacle at location does not exists!");
-//
-//            }
-//            if (setObstacle)
-//                expMapDraw = false;
-//            else
-//                expMapDraw = true;
+                if (setObstacle) {
+                    if (event.getButton() == MouseButton.PRIMARY)
+                        System.out.println(setObstacle(map, selectedRow, selectedCol)
+                                ? "New Obstacle Added at row: " + selectedRow + " col: " + selectedCol
+                                : "Obstacle at location alredy exists!");
+                    else
+                        System.out.println(removeObstacle(map, selectedRow, selectedCol)
+                                ? "Obstacle removed at row: " + selectedRow + " col: " + selectedCol
+                                : "Obstacle at location does not exists!");
+
+                }
+                if (setObstacle)
+                    expMapDraw = false;
+                else
+                    expMapDraw = true;
+
+        }
+
+    };
+
+    private EventHandler<MouseEvent> NewMapClick = new EventHandler<MouseEvent>() {
+        public void handle(MouseEvent event) {
+
+            double mouseX = event.getX();
+            double mouseY = event.getY();
+
+
+            int selectedCol = (int) ((mouseX - MapConstants.MAP_OFFSET / 2) / MapConstants.MAP_CELL_SZ);
+            int selectedRow = (int) (MapConstants.MAP_HEIGHT
+                    - (mouseY - MapConstants.MAP_OFFSET / 2) / MapConstants.MAP_CELL_SZ);
+            // Debug Text
+            System.out.println(newExploredMap.getCell(selectedRow, selectedCol).toString() + " validMove:"
+                    + newExploredMap.checkValidMove(selectedRow, selectedCol));
+
+                    if (event.getButton() == MouseButton.PRIMARY)
+                        System.out.println(setObstacle(newExploredMap, selectedRow, selectedCol)
+                                ? "New Obstacle Added at row: " + selectedRow + " col: " + selectedCol
+                                : "Obstacle at location alredy exists!");
+                    else
+                        System.out.println(removeObstacle(newExploredMap, selectedRow, selectedCol)
+                                ? "Obstacle removed at row: " + selectedRow + " col: " + selectedCol
+                                : "Obstacle at location does not exists!");
+
         }
 
     };
 
     // Place Obstacle at Location
-    private boolean setObstacle(int row, int col) {
+    private boolean setObstacle(Map mapObj, int row, int col) {
         // Check to make sure the cell is valid and is not a existing obstacle
-        if (map.checkValidCell(row, col) && !map.getCell(row, col).isObstacle()) {
-            map.getCell(row, col).setObstacle(true);
+        if (mapObj.checkValidCell(row, col) && !mapObj.getCell(row, col).isObstacle()) {
+            mapObj.getCell(row, col).setObstacle(true);
 
             // Set the virtual wall around the obstacle
             for (int r = row - 1; r <= row + 1; r++)
                 for (int c = col - 1; c <= col + 1; c++)
-                    if (map.checkValidCell(r, c))
-                        map.getCell(r, c).setVirtualWall(true);
+                    if (mapObj.checkValidCell(r, c))
+                        mapObj.getCell(r, c).setVirtualWall(true);
 
             return true;
         }
@@ -660,16 +863,16 @@ public class SimulatorNew extends Application {
     }
 
     // Remove Obstacle at Location
-    private boolean removeObstacle(int row, int col) {
+    private boolean removeObstacle(Map mapObj, int row, int col) {
         // Check to make sure the cell is valid and is not a existing obstacle
-        if (map.checkValidCell(row, col) && map.getCell(row, col).isObstacle()) {
-            map.getCell(row, col).setObstacle(false);
+        if (mapObj.checkValidCell(row, col) && mapObj.getCell(row, col).isObstacle()) {
+            mapObj.getCell(row, col).setObstacle(false);
 
             // Set the virtual wall around the obstacle
             for (int r = row - 1; r <= row + 1; r++)
                 for (int c = col - 1; c <= col + 1; c++)
-                    if (map.checkValidCell(r, c))
-                        map.getCell(r, c).setVirtualWall(false);
+                    if (mapObj.checkValidCell(r, c))
+                        mapObj.getCell(r, c).setVirtualWall(false);
 
             reinitVirtualWall();
             return true;
