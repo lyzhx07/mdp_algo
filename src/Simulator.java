@@ -12,6 +12,7 @@ import Network.NetMgr;
 import Robot.*;
 import Robot.Command;
 import Map.Direction;
+import StatusHelper.*;
 
 //JavaFX Libraries
 import javafx.application.Application;
@@ -68,7 +69,7 @@ public class Simulator extends Application {
     private RadioButton expRB = new RadioButton(EXPLORATION);
     private RadioButton fastPathRB = new RadioButton(FASTEST_PATH);
     private ToggleGroup group = new ToggleGroup();
-    private TextArea debugOutput = new TextArea();
+    private PrintManager printer = new PrintManager();
 
     private ScrollBar timeLimitSB, coverageLimitSB, stepsSB;
     private TextField timeLimitTxt, coverageLimitTxt, stepsTxt;
@@ -189,7 +190,7 @@ public class Simulator extends Application {
         //load default variables
         double coverageLimit = 100;
         int timeLimit = (int) 240000;
-        int steps = (int) 40;
+        int steps = (int) 25;
 
         coverageLimitTxt.setText("" + (int) coverageLimit + " s");
         coverageLimitSB.setValue(coverageLimit);
@@ -297,6 +298,11 @@ public class Simulator extends Application {
             stepsTxt.setText("" + (int) stepsSB.getValue());
         });
 
+        printer.getTextArea().textProperty().addListener(change -> {
+            printer.getTextArea().setScrollTop(Double.MAX_VALUE); //this will scroll to the bottom
+            //use Double.MIN_VALUE to scroll to the top
+        });
+
         // Layer 1 (6 Grids)
         // controlGrid.add(ipLbl, 0, 0, 1, 1);
         // controlGrid.add(ipTxt, 1, 0, 3, 1);
@@ -337,7 +343,7 @@ public class Simulator extends Application {
         controlGrid.add(setRobotBtn, 0, 9, 2, 1);
         controlGrid.add(setObstacleBtn, 2, 9, 4, 1);
 
-        controlGrid.add(debugOutput, 0, 10, 6, 1);
+        controlGrid.add(printer.getTextArea(), 0, 10, 6, 1);
 //		controlGrid.setFillWidth(startBtn, true);
 //		controlGrid.setFillWidth(loadMapBtn, true);
 //		controlGrid.setFillWidth(saveMapBtn, true);
@@ -452,8 +458,8 @@ public class Simulator extends Application {
                                 + MapConstants.CELL_CM / 2,
                         (MapConstants.MAP_CELL_SZ - 1) * MapConstants.MAP_HEIGHT
                                 - (wayPoint.getY() - 1) * MapConstants.MAP_CELL_SZ + MapConstants.MAP_OFFSET / 2
-                                - MapConstants.CELL_CM / 2);
-            }
+                    - MapConstants.CELL_CM / 2);
+        }
         }
     }
 

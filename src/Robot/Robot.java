@@ -6,6 +6,7 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Logger;
+import StatusHelper.*;
 
 public class Robot {
 
@@ -22,6 +23,7 @@ public class Robot {
 
     private ArrayList<String> sensorList;
     private HashMap<String, Sensor> sensorMap;
+    private static PrintManager printer = new PrintManager();
 
     public Robot(boolean sim, boolean findingFP, int row, int col, Direction dir) {
         this.sim = sim;
@@ -33,6 +35,7 @@ public class Robot {
         this.sensorMap = new HashMap<String, Sensor>();
         initSensors();
         this.status = String.format("Initialization completed. Robot at %s\n", pos.toString());
+        printer.setText(printer.getText() + this.status + "\n");
     }
 
     @Override
@@ -164,6 +167,7 @@ public class Robot {
         }
 
         this.status = "Sensor initialized\n";
+        printer.setText(printer.getText() + this.status + "\n");
 
     }
 
@@ -275,6 +279,7 @@ public class Robot {
                 break;
             default:
                 status = String.format("Invalid command: %s! No movement executed.\n", cmd.toString());
+                printer.setText(printer.getText() + status + "\n");
                 LOGGER.warning(status);
                 return;
         }
@@ -292,6 +297,7 @@ public class Robot {
         }
         preMove = cmd;
         status = String.format("%s for %d steps\n", cmd.toString(), steps);
+        printer.setText(printer.getText() + status + "\n" + pos.toString() + "\n");
         LOGGER.info(status);
         LOGGER.info(pos.toString());
 //        logSensorInfo();
@@ -314,11 +320,13 @@ public class Robot {
                 break;
             default:
                 status = "Invalid command! No movement executed.\n";
+                printer.setText(printer.getText() + status + "\n");
                 LOGGER.warning(status);
                 return;
         }
         preMove = cmd;
         status = cmd.toString() + "\n";
+        printer.setText(printer.getText() + status + "\n" + pos.toString() + "\n");
         LOGGER.info(status);
         LOGGER.info(pos.toString());
 //        logSensorInfo();
@@ -467,6 +475,8 @@ public class Robot {
         robot.logSensorInfo();
         LOGGER.info(robot.status);
         LOGGER.info(robot.toString());
+        printer.setText(printer.getText() + robot.status + "\n" + robot.toString() + "\n");
+
         robot.move(Command.FORWARD, 1, null);
 //        robot.logSensorInfo();
 //        LOGGER.info(robot.status);
