@@ -71,7 +71,8 @@ public class Exploration {
         endTime = startTime + timeLimit;
         double prevArea = exploredMap.getExploredPercentage();
         int moves = 1;
-        int checkingStep = 4;
+        int CHECKINGSTEPS = 10;
+        int checkingStep = CHECKINGSTEPS;
         this.start = start;
 
         // Loop to explore the map
@@ -103,7 +104,7 @@ public class Exploration {
                     areaExplored = exploredMap.getExploredPercentage();
                 }while(prevArea == areaExplored);
                 moves=1;
-                checkingStep = 3;
+                checkingStep = CHECKINGSTEPS;
             }
         } while (areaExplored < coverageLimit && System.currentTimeMillis() < endTime);
 
