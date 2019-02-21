@@ -1,5 +1,8 @@
 package Map;
 
+import Robot.Robot;
+import Robot.RobotConstants;
+
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -151,6 +154,59 @@ public class Map {
                 }
             }
         }
+    }
+
+    // TODO: Not working
+    /**
+     * Checking whether the area within the sensor range of front is explored
+     * @param botDir
+     * @param botPos
+     * @return
+     */
+    public boolean areAllExplored(Direction botDir, Point botPos) {
+        int minRow = 0, maxRow = 0, minCol = 0, maxCol = 0;
+        boolean res = true;
+        switch (botDir) {
+            case UP:
+                minRow = botPos.y + 1;
+                maxRow = minRow + RobotConstants.SHORT_MAX ;
+                minCol = botPos.x - 1 - RobotConstants.LONG_MAX;
+                maxCol = botPos.x + 1 + RobotConstants.SHORT_MAX;
+                break;
+            case DOWN:
+                maxRow = botPos.y - 1;
+                minRow = maxRow - RobotConstants.SHORT_MAX;
+                minCol = botPos.x - 1 - RobotConstants.SHORT_MAX;
+                maxCol = botPos.x + 1 + RobotConstants.LONG_MAX;
+                break;
+            case RIGHT:
+                minCol = botPos.x + 1;
+                maxCol = minCol + RobotConstants.SHORT_MAX;
+                minRow = botPos.y - 1 - RobotConstants.SHORT_MAX;
+                maxRow = botPos.y + 1 + RobotConstants.LONG_MAX;
+                break;
+            case LEFT:
+                maxCol = botPos.x - 1;
+                minCol = maxCol - RobotConstants.SHORT_MAX;
+                minRow = botPos.y - 1 - RobotConstants.LONG_MAX;
+                maxRow = botPos.y + 1 + RobotConstants.SHORT_MAX;
+                break;
+        }
+
+        System.out.println(String.format("minRow %d, maxRow %d, minCol %d, maxCol %d", minRow, maxRow, minCol, maxCol));
+        for (int r = minRow; r <= maxRow; r++) {
+            for (int c = minCol; c <= maxCol; c++) {
+                 if (checkValidCell(r, c)) {
+                     if (!getCell(r, c).isExplored()) {
+                         res = false;
+                         break;
+                     }
+                 }
+            }
+        }
+        System.out.println(res);
+        return res;
+
     }
 
     /**

@@ -82,6 +82,7 @@ public class Exploration {
                 break;
             try {
                 rightWallHug();
+
             } catch (InterruptedException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
@@ -113,6 +114,42 @@ public class Exploration {
         System.out.println("Total Time: "+minutes+"mins "+seconds+"seconds");
     }
 
+    //TODO clean this
+    public void exploration2(Point start) throws InterruptedException {
+        areaExplored = exploredMap.getExploredPercentage();
+        startTime = System.currentTimeMillis();
+        endTime = startTime + timeLimit;
+        double prevArea = exploredMap.getExploredPercentage();
+
+        this.start = start;
+
+        // Loop to explore the map
+        outer:
+        do {
+            prevArea = areaExplored;
+            if (areaExplored >= 100)
+                break;
+            try {
+                prevArea = areaExplored;
+                if (!goToUnexplored()) {
+                    break outer;
+                }
+                areaExplored = exploredMap.getExploredPercentage();
+
+            } catch (InterruptedException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+
+        } while (areaExplored < coverageLimit && System.currentTimeMillis() < endTime);
+
+        goToPoint(start);
+        endTime = System.currentTimeMillis();
+        int seconds = (int)((endTime - startTime)/1000%60);
+        int minutes = (int)((endTime - startTime)/1000/60);
+        System.out.println("Total Time: "+minutes+"mins "+seconds+"seconds");
+    }
+
     /**
      * Go to the nearest unexplored cell
      * @return true there is an unexplored cell and function executed, false if unexplored cell not found or no path to the nearest unexplored cell
@@ -122,9 +159,9 @@ public class Exploration {
         LOGGER.info(robot.getStatus());
 
         // Pause for half a second
-        if(sim) {
-            TimeUnit.MILLISECONDS.sleep(500);
-        }
+//        if(sim) {
+//            TimeUnit.MILLISECONDS.sleep(500);
+//        }
 
         Cell nearestUnexp = exploredMap.nearestUnexplored(robot.getPos());
         LOGGER.info("Nearest unexplored: " + nearestUnexp);
@@ -141,11 +178,67 @@ public class Exploration {
         }
     }
 
+    // TODO: Not working
+    /**
+     * Fast right wall hugging (assuming sensor reading 100% correct)
+     */
+    public void fastRightWallHug(int steps) throws InterruptedException {
+        Direction robotDir = robot.getDir();
+
+        if (sim) {
+            TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+        }
+
+        // if right movable
+        if (movable(Direction.getClockwise(robotDir), steps)) {
+            robot.turn(Command.TURN_RIGHT);
+            robot.sense(exploredMap, realMap);
+            moveForward(RobotConstants.MOVE_STEPS);
+        }
+
+        // else if front movable
+        else if (movable(robotDir, steps)) {
+            robot.move(Command.FORWARD, RobotConstants.MOVE_STEPS, exploredMap);
+            robot.sense(exploredMap, realMap);
+        }
+
+        // else if left movable
+        else if (movable(Direction.getAntiClockwise(robotDir), steps)) {
+            robot.turn(Command.TURN_LEFT);
+            robot.sense(exploredMap, realMap);
+            moveForward(RobotConstants.MOVE_STEPS);
+        }
+
+        // else move backwards
+        else {
+            do {
+                robot.move(Command.BACKWARD, RobotConstants.MOVE_STEPS, exploredMap);
+                robot.sense(exploredMap, realMap);
+
+                if (sim) {
+                    TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+                }
+
+            } while (!movable(Direction.getAntiClockwise(robotDir), steps) && !movable(Direction.getClockwise(robotDir), steps));
+
+            // turn left if possible
+            if (movable(Direction.getAntiClockwise(robotDir), steps)) {
+                robot.turn(Command.TURN_LEFT);
+                moveForward(RobotConstants.MOVE_STEPS);
+            }
+
+            // else turn right
+            else {
+                robot.turn(Command.TURN_RIGHT);
+                moveForward(RobotConstants.MOVE_STEPS);
+            }
+        }
+    }
 
     /**
      * Basic right wall hugging algo
      */
-    public void rightWallHug() throws InterruptedException{
+    public void rightWallHug() throws InterruptedException {
         Direction robotDir = robot.getDir();
 
         if (sim) {
@@ -247,6 +340,88 @@ public class Exploration {
         }
 
         return exploredMap.checkValidMove(robot.getPos().y + rowInc, robot.getPos().x + colInc);
+    }
+
+    // TODO: Not Working
+    public boolean movable(Direction dir, int steps) {
+
+        int rowInc = 0, colInc = 0, inc, tempRow, tempCol;
+        boolean res = true, isRowInc, check, isPositive = true;
+
+        switch (dir) {
+            case UP:
+                rowInc = steps;
+                colInc = 0;
+                isPositive = true;
+                break;
+
+            case LEFT:
+                rowInc = 0;
+                colInc = steps;
+                isPositive = false;
+                break;
+
+            case RIGHT:
+                rowInc = 0;
+                colInc = steps;
+                isPositive = true;
+                break;
+
+            case DOWN:
+                rowInc = steps;
+                colInc = 0;
+                isPositive = false;
+                break;
+        }
+
+        if (rowInc == 0) {
+            inc = colInc;
+            isRowInc = false;
+        }
+        else {
+            inc = rowInc;
+            isRowInc = true;
+        }
+        LOGGER.info("inc" + Integer.toString(inc) + " isRowInc: " + Boolean.toString(isRowInc));
+
+        for (int i = 1; i <= inc; i++) {
+            if(isRowInc) {
+                if (isPositive) {
+                    tempRow = robot.getPos().y + i;
+                }
+                else {
+                    tempRow = robot.getPos().y - i;
+                }
+
+                tempCol = robot.getPos().x;
+            }
+            else {
+                tempRow = robot.getPos().y;
+                if (isPositive) {
+                    tempCol = robot.getPos().x + i;
+                }
+                else {
+                    tempCol = robot.getPos().x - i;
+                }
+            }
+            LOGGER.info(robot.getPos().toString());
+            LOGGER.info(String.format("TempCol: %d, TempRow: %d", tempCol, tempRow));
+            check = exploredMap.checkValidMove(tempRow, tempCol);
+            LOGGER.info("check: " + Boolean.toString(check));
+            if (!exploredMap.checkValidCell(tempRow, tempCol)) {
+                res = false;
+                break;
+            }
+            else if (check == false) {
+                if (exploredMap.getCell(tempRow, tempCol).isExplored() && exploredMap.areAllExplored(robot.getDir(), robot.getPos())) {
+                    res = false;
+                    break;
+                }
+
+            }
+        }
+        LOGGER.info("res: " + Boolean.toString(res));
+        return res;
     }
 
     // TODO add nearestVirtualWall (if the robot get lost, go to the nearest wall
