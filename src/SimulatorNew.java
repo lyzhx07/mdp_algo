@@ -7,13 +7,10 @@ import Robot.Command;
 import Robot.Robot;
 import Robot.RobotConstants;
 import Robot.Sensor;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -309,7 +306,7 @@ public class SimulatorNew extends Application {
         coverageLimitTxt.setText("" + (int) coverageLimit + " %");
         coverageLimitSB.setValue(coverageLimit);
 
-        timeLimitTxt.setText("" + (int) timeLimit + " s");
+        timeLimitTxt.setText("" + (int) timeLimit / 1000 + " s");
         timeLimitSB.setValue(timeLimit);
 
         stepsTxt.setText("" + (int) steps + " steps");
@@ -341,6 +338,7 @@ public class SimulatorNew extends Application {
         newMapBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent e) {
+                newExploredMap.resetMap();
                 dialog = new Stage();
                 timer1.cancel();
                 dialog.initModality(Modality.APPLICATION_MODAL);
@@ -432,8 +430,22 @@ public class SimulatorNew extends Application {
         });
         confirmBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
             public void handle(MouseEvent e) {
+                newExploredMap.setAllExplored(true);
                 mapDescriptor.saveRealMap(newExploredMap, defaultMapPath);
+                map.resetMap();
+                exploredMap.resetMap();
+                mapDescriptor.loadRealMap(map, defaultMapPath);
+                mapDescriptor.loadRealMap(exploredMap, defaultMapPath);
                 dialog.close();
+                timer1 = new Timer();
+
+                timer1.scheduleAtFixedRate(new TimerTask() {
+                    public void run() {
+                        drawMap(expMapDraw);
+                        drawRobot();
+                        //When the appliation starts, they just keep calling this timer function
+                    }
+                },100,100);
             }
         });
 //        setObstacleBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
@@ -639,7 +651,6 @@ public class SimulatorNew extends Application {
         // Basic Init for the Cells
         gc.setStroke(MapConstants.CW_COLOR);
         gc.setLineWidth(2);
-        System.out.println("HN DEBUG drawMap");
         // Draw the Cells on the Map Canvas
         for (int row = 0; row < MapConstants.MAP_HEIGHT; row++) {
             for (int col = 0; col < MapConstants.MAP_WIDTH; col++) {
@@ -706,7 +717,6 @@ public class SimulatorNew extends Application {
         // Basic Init for the Cells
         newGC.setStroke(MapConstants.CW_COLOR);
         newGC.setLineWidth(2);
-        System.out.println("HN DEBUG drawNewMap");
 
         // Draw the Cells on the Map Canvas
         for (int row = 0; row < MapConstants.MAP_HEIGHT; row++) {
@@ -798,21 +808,21 @@ public class SimulatorNew extends Application {
                     System.out.println(setRobotLocation(selectedRow, selectedCol) ? "Robot Position has changed"
                             : "Unable to put Robot at obstacle or virtual wall!");
 
-                if (setObstacle) {
-                    if (event.getButton() == MouseButton.PRIMARY)
-                        System.out.println(setObstacle(map, selectedRow, selectedCol)
-                                ? "New Obstacle Added at row: " + selectedRow + " col: " + selectedCol
-                                : "Obstacle at location alredy exists!");
-                    else
-                        System.out.println(removeObstacle(map, selectedRow, selectedCol)
-                                ? "Obstacle removed at row: " + selectedRow + " col: " + selectedCol
-                                : "Obstacle at location does not exists!");
-
-                }
-                if (setObstacle)
-                    expMapDraw = false;
-                else
-                    expMapDraw = true;
+//                if (setObstacle) {
+//                    if (event.getButton() == MouseButton.PRIMARY)
+//                        System.out.println(setObstacle(map, selectedRow, selectedCol)
+//                                ? "New Obstacle Added at row: " + selectedRow + " col: " + selectedCol
+//                                : "Obstacle at location alredy exists!");
+//                    else
+//                        System.out.println(removeObstacle(map, selectedRow, selectedCol)
+//                                ? "Obstacle removed at row: " + selectedRow + " col: " + selectedCol
+//                                : "Obstacle at location does not exists!");
+//
+//                }
+//                if (setObstacle)
+//                    expMapDraw = false;
+//                else
+//                    expMapDraw = true;
 
         }
 
@@ -1088,7 +1098,7 @@ public class SimulatorNew extends Application {
             }
             if (timeLimit == 0) {
                 timeLimit = 240000;
-                timeLimitTxt.setText("" + (int) timeLimit + " s");
+                timeLimitTxt.setText("" + (int) timeLimit / 1000 + " s");
             }
             if (steps == 0) {
                 steps = 5;
