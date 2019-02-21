@@ -66,13 +66,14 @@ public class FastestPath {
             }
             visited.add(cur);
             toVisit.remove(cur);
-
+            LOGGER.info("69");
             // Check whether the goal has been reached
             if(visited.contains(exploredMap.getCell(goal))) {
                 LOGGER.info("Path found");
                 return getPath(start, goal);
             }
             else {
+                LOGGER.info("76");
                 neighbours = exploredMap.getNeighbours(cur);
                 for (Cell n: neighbours) {
                     if (visited.contains(n)) {
