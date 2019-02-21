@@ -64,15 +64,12 @@ public class Simulator extends Application {
     // UI components
     private Button loadMapBtn, saveMapBtn, resetMapBtn, startBtn, connectBtn, setWaypointBtn, setRobotBtn,
             setObstacleBtn;
-
-    private RadioButton expRB = new RadioButton(EXPLORATION);
-    private RadioButton fastPathRB = new RadioButton(FASTEST_PATH);
-    private ToggleGroup group = new ToggleGroup();
-    private TextArea debugOutput = new TextArea();
-
+    private RadioButton expRB, fastPathRB, simRB, realRB;
+    private ToggleGroup mode, task;
+    private TextArea debugOutput;
     private ScrollBar timeLimitSB, coverageLimitSB, stepsSB;
     private TextField timeLimitTxt, coverageLimitTxt, stepsTxt;
-    private Label timeLimitLbl, coverageLimitLbl, stepsLbl, modeChoiceLbl;
+    private Label timeLimitLbl, coverageLimitLbl, stepsLbl, modeChoiceLbl, taskChoiceLbl;
     private ComboBox<String> modeCB;
     private FileChooser fileChooser;
 
@@ -106,6 +103,7 @@ public class Simulator extends Application {
         controlGrid.setAlignment(Pos.CENTER);
         controlGrid.setHgap(5);
         controlGrid.setVgap(5);
+//        controlGrid.
 
         // Drawing Component
         mapGrid = new Canvas(MapConstants.MAP_CELL_SZ * MapConstants.MAP_WIDTH + 1 + MapConstants.MAP_OFFSET,
@@ -131,6 +129,7 @@ public class Simulator extends Application {
         timeLimitTxt = new TextField();
         coverageLimitTxt = new TextField();
         modeChoiceLbl = new Label("Mode:");
+        taskChoiceLbl = new Label("Task:");
         timeLimitTxt.setDisable(true);
         coverageLimitTxt.setDisable(true);
         stepsLbl = new Label("Steps: ");
@@ -139,12 +138,6 @@ public class Simulator extends Application {
         stepsTxt.setMaxWidth(50);
         timeLimitTxt.setMaxWidth(50);
         coverageLimitTxt.setMaxWidth(50);
-
-
-        // ChoiceBox Init
-        modeCB = new ComboBox<String>();
-        modeCB.getItems().addAll(SIM, REAL);
-        modeCB.getSelectionModel().select(SIM);
 
         // Buttons Init
         connectBtn = new Button("Connect");
@@ -156,9 +149,25 @@ public class Simulator extends Application {
         setRobotBtn = new Button("Set Robot Position");
         setObstacleBtn = new Button("Set Obstacles");
 
-        expRB.setToggleGroup(group);
+        // Radio Buttom Init
+        expRB = new RadioButton(EXPLORATION);
+        fastPathRB = new RadioButton(FASTEST_PATH);
+        simRB = new RadioButton(SIM);
+        realRB = new RadioButton(REAL);
+
+        // Toggle Group Init
+        mode = new ToggleGroup();
+        simRB.setToggleGroup(mode);
+        realRB.setToggleGroup(mode);
+        simRB.setSelected(true);
+
+        task = new ToggleGroup();
+        expRB.setToggleGroup(task);
         expRB.setSelected(true);
-        fastPathRB.setToggleGroup(group);
+        fastPathRB.setToggleGroup(task);
+
+        // TextArea
+        debugOutput = new TextArea();
 
         // File Chooser
         fileChooser = new FileChooser();
@@ -306,11 +315,13 @@ public class Simulator extends Application {
         // Layer 2
 
         //type, colindex, rowindex, colspan, rowspan
-        controlGrid.add(modeChoiceLbl, 0, 0, 4, 1);
-        controlGrid.add(modeCB, 3, 0, 4, 1);
+        controlGrid.add(modeChoiceLbl, 0, 0, 1, 1);
+        controlGrid.add(simRB, 1, 0, 4, 1);
+        controlGrid.add(realRB, 5, 0, 4, 1);
 
-        controlGrid.add(expRB, 0, 1, 4, 1);
-        controlGrid.add(fastPathRB, 3, 1, 4, 1);
+        controlGrid.add(taskChoiceLbl, 0, 1, 1, 1);
+        controlGrid.add(expRB, 1, 1, 4, 1);
+        controlGrid.add(fastPathRB, 5, 1, 4, 1);
 
         controlGrid.add(timeLimitLbl, 0, 2, 1, 1);
         controlGrid.add(timeLimitSB, 1, 2, 4, 1);
@@ -352,7 +363,7 @@ public class Simulator extends Application {
         grid.add(controlGrid, 1, 0);
 
         ColumnConstraints col1 = new ColumnConstraints();
-        col1.setPercentWidth(50);
+        col1.setPercentWidth(30);
         controlGrid.getColumnConstraints().addAll(col1);
 
         // Font and Text Alignment
@@ -573,7 +584,7 @@ public class Simulator extends Application {
                 robot.move(Command.TURN_LEFT, RobotConstants.MOVE_STEPS, exploredMap);
                 System.out.println("Robot Direction Changed to " + robot.getDir().name());
             } else {
-                robot.setStartPos(col, row, exploredMap);
+                robot.setStartPos(row, col, exploredMap);
                 System.out.println("Robot moved to new position at row: " + row + " col:" + col);
             }
 
@@ -586,8 +597,13 @@ public class Simulator extends Application {
     private EventHandler<MouseEvent> startBtnClick = new EventHandler<MouseEvent>() {
 
         public void handle(MouseEvent event) {
-
-            String selectedMode = modeCB.getSelectionModel().getSelectedItem();
+            String selectedMode;
+            if (simRB.isSelected()) {
+                selectedMode = SIM;
+            }
+            else {
+                selectedMode = REAL;
+            }
             boolean isFastestPath = fastPathRB.isSelected();
             switch (selectedMode) {
                 case REAL:
@@ -665,7 +681,7 @@ public class Simulator extends Application {
 //                        Direction dir = Direction.values()[Integer.parseInt(data[2])];
 //                        int wayCol = Integer.parseInt(data[3]);
 //                        int wayRow = Integer.parseInt(data[4]);
-//                        robot.setStartPos(col, row, exploredMap);
+//                        robot.setStartPos(row, col, exploredMap);
 //                        while(robot.getDir()!=dir) {
 //                            robot.rotateSensors(true);
 //                            robot.setDirection(Direction.getNext(robot.getDir()));
