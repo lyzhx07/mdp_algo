@@ -299,7 +299,7 @@ public class SimulatorNew extends Application {
         coverageLimitSB = new ScrollBar();
         stepsSB = new ScrollBar();
         stepsSB.setMin(1);
-        stepsSB.setMax(50);
+        stepsSB.setMax(30);
         timeLimitSB.setMin(10);
         timeLimitSB.setMax(240);
         coverageLimitSB.setMin(10);
@@ -1111,11 +1111,11 @@ public class SimulatorNew extends Application {
             }
             if (timeLimit == 0) {
                 timeLimit = 240000;
-                timeLimitTxt.setText("" + (int) timeLimit / 1000 + " s");
+                timeLimitTxt.setText("" + (int) timeLimit / 1000 + " %");
             }
             if (steps == 0) {
                 steps = 5;
-                stepsTxt.setText("" + (int) steps + " s");
+                stepsTxt.setText("" + (int) steps + " steps");
             }
 
             Exploration explore = new Exploration(exploredMap, map, robot, coverageLimit, timeLimit, steps, sim);
