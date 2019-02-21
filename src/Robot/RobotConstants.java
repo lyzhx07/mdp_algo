@@ -26,7 +26,7 @@ public class RobotConstants {
     public static final double RIGHT_DIS_THRES_CLOSE = 1.0;
     public static final double RIGHT_DIS_THRES_FAR = 3.8;
     //Constants to render Robot
-    public static final Color ROBOT_BODY = Color.rgb(148, 168, 208, 0.8);
+    public static final Color ROBOT_BODY = Color.rgb(59, 89, 152, 1);
     public static final Color ROBOT_OUTLINE = Color.BLACK;
     public static final Color ROBOT_DIRECTION = Color.WHITESMOKE;
 }
