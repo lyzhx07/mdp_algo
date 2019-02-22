@@ -1,4 +1,4 @@
-package StatusHelper;
+package Helper;
 import javafx.scene.control.*;
 import java.lang.*;
 

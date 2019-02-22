@@ -12,7 +12,7 @@ import Network.NetMgr;
 import Robot.*;
 import Robot.Command;
 import Map.Direction;
-import StatusHelper.*;
+import Helper.*;
 
 //JavaFX Libraries
 import javafx.application.Application;
