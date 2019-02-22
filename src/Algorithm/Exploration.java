@@ -71,8 +71,7 @@ public class Exploration {
         endTime = startTime + timeLimit;
         double prevArea = exploredMap.getExploredPercentage();
         int moves = 1;
-        int CHECKINGSTEPS = 10;
-        int checkingStep = CHECKINGSTEPS;
+        int checkingStep = RobotConstants.CHECKSTEPS;
         this.start = start;
 
         // Loop to explore the map
@@ -89,22 +88,22 @@ public class Exploration {
                 e1.printStackTrace();
             }
             areaExplored = exploredMap.getExploredPercentage();
-            if(prevArea==areaExplored)
+            if (prevArea == areaExplored)
                 moves++;
             else
                 moves=1;
-            //returned to start ??
+
             LOGGER.info(Double.toString(areaExplored));
             LOGGER.info(Integer.toString(moves));
-            if (moves%checkingStep==0||robot.getPos().distance(start)==0) {
+            if (moves % checkingStep == 0 || robot.getPos().distance(start)==0) {
                 do{
                     prevArea = areaExplored;
                     if(!goToUnexplored())
                         break outer;
                     areaExplored = exploredMap.getExploredPercentage();
                 }while(prevArea == areaExplored);
-                moves=1;
-                checkingStep = CHECKINGSTEPS;
+                moves = 1;
+                checkingStep = RobotConstants.CHECKSTEPS;
             }
         } while (areaExplored < coverageLimit && System.currentTimeMillis() < endTime);
 
@@ -487,15 +486,18 @@ public class Exploration {
             }
 
             //If Robot Gets Lost When Moving to unexplored area Move it Back to a wall
-            if(!loc.equals(start) && exploredMap.getExploredPercentage()<100 && movable(Direction.getClockwise(robot.getDir()))) {
+            if(!loc.equals(start) && exploredMap.getExploredPercentage() < 100 && movable(Direction.getClockwise(robot.getDir()))) {
+                robot.setStatus("Lost. Finding the nearest virtual wall.");
+                LOGGER.info(robot.getStatus());
+
                 //Get direction of the nearest virtual wall
                 Direction dir = nearestVirtualWall(robot.getPos());
 
                 //If not at a virtual wall
-                if(movable(dir))
+                if (movable(dir))
                 {
                     //Orient the robot to face the wall
-                    while(dir!=robot.getDir()) {
+                    while(dir != robot.getDir()) {
                         //Check the difference in the direction enum
                         if(dir.ordinal() - robot.getDir().ordinal()==1)
                             robot.turn(Command.TURN_LEFT);
