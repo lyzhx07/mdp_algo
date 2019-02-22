@@ -22,7 +22,7 @@ public class DisplayTimer {
             // timeSeconds.set((now - startTime) / 1000.0);
             // Duration duration = ((KeyFrame)t.getSource()).getTime();
             // timerTime = timerTime.add(duration);
-            int duration = (int) ((now - startTime)/1000)%240;
+            int duration = (int) ((now - startTime) / 1000) % 240;
             timerTextLbl.setText(duration + " s");
         }
   };

@@ -161,6 +161,7 @@ public class SimulatorNew extends Application {
                 long now = System.currentTimeMillis();
                 drawMap(expMapDraw);
                 drawRobot();
+                debugOutput.setText(robot.getStatus() + "\n" + robot.toString());
             }
         };
         animateTimer2 = new AnimationTimer() {

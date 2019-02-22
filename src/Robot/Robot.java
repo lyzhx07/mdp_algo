@@ -38,7 +38,7 @@ public class Robot {
         this.sensorList = new ArrayList<String>();
         this.sensorMap = new HashMap<String, Sensor>();
         initSensors();
-        this.status = String.format("Initialization completed. Robot at %s\n", pos.toString());
+        this.status = String.format("Initialization completed.\n");
 //        printer.setText(printer.getText() + this.status + "\n");
     }
 
