@@ -7,10 +7,15 @@ import Robot.Command;
 import Robot.Robot;
 import Robot.RobotConstants;
 import Robot.Sensor;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -27,8 +32,10 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.*;
 import javafx.animation.AnimationTimer;
+import javafx.util.Duration;
 
 import java.awt.*;
 import java.io.File;
@@ -97,8 +104,13 @@ public class SimulatorNew extends Application {
     private ScrollBar timeLimitSB, coverageLimitSB, stepsSB;
     private TextField startPosTxt, wayPointTxt, timeLimitTxt, coverageLimitTxt, stepsTxt, mapTxt;
     private Label genSetLbl, simSetLbl, arenaSetLbl, startPosLbl, startDirLbl, wayPointLbl, timeLimitLbl, coverageLimitLbl, stepsLbl;
-    private Label modeChoiceLbl, taskChoiceLbl, mapChoiceLbl, statusLbl;
+    private Label modeChoiceLbl, taskChoiceLbl, mapChoiceLbl, statusLbl, timerLbl;
+    private Label timerTextLbl, splitTimerTextLbl;
     private FileChooser fileChooser;
+    private DoubleProperty timeSeconds, splitTimeSeconds;
+    private Duration timerTime, splitTimerTime;
+    private Timeline timeline;
+//    private VBox timerVBox;
 
     // Threads for each of the tasks
     private Thread fastTask, expTask;
@@ -226,6 +238,9 @@ public class SimulatorNew extends Application {
         statusLbl.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, CornerRadii.EMPTY, Insets.EMPTY)));
         statusLbl.setMaxWidth(MAX_WIDTH);
 
+        timerLbl = new Label("Timer");
+        timerLbl.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, CornerRadii.EMPTY, Insets.EMPTY)));
+        timerLbl.setMaxWidth(MAX_WIDTH);
 
         // Buttons Init
         connectBtn = new Button("Connect");
@@ -524,6 +539,17 @@ public class SimulatorNew extends Application {
             stepsTxt.setText("" + (int) stepsSB.getValue() + "steps per second");
         });
 
+        // TIMER
+        timerTextLbl = new Label();
+        timeSeconds = new SimpleDoubleProperty();
+        timerTime = Duration.ZERO;
+        timerTextLbl.textProperty().bind(timeSeconds.asString());
+        timerTextLbl.setTextFill(Color.RED);
+        timerTextLbl.setStyle("-fx-font-size: 4em;");
+        timerTextLbl.setMaxWidth(MAX_WIDTH);
+        timerTextLbl.setTextAlignment(TextAlignment.CENTER);
+        timerTextLbl.setAlignment(Pos.CENTER);
+
         // Layer 1 (6 Grids)
         // controlGrid.add(ipLbl, 0, 0, 1, 1);
         // controlGrid.add(ipTxt, 1, 0, 3, 1);
@@ -595,8 +621,11 @@ public class SimulatorNew extends Application {
 //        // Layer 5
 //        controlGrid.add(setObstacleBtn, 2, 12, 4, 1);
 
-        controlGrid.add(statusLbl, 0, 13, 5, 1);
-        controlGrid.add(debugOutput, 0, 14, 5, 1);
+        controlGrid.add(statusLbl, 0, 13, 3, 1);
+        controlGrid.add(debugOutput, 0, 14, 3, 1);
+
+        controlGrid.add(timerLbl, 3, 13, 2, 1);
+        controlGrid.add(timerTextLbl, 3, 14, 2, 1);
 //		controlGrid.setFillWidth(startBtn, true);
 //		controlGrid.setFillWidth(loadMapBtn, true);
 //		controlGrid.setFillWidth(saveMapBtn, true);
@@ -970,6 +999,19 @@ public class SimulatorNew extends Application {
                     } else {
                         selectedMode = REAL;
                     }
+                    timeline = new Timeline(
+                            new KeyFrame(Duration.millis(100),
+                                    new EventHandler<ActionEvent>() {
+                                        @Override
+                                        public void handle(ActionEvent t) {
+                                            Duration duration = ((KeyFrame)t.getSource()).getTime();
+                                            timerTime = timerTime.add(duration);
+                                            timeSeconds.set(timerTime.toSeconds());
+                                        }
+                                    })
+                    );
+                    timeline.setCycleCount(Timeline.INDEFINITE);
+                    timeline.play();
                 } catch (InterruptedException e) {
                     LOGGER.warning("Interrupt Exception.");
                     e.printStackTrace();
@@ -1272,9 +1314,10 @@ public class SimulatorNew extends Application {
 //            if (!setObstacle)
 //                expMapDraw = false;
             wayPointTxt.setText(String.format("(%d, %d)", 13, 18));
+            upRB.setSelected(true);
             robot = new Robot(sim, false, 1, 1, Direction.UP);
             robot.setStatus("Reset to start zone");
-            upRB.setSelected(true);
+            System.out.println(robot.getDir());
         }
     };
 
