@@ -12,10 +12,13 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import javafx.animation.AnimationTimer;
+import Helper.*;
 
 public class Exploration {
 
     private static final Logger LOGGER = Logger.getLogger(Exploration.class.getName());
+    private static DisplayTimer helperTimer = new DisplayTimer();
 
     private Map exploredMap;
     private Map realMap;
@@ -107,7 +110,7 @@ public class Exploration {
                 checkingStep = RobotConstants.CHECKSTEPS;
             }
         } while (areaExplored < coverageLimit && System.currentTimeMillis() < endTime);
-
+        helperTimer.stopTimer();
         goToPoint(start);
         endTime = System.currentTimeMillis();
         int seconds = (int)((endTime - startTime)/1000%60);

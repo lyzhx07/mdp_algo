@@ -8,7 +8,6 @@ import Robot.Robot;
 import Robot.RobotConstants;
 import Robot.Sensor;
 import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -34,7 +33,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.*;
-import javafx.util.Duration;
+import javafx.animation.AnimationTimer;
 
 import java.awt.*;
 import java.io.File;
@@ -45,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import static java.lang.Math.abs;
+import Helper.*;
 
 //JavaFX Libraries
 
@@ -62,8 +62,9 @@ public class SimulatorNew extends Application {
     private boolean sim = true;
     private boolean expMapDraw = true;
     private boolean newExpMapDraw = true;
-    private Timer timer1;
-    private Timer timer2;
+    private AnimationTimer animateTimer1;
+    private AnimationTimer animateTimer2;
+    private static DisplayTimer displayTimer = new DisplayTimer();
 
     private MapDescriptor mapDescriptor = new MapDescriptor();
     private String defaultMapPath = "defaultMap.txt";
@@ -102,11 +103,8 @@ public class SimulatorNew extends Application {
     private TextField startPosTxt, wayPointTxt, timeLimitTxt, coverageLimitTxt, stepsTxt, mapTxt;
     private Label genSetLbl, simSetLbl, arenaSetLbl, startPosLbl, startDirLbl, wayPointLbl, timeLimitLbl, coverageLimitLbl, stepsLbl;
     private Label modeChoiceLbl, taskChoiceLbl, mapChoiceLbl, statusLbl, timerLbl;
-    private Label timerTextLbl, splitTimerTextLbl;
+    private Label timerTextLbl = displayTimer.getTimerLbl();
     private FileChooser fileChooser;
-    private DoubleProperty timeSeconds, splitTimeSeconds;
-    private Duration timerTime, splitTimerTime;
-    private Timeline timeline;
 //    private VBox timerVBox;
 
     // Threads for each of the tasks
@@ -148,18 +146,41 @@ public class SimulatorNew extends Application {
         gc = mapGrid.getGraphicsContext2D();
 //        expMapDraw = !setObstacle;
 
-        timer1 = new Timer();
-        timer1.scheduleAtFixedRate(new TimerTask() {
-            public void run() {
+        animateTimer1 = new AnimationTimer() {
+
+            private long startTime ;
+
+            @Override
+            public void start() {
+                startTime = System.currentTimeMillis();
+                super.start();
+            }
+
+            @Override
+            public void handle(long timestamp) {
+                long now = System.currentTimeMillis();
                 drawMap(expMapDraw);
                 drawRobot();
-                //When the application starts, they just keep calling this timer function
-                if (robot.getStatus() != null) {
-                    debugOutput.setText(robot.getStatus() + "\n" + robot.toString());
-                }
             }
-        },100,100);
+        };
+        animateTimer2 = new AnimationTimer() {
 
+            private long startTime ;
+
+            @Override
+            public void start() {
+                startTime = System.currentTimeMillis();
+                super.start();
+            }
+
+            @Override
+            public void handle(long timestamp) {
+                long now = System.currentTimeMillis();
+                drawNewMap(false);
+            }
+        };
+
+        animateTimer1.start();
 
         // Canvas MouseEvent
         mapGrid.setOnMouseClicked(MapClick);
@@ -370,7 +391,6 @@ public class SimulatorNew extends Application {
             public void handle(MouseEvent e) {
                 newExploredMap.resetMap();
                 dialog = new Stage();
-                timer1.cancel();
                 dialog.initModality(Modality.APPLICATION_MODAL);
                 dialog.initOwner(primaryStage);
 
@@ -415,13 +435,9 @@ public class SimulatorNew extends Application {
                 setRobot = false;
                 setWaypoint = false;
                 Boolean alreadyExplored = false;
-                timer2 = new Timer();
-                timer2.scheduleAtFixedRate(new TimerTask() {
-                    public void run() {
-                        drawNewMap(alreadyExplored);
-                        //When the appliation starts, they just keep calling this timer function
-                    }
-                },100,100);
+
+                animateTimer1.stop();
+                animateTimer2.start();
 
                 // Canvas MouseEvent
                 newMapGrid.setOnMouseClicked(NewMapClick);
@@ -446,19 +462,8 @@ public class SimulatorNew extends Application {
         cancelBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
             public void handle(MouseEvent e) {
                 dialog.close();
-                timer2.cancel();
-                timer1 = new Timer();
-
-                timer1.scheduleAtFixedRate(new TimerTask() {
-                    public void run() {
-                        drawMap(expMapDraw);
-                        drawRobot();
-                        //When the appliation starts, they just keep calling this timer function
-                        if (robot.getStatus() != null) {
-                            debugOutput.setText(robot.getStatus() + "\n" + robot.toString());
-                        }
-                    }
-                },100,100);
+                animateTimer2.stop();
+                animateTimer1.start();
             }
         });
         confirmBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
@@ -470,18 +475,8 @@ public class SimulatorNew extends Application {
                 mapDescriptor.loadRealMap(map, defaultMapPath);
                 mapDescriptor.loadRealMap(exploredMap, defaultMapPath);
                 dialog.close();
-                timer1 = new Timer();
-
-                timer1.scheduleAtFixedRate(new TimerTask() {
-                    public void run() {
-                        drawMap(expMapDraw);
-                        drawRobot();
-                        //When the appliation starts, they just keep calling this timer function
-                        if (robot.getStatus() != null) {
-                            debugOutput.setText(robot.getStatus() + "\n" + robot.toString());
-                        }
-                    }
-                },100,100);
+                animateTimer2.stop();
+                animateTimer1.start();
             }
         });
 //        setObstacleBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
@@ -539,10 +534,6 @@ public class SimulatorNew extends Application {
         });
 
         // TIMER
-        timerTextLbl = new Label();
-        timeSeconds = new SimpleDoubleProperty();
-        timerTime = Duration.ZERO;
-        timerTextLbl.textProperty().bind(timeSeconds.asString());
         timerTextLbl.setTextFill(Color.RED);
         timerTextLbl.setStyle("-fx-font-size: 4em;");
         timerTextLbl.setMaxWidth(MAX_WIDTH);
@@ -980,6 +971,7 @@ public class SimulatorNew extends Application {
         @Override
         public void handle(MouseEvent event) {
             String selectedMode;
+            timerTextLbl.setText("" + 0 + " s");
             if (expRB.isSelected()) {
                 try {
                     if (simRB.isSelected()) {
@@ -995,22 +987,12 @@ public class SimulatorNew extends Application {
                         expMapDraw = true;
                         expTask = new Thread(new ExplorationTask());
                         expTask.start();
+                        displayTimer.startTimer();
+
                     } else {
                         selectedMode = REAL;
                     }
-                    timeline = new Timeline(
-                            new KeyFrame(Duration.millis(100),
-                                    new EventHandler<ActionEvent>() {
-                                        @Override
-                                        public void handle(ActionEvent t) {
-                                            Duration duration = ((KeyFrame)t.getSource()).getTime();
-                                            timerTime = timerTime.add(duration);
-                                            timeSeconds.set(timerTime.toSeconds());
-                                        }
-                                    })
-                    );
-                    timeline.setCycleCount(Timeline.INDEFINITE);
-                    timeline.play();
+
                 } catch (InterruptedException e) {
                     LOGGER.warning("Interrupt Exception.");
                     e.printStackTrace();
@@ -1024,6 +1006,9 @@ public class SimulatorNew extends Application {
         @Override
         public void handle(MouseEvent event) {
             String selectedMode;
+            timerTextLbl.setText("" + 0 + " s");
+            displayTimer.stopTimer();
+            displayTimer.startTimer();
             if (fastPathRB.isSelected()) {
                 if (simRB.isSelected()) {
                     selectedMode = SIM;
@@ -1294,6 +1279,7 @@ public class SimulatorNew extends Application {
             endT = System.currentTimeMillis();
             int seconds = (int)((endT - startT)/1000%60);
             int minutes = (int)((endT - startT)/1000/60);
+            displayTimer.stopTimer();
             System.out.println("Total Time: "+minutes+"mins "+seconds+"seconds");
             return 1;
         }
