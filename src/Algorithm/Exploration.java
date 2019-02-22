@@ -29,6 +29,7 @@ public class Exploration {
     private long endTime;
     private Point start;
 
+
     public Exploration(Map exploredMap, Map realMap, Robot robot, double coverageLimit, int timeLimit, int stepPerSecond,
                        boolean sim) {
         this.exploredMap = exploredMap;
@@ -191,46 +192,46 @@ public class Exploration {
 
         // if right movable
         if (movable(Direction.getClockwise(robotDir), steps)) {
-            robot.turn(Command.TURN_RIGHT);
+            robot.turn(Command.TURN_RIGHT, stepPerSecond);
             robot.sense(exploredMap, realMap);
-            moveForward(RobotConstants.MOVE_STEPS);
+            moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
         }
 
         // else if front movable
         else if (movable(robotDir, steps)) {
-            robot.move(Command.FORWARD, RobotConstants.MOVE_STEPS, exploredMap);
+            robot.move(Command.FORWARD, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
             robot.sense(exploredMap, realMap);
         }
 
         // else if left movable
         else if (movable(Direction.getAntiClockwise(robotDir), steps)) {
-            robot.turn(Command.TURN_LEFT);
+            robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
-            moveForward(RobotConstants.MOVE_STEPS);
+            moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
         }
 
         // else move backwards
         else {
             do {
-                robot.move(Command.BACKWARD, RobotConstants.MOVE_STEPS, exploredMap);
+                robot.move(Command.BACKWARD, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
                 robot.sense(exploredMap, realMap);
 
-                if (sim) {
-                    TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
-                }
+//                if (sim) {
+//                    TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+//                }
 
             } while (!movable(Direction.getAntiClockwise(robotDir), steps) && !movable(Direction.getClockwise(robotDir), steps));
 
             // turn left if possible
             if (movable(Direction.getAntiClockwise(robotDir), steps)) {
-                robot.turn(Command.TURN_LEFT);
-                moveForward(RobotConstants.MOVE_STEPS);
+                robot.turn(Command.TURN_LEFT, stepPerSecond);
+                moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
             }
 
             // else turn right
             else {
-                robot.turn(Command.TURN_RIGHT);
-                moveForward(RobotConstants.MOVE_STEPS);
+                robot.turn(Command.TURN_RIGHT, stepPerSecond);
+                moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
             }
         }
     }
@@ -240,53 +241,53 @@ public class Exploration {
      */
     public void rightWallHug() throws InterruptedException {
         Direction robotDir = robot.getDir();
-
-        if (sim) {
-            TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
-        }
+//
+//        if (sim) {
+//            TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+//        }
 
         // if right movable
         if (movable(Direction.getClockwise(robotDir))) {
-            robot.turn(Command.TURN_RIGHT);
+            robot.turn(Command.TURN_RIGHT, stepPerSecond);
             robot.sense(exploredMap, realMap);
-            moveForward(RobotConstants.MOVE_STEPS);
+            moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
         }
 
         // else if front movable
         else if (movable(robotDir)) {
-            robot.move(Command.FORWARD, RobotConstants.MOVE_STEPS, exploredMap);
+            robot.move(Command.FORWARD, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
             robot.sense(exploredMap, realMap);
         }
 
         // else if left movable
         else if (movable(Direction.getAntiClockwise(robotDir))) {
-            robot.turn(Command.TURN_LEFT);
+            robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
-            moveForward(RobotConstants.MOVE_STEPS);
+            moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
         }
 
         // else move backwards
         else {
             do {
-                robot.move(Command.BACKWARD, RobotConstants.MOVE_STEPS, exploredMap);
+                robot.move(Command.BACKWARD, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
                 robot.sense(exploredMap, realMap);
 
-                if (sim) {
-                    TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
-                }
+//                if (sim) {
+//                    TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+//                }
 
             } while (!movable(Direction.getAntiClockwise(robotDir)) && !movable(Direction.getClockwise(robotDir)));
 
             // turn left if possible
             if (movable(Direction.getAntiClockwise(robotDir))) {
-                robot.turn(Command.TURN_LEFT);
-                moveForward(RobotConstants.MOVE_STEPS);
+                robot.turn(Command.TURN_LEFT, stepPerSecond);
+                moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
             }
 
             // else turn right
             else {
-                robot.turn(Command.TURN_RIGHT);
-                moveForward(RobotConstants.MOVE_STEPS);
+                robot.turn(Command.TURN_RIGHT, stepPerSecond);
+                moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
             }
         }
 
@@ -296,14 +297,14 @@ public class Exploration {
      * Move forward if movable
      * @param steps
      */
-    private void moveForward(int steps) throws InterruptedException {
+    private void moveForward(int steps, int stepPerSecond) throws InterruptedException {
         if (movable(robot.getDir())) {       // for actual, double check in case of previous sensing error
 
-            if (sim) {
-                TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
-            }
+//            if (sim) {
+//                TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+//            }
 
-            robot.move(Command.FORWARD, steps, exploredMap);
+            robot.move(Command.FORWARD, steps, exploredMap, stepPerSecond);
             robot.sense(exploredMap, realMap);
         }
     }
@@ -427,21 +428,21 @@ public class Exploration {
     // TODO add nearestVirtualWall (if the robot get lost, go to the nearest wall
 
     // TODO clean this
-    public boolean goToPoint(Point loc) {
+    public boolean goToPoint(Point loc) throws InterruptedException {
         robot.setStatus("Go to point: " + loc.toString());
         LOGGER.info(robot.getStatus());
         // TODO: now ignore robot already at start
         if (robot.getPos().equals(start) && loc.equals(start)) {
             while (robot.getDir() != Direction.UP) {
-                if (sim) {
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
+//                if (sim) {
+//                    try {
+//                        TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
                 robot.sense(exploredMap, realMap);
-                robot.turn(Command.TURN_RIGHT);
+                robot.turn(Command.TURN_RIGHT, stepPerSecond);
                 // hx: to be changed to turn right  / left
             }
             return false;
@@ -469,20 +470,20 @@ public class Exploration {
                             (c == Command.TURN_RIGHT && !movable(Direction.getClockwise(robot.getDir())))) && commands.indexOf(c) == commands.size()-1)
                         continue;
                     if (c == Command.TURN_LEFT || c == Command.TURN_RIGHT){
-                        robot.turn(c);
+                        robot.turn(c, stepPerSecond);
                     }
                     else {
-                        robot.move(c, RobotConstants.MOVE_STEPS, exploredMap);
+                        robot.move(c, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
                     }
                     robot.sense(exploredMap, realMap);
                 }
-                if (sim) {
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
+//                if (sim) {
+//                    try {
+//                        TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
             }
 
             //If Robot Gets Lost When Moving to unexplored area Move it Back to a wall
@@ -500,13 +501,13 @@ public class Exploration {
                     while(dir != robot.getDir()) {
                         //Check the difference in the direction enum
                         if(dir.ordinal() - robot.getDir().ordinal()==1)
-                            robot.turn(Command.TURN_LEFT);
+                            robot.turn(Command.TURN_LEFT, stepPerSecond);
                         else
-                            robot.turn(Command.TURN_RIGHT);
+                            robot.turn(Command.TURN_RIGHT, stepPerSecond);
                     }
                     //Move Towards the wall till unable to move
                     while(movable(robot.getDir())) {
-                        robot.move(Command.FORWARD, RobotConstants.MOVE_STEPS, exploredMap);
+                        robot.move(Command.FORWARD, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
                         if (sim) {
                             try {
                                 TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
@@ -519,7 +520,7 @@ public class Exploration {
                 }
                 //Orient the robot to make its right side hug the wall
                 while(Direction.getAntiClockwise(dir) != robot.getDir()) {
-                    robot.turn(Command.TURN_LEFT);
+                    robot.turn(Command.TURN_LEFT, stepPerSecond);
                     if (sim) {
                         try {
                             TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
@@ -557,20 +558,20 @@ public class Exploration {
                         moves++;
                         // If last command
                         if (i == (commands.size() - 1)) {
-                            robot.move(c, moves, exploredMap);
+                            robot.move(c, moves, exploredMap, stepPerSecond);
                             robot.sense(exploredMap, realMap);
                         }
                     }
                     else{
                         if (moves > 0) {
-                            robot.move(Command.FORWARD, moves, exploredMap);
+                            robot.move(Command.FORWARD, moves, exploredMap, stepPerSecond);
                             robot.sense(exploredMap, realMap);
                         }
                         if(c == Command.TURN_RIGHT || c == Command.TURN_LEFT) {
-                            robot.turn(c);
+                            robot.turn(c, stepPerSecond);
                         }
                         else {
-                            robot.move(c, RobotConstants.MOVE_STEPS, exploredMap);
+                            robot.move(c, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
                         }
                         robot.sense(exploredMap, realMap);
                         moves = 0;
@@ -580,7 +581,7 @@ public class Exploration {
             // Orient robot to face UP
             if (loc.equals(start)) {
                 while (robot.getDir() != Direction.UP) {
-                    robot.turn(Command.TURN_RIGHT);
+                    robot.turn(Command.TURN_RIGHT, stepPerSecond);
                     try {
                         TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
                     } catch (InterruptedException e) {

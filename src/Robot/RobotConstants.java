@@ -30,4 +30,7 @@ public class RobotConstants {
     public static final Color ROBOT_BODY = Color.rgb(59, 89, 152, 1);
     public static final Color ROBOT_OUTLINE = Color.BLACK;
     public static final Color ROBOT_DIRECTION = Color.WHITESMOKE;
+
+    // Not to add delay in movement
+    public static final int MAX_STEPSPERSECOND = 1000;
 }

@@ -5,6 +5,7 @@ import Map.Direction;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import StatusHelper.*;
 
@@ -25,6 +26,9 @@ public class Robot {
     private HashMap<String, Sensor> sensorMap;
     private static PrintManager printer = new PrintManager();
 
+    // for delay in sim
+    private long tempStartTime, tempEndTime, tempDiff;
+
     public Robot(boolean sim, boolean findingFP, int row, int col, Direction dir) {
         this.sim = sim;
         this.findingFP = findingFP;
@@ -35,7 +39,7 @@ public class Robot {
         this.sensorMap = new HashMap<String, Sensor>();
         initSensors();
         this.status = String.format("Initialization completed. Robot at %s\n", pos.toString());
-        printer.setText(printer.getText() + this.status + "\n");
+//        printer.setText(printer.getText() + this.status + "\n");
     }
 
     @Override
@@ -248,6 +252,21 @@ public class Robot {
      * @param steps number of steps moved by the robot
      * @param exploredMap current explored environment of the robot
      */
+    public void move(Command cmd, int steps, Map exploredMap, int stepsPerSecond) throws InterruptedException {
+
+        tempStartTime = System.currentTimeMillis();
+        move(cmd, steps, exploredMap);
+
+        // delay
+        tempEndTime = System.currentTimeMillis();
+        tempDiff = RobotConstants.WAIT_TIME / stepsPerSecond * steps - (tempEndTime - tempStartTime);
+        if (tempDiff > 0) {
+            System.out.println(tempDiff);
+            TimeUnit.MILLISECONDS.sleep(tempDiff);
+        }
+
+    }
+
     public void move(Command cmd, int steps, Map exploredMap) {
         int rowInc = 0, colInc = 0;
 
@@ -307,8 +326,19 @@ public class Robot {
      * move method when cmd is about turning (TURN_LEFT, TURN RIGHT)
      * @param cmd
      */
-    public void turn(Command cmd) {
+    public void turn(Command cmd, int stepsPerSecond) throws InterruptedException {
 
+        tempStartTime = System.currentTimeMillis();
+        turn(cmd);
+        // delay
+        tempEndTime = System.currentTimeMillis();
+        tempDiff = RobotConstants.WAIT_TIME / stepsPerSecond - (tempEndTime - tempStartTime);
+        if (tempDiff > 0) {
+            TimeUnit.MILLISECONDS.sleep(tempDiff);
+        }
+    }
+
+    public void turn(Command cmd) {
         switch(cmd) {
             case TURN_LEFT:
                 dir = Direction.getAntiClockwise(dir);
@@ -330,6 +360,7 @@ public class Robot {
         LOGGER.info(status);
         LOGGER.info(pos.toString());
 //        logSensorInfo();
+
     }
 
     /**
@@ -467,17 +498,17 @@ public class Robot {
         // Take note of setting obstacles on and off (different from simulator)
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException{
         Robot robot = new Robot(true, true,1, 1, Direction.UP);
         System.out.println(robot.status);
 
-        robot.turn(Command.TURN_RIGHT);
+        robot.turn(Command.TURN_RIGHT, 1);
         robot.logSensorInfo();
         LOGGER.info(robot.status);
         LOGGER.info(robot.toString());
         printer.setText(printer.getText() + robot.status + "\n" + robot.toString() + "\n");
 
-        robot.move(Command.FORWARD, 1, null);
+        robot.move(Command.FORWARD, 1, null, 1);
 //        robot.logSensorInfo();
 //        LOGGER.info(robot.status);
 //        LOGGER.info(robot.toString());
