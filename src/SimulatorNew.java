@@ -7,14 +7,10 @@ import Robot.Command;
 import Robot.Robot;
 import Robot.RobotConstants;
 import Robot.Sensor;
-import javafx.animation.KeyFrame;
 import javafx.application.Application;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -38,8 +34,6 @@ import javafx.animation.AnimationTimer;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -531,7 +525,7 @@ public class SimulatorNew extends Application {
         });
 
         stepsSB.valueProperty().addListener(change -> {
-            stepsTxt.setText("" + (int) stepsSB.getValue() + "steps per second");
+            stepsTxt.setText("" + (int) stepsSB.getValue() + " steps per second");
         });
 
         // TIMER
@@ -1025,61 +1019,7 @@ public class SimulatorNew extends Application {
             }
         }
     };
-    // TODO: Update and delete - Event Handler for StartButton
-    private EventHandler<MouseEvent> startBtnClick = new EventHandler<MouseEvent>() {
 
-        public void handle(MouseEvent event) {
-            String selectedMode;
-            if (simRB.isSelected()) {
-                selectedMode = SIM;
-            }
-            else {
-                selectedMode = REAL;
-                //TODO: Add later
-            }
-            boolean isFastestPath = fastPathRB.isSelected();
-            switch (selectedMode) {
-                case REAL:
-                    // to be added later
-                    break;
-//                    netMgr.initConn();
-//                    sim = false;
-//                    robot.setSim(false);
-//
-//                    if (isFastestPath) { //if fastest path is selected
-//                        System.out.println("RF Here");
-//                        exploredMap.removeAllPaths();
-//                        expMapDraw = true;
-//                        fastTask = new Thread(new FastTask());
-//                        fastTask.start();
-//                    } else {
-//                        sim = false;
-//                        robot.setSim(false);
-//                        System.out.println("FastSense"+robot.isFastSense());
-//                        expTask = new Thread(new ExplorationTask());
-//                        expTask.start();
-//                    }
-//                    break;
-                case SIM:
-                    sim = true;
-                    expMapDraw = true;
-                    if (isFastestPath) { //if fastest path is selected
-                        robot.setFindingFP(true);
-                        System.out.println("SF Here");
-                        exploredMap.removeAllPaths();
-                        fastTask = new Thread(new FastTask());
-                        fastTask.start();
-                    } else {
-                        System.out.println("SE Here");
-                        robot.sense(exploredMap, map);
-                        expMapDraw = true;
-                        expTask = new Thread(new ExplorationTask());
-                        expTask.start();
-                    }
-                    break;
-            }
-        }
-    };
 
     class ExplorationTask extends Task<Integer> {
         @Override

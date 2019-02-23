@@ -156,58 +156,6 @@ public class Map {
         }
     }
 
-    // TODO: Not working
-    /**
-     * Checking whether the area within the sensor range of front is explored
-     * @param botDir
-     * @param botPos
-     * @return
-     */
-    public boolean areAllExplored(Direction botDir, Point botPos) {
-        int minRow = 0, maxRow = 0, minCol = 0, maxCol = 0;
-        boolean res = true;
-        switch (botDir) {
-            case UP:
-                minRow = botPos.y + 1;
-                maxRow = minRow + RobotConstants.SHORT_MAX ;
-                minCol = botPos.x - 1 - RobotConstants.LONG_MAX;
-                maxCol = botPos.x + 1 + RobotConstants.SHORT_MAX;
-                break;
-            case DOWN:
-                maxRow = botPos.y - 1;
-                minRow = maxRow - RobotConstants.SHORT_MAX;
-                minCol = botPos.x - 1 - RobotConstants.SHORT_MAX;
-                maxCol = botPos.x + 1 + RobotConstants.LONG_MAX;
-                break;
-            case RIGHT:
-                minCol = botPos.x + 1;
-                maxCol = minCol + RobotConstants.SHORT_MAX;
-                minRow = botPos.y - 1 - RobotConstants.SHORT_MAX;
-                maxRow = botPos.y + 1 + RobotConstants.LONG_MAX;
-                break;
-            case LEFT:
-                maxCol = botPos.x - 1;
-                minCol = maxCol - RobotConstants.SHORT_MAX;
-                minRow = botPos.y - 1 - RobotConstants.LONG_MAX;
-                maxRow = botPos.y + 1 + RobotConstants.SHORT_MAX;
-                break;
-        }
-
-        System.out.println(String.format("minRow %d, maxRow %d, minCol %d, maxCol %d", minRow, maxRow, minCol, maxCol));
-        for (int r = minRow; r <= maxRow; r++) {
-            for (int c = minCol; c <= maxCol; c++) {
-                 if (checkValidCell(r, c)) {
-                     if (!getCell(r, c).isExplored()) {
-                         res = false;
-                         break;
-                     }
-                 }
-            }
-        }
-        System.out.println(res);
-        return res;
-
-    }
 
     /**
      * Get all movable neighbours Direction and Cell object
@@ -255,12 +203,16 @@ public class Map {
         return checkValidCell(row, col) && !getCell(row, col).isVirtualWall() && !getCell(row, col).isObstacle();
     }
 
-    // TODO clean this
-    //Make sure the robot can move to the row, and col
+    /**
+     * Check whether a particular grid is clear for robot to move through
+     * @param row
+     * @param col
+     * @return true if the cell, its left and its right are valid explored non-obstacle cell
+     */
     public boolean clearForRobot(int row, int col) {
-        for(int r=row-1; r<= row+1; r++) {
-            for(int c=col-1; c<=col+1; c++) {
-                if(!checkValidCell(r,c)||!grid[r][c].isExplored()||grid[r][c].isObstacle())
+        for (int r = row - 1; r <= row + 1; r++) {
+            for (int c = col - 1; c <= col + 1; c++) {
+                if (!checkValidCell(r,c) || !grid[r][c].isExplored() || grid[r][c].isObstacle())
                     return false;
             }
         }
@@ -289,19 +241,21 @@ public class Map {
         return nearest;
     }
 
-    //TODO Returns the nearest explored cell to the loc
+    /**
+     * Return the nearest explored but not move through cell given the nearest unexplored cell
+     * @param loc nearest unexplored point location
+     * @param botLoc location of the robot
+     * @return nearest explored Cell, null if there isnt one
+     */
     public Cell nearestExplored(Point loc, Point botLoc) {
         Cell cell, nearest = null;
         double distance = 1000;
 
-        //Check for nearest unexplored
         for (int row = 0; row < MapConstants.MAP_HEIGHT; row++) {
             for (int col = 0; col < MapConstants.MAP_WIDTH; col++) {
                 cell = grid[row][col];
-                if(checkValidMove(row,col) && clearForRobot(row,col) && areaMoveThru(row,col))
-//				if(checkValidMove(row,col) && clearForRobot(row,col) && moveThru(row,col))
-                {
-                    if((distance > loc.distance(cell.getPos())&& cell.getPos().distance(botLoc)>0)){
+                if (checkValidMove(row, col) && clearForRobot(row, col) && notAreaMoveThru(row, col)) {
+                    if ((distance > loc.distance(cell.getPos()) && cell.getPos().distance(botLoc) > 0)) {       // actually no need to check for botLoc
                         nearest = cell;
                         distance = loc.distance(cell.getPos());
                     }
@@ -311,21 +265,29 @@ public class Map {
         return nearest;
     }
 
-    //TODO Check if the entire area is moveThru
-    public boolean areaMoveThru(int row, int col) {
-        for(int r=row-1; r<= row+1; r++) {
-            for(int c=col-1; c<=col+1; c++) {
-                if(!grid[r][c].isMoveThru())
+    /**
+     * Check whether the entire area was moved through by the robot
+     * @param row
+     * @param col
+     * @return true if the cell, its left or its right has not been move through by the robot
+     */
+    public boolean notAreaMoveThru(int row, int col) {
+        for (int r = row - 1; r <= row + 1; r++) {
+            for (int c = col - 1; c <= col + 1; c++) {
+                if (!grid[r][c].isMoveThru()) {
                     return true;
+                }
             }
         }
         return false;
     }
 
-    //Remove existing cells with path
+    /**
+     * Remove existing cell with path
+     */
     public void removeAllPaths() {
-        for(int r=0; r<MapConstants.MAP_HEIGHT; r++) {
-            for(int c=0; c<MapConstants.MAP_WIDTH; c++) {
+        for (int r = 0; r < MapConstants.MAP_HEIGHT; r++) {
+            for (int c = 0; c < MapConstants.MAP_WIDTH; c++) {
                 grid[r][c].setPath(false);
             }
         }
