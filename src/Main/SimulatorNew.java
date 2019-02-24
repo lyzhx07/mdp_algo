@@ -1212,7 +1212,12 @@ public class SimulatorNew extends Application {
                     moves++;
                     // If last command
                     if (i == (commands.size() - 1)) {
-                        robot.move(c, moves, exploredMap);
+                        if (sim) {
+                            robot.move(c, moves, exploredMap, steps);
+                        }
+                        else {
+                            robot.move(c, moves, exploredMap);
+                        }
                         //netMgr.receive();
                         //robot.sense(exploredMap, Map);
                     }
@@ -1220,37 +1225,57 @@ public class SimulatorNew extends Application {
 
                     if (moves > 0) {
                         System.out.println("Moving Forwards "+moves+" steps.");
-                        robot.move(Command.FORWARD, moves, exploredMap);
-//                        netMgr.receive();
-//						robot.sense(exploredMap, Map);
                         if (sim) {
-                            try {
-                                TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME * moves / steps);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-
+                            robot.move(Command.FORWARD, moves, exploredMap, steps);
                         }
+                        else {
+                            robot.move(Command.FORWARD, moves, exploredMap);
+                            netMgr.receive();
+                        }
+
+//						robot.sense(exploredMap, Map);
+//                        if (sim) {
+//                            try {
+//                                TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME * moves / steps);
+//                            } catch (InterruptedException e) {
+//                                e.printStackTrace();
+//                            }
+//
+//                        }
                     }
 
                     if(c == Command.TURN_RIGHT || c == Command.TURN_LEFT) {
-                        robot.turn(c);
+                        if (sim) {
+                            robot.turn(c, steps);
+                        }
+                        else {
+                            robot.turn(c);
+                        }
                     }
                     else {
-                        robot.move(c, RobotConstants.MOVE_STEPS, exploredMap);
+                        if (sim) {
+                            robot.move(c, RobotConstants.MOVE_STEPS, exploredMap, steps);
+
+                        }
+                        else {
+                            robot.move(c, RobotConstants.MOVE_STEPS, exploredMap);
+                        }
                     }
-                    //netMgr.receive();
+                    if (!sim) {
+                        netMgr.receive();
+                    }
+
 //					robot.sense(exploredMap, Map);
                     moves = 0;
                 }
-                if (sim) {
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / steps);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-                }
+//                if (sim) {
+//                    try {
+//                        TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / steps);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//
+//                }
             }
 
 //            if (!sim) {
