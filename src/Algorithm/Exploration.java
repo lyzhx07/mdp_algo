@@ -10,9 +10,8 @@ import Robot.RobotConstants;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-import javafx.animation.AnimationTimer;
+
 import Helper.*;
 
 public class Exploration {
@@ -110,7 +109,7 @@ public class Exploration {
                 checkingStep = RobotConstants.CHECKSTEPS;
             }
         } while (areaExplored < coverageLimit && System.currentTimeMillis() < endTime);
-        helperTimer.stopTimer();
+        Main.SimulatorNew.displayTimer.stop();
         goToPoint(start);
         endTime = System.currentTimeMillis();
         int seconds = (int)((endTime - startTime)/1000%60);
@@ -338,26 +337,26 @@ public class Exploration {
                     //Move Towards the wall till unable to move
                     while(movable(robot.getDir())) {
                         robot.move(Command.FORWARD, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
-                        if (sim) {
-                            try {
-                                TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
+//                        if (sim) {
+//                            try {
+//                                TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+//                            } catch (InterruptedException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
                         robot.sense(exploredMap, realMap);
                     }
                 }
                 //Orient the robot to make its right side hug the wall
                 while(Direction.getAntiClockwise(dir) != robot.getDir()) {
                     robot.turn(Command.TURN_LEFT, stepPerSecond);
-                    if (sim) {
-                        try {
-                            TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
+//                    if (sim) {
+//                        try {
+//                            TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+//                        } catch (InterruptedException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
                     robot.sense(exploredMap, realMap);
                 }
 
@@ -369,14 +368,14 @@ public class Exploration {
             Command c = null;
             for (int i = 0; i < commands.size(); i++) {
                 c = commands.get(i);
-                if (sim) {
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-                }
+//                if (sim) {
+//                    try {
+//                        TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//
+//                }
 
                 if ((c == Command.FORWARD) && !movable(robot.getDir())) {
                     // System.out.println("moves "+moves);
@@ -412,11 +411,14 @@ public class Exploration {
             if (loc.equals(start)) {
                 while (robot.getDir() != Direction.UP) {
                     robot.turn(Command.TURN_RIGHT, stepPerSecond);
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+//                    if (sim) {
+//                        try {
+//                            TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+//                        } catch (InterruptedException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+
                     System.out.println(robot.getDir());
                     robot.sense(exploredMap, realMap);
                     // actual to be added later

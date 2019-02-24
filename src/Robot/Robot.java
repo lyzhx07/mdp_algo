@@ -257,13 +257,16 @@ public class Robot {
         tempStartTime = System.currentTimeMillis();
         move(cmd, steps, exploredMap);
 
-        // delay
-        tempEndTime = System.currentTimeMillis();
-        tempDiff = RobotConstants.WAIT_TIME / stepsPerSecond * steps - (tempEndTime - tempStartTime);
-        if (tempDiff > 0) {
-            System.out.println(tempDiff);
-            TimeUnit.MILLISECONDS.sleep(tempDiff);
+        // delay for sim
+        if (sim) {
+            tempEndTime = System.currentTimeMillis();
+            tempDiff = RobotConstants.WAIT_TIME / stepsPerSecond * steps - (tempEndTime - tempStartTime);
+            if (tempDiff > 0) {
+                System.out.println(tempDiff);
+                TimeUnit.MILLISECONDS.sleep(tempDiff);
+            }
         }
+
 
     }
 
@@ -330,12 +333,16 @@ public class Robot {
 
         tempStartTime = System.currentTimeMillis();
         turn(cmd);
-        // delay
-        tempEndTime = System.currentTimeMillis();
-        tempDiff = RobotConstants.WAIT_TIME / stepsPerSecond - (tempEndTime - tempStartTime);
-        if (tempDiff > 0) {
-            TimeUnit.MILLISECONDS.sleep(tempDiff);
+
+        // delay for simulator
+        if (sim) {
+            tempEndTime = System.currentTimeMillis();
+            tempDiff = RobotConstants.WAIT_TIME / stepsPerSecond - (tempEndTime - tempStartTime);
+            if (tempDiff > 0) {
+                TimeUnit.MILLISECONDS.sleep(tempDiff);
+            }
         }
+
     }
 
     public void turn(Command cmd) {

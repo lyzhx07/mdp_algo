@@ -1,3 +1,5 @@
+package Main;
+
 import Algorithm.Exploration;
 import Algorithm.FastestPath;
 import Map.Cell;
@@ -58,7 +60,7 @@ public class SimulatorNew extends Application {
     private boolean newExpMapDraw = true;
     private AnimationTimer animateTimer1;
     private AnimationTimer animateTimer2;
-    private static DisplayTimer displayTimer = new DisplayTimer();
+    public static DisplayTimer displayTimer = new DisplayTimer();
 
     private MapDescriptor mapDescriptor = new MapDescriptor();
     private String defaultMapPath = "defaultMap.txt";
@@ -76,7 +78,11 @@ public class SimulatorNew extends Application {
     private final String REAL = "Actual Run";
     private final String FASTEST_PATH = "Fastest Path";
     private final String EXPLORATION = "Exploration";
+    private final String CHECK_LIST = "Check list";
     private final int MAX_WIDTH = 1000;
+
+    // initial task set to exploration
+    private String taskSelected = EXPLORATION;
 
     // GUI Components
     private Canvas mapGrid;
@@ -89,8 +95,8 @@ public class SimulatorNew extends Application {
 
     // UI components
     private Button loadMapBtn, newMapBtn, saveMapBtn, resetMapBtn, startBtn, connectBtn, setWaypointBtn, setRobotBtn,
-            setObstacleBtn, startExpBtn, startFPBtn, cancelBtn, confirmBtn;
-    private RadioButton expRB, fastPathRB, simRB, realRB, upRB, downRB, leftRB, rightRB;
+            setObstacleBtn, cancelBtn, confirmBtn;
+    private RadioButton expRB, fastPathRB, checkListRB, simRB, realRB, upRB, downRB, leftRB, rightRB;
     private ToggleGroup mode, task, startDir;
     private TextArea debugOutput;
     private ScrollBar timeLimitSB, coverageLimitSB, stepsSB;
@@ -102,7 +108,9 @@ public class SimulatorNew extends Application {
 //    private VBox timerVBox;
 
     // Threads for each of the tasks
-    private Thread fastTask, expTask;
+    private Thread fastTask, expTask, checklistTask;
+    private boolean taskStarted = false, taskPaused = false;
+    private Thread startedTask = null;
 
     public void start(Stage primaryStage) {
         // Init for Map and Robot
@@ -156,6 +164,11 @@ public class SimulatorNew extends Application {
                 drawMap(expMapDraw);
                 drawRobot();
                 debugOutput.setText(robot.getStatus() + "\n" + robot.toString());
+                if (startedTask != null) {
+                    if (!startedTask.isAlive()) {
+                        startBtn.setVisible(false);
+                    }
+                }
             }
         };
         animateTimer2 = new AnimationTimer() {
@@ -233,8 +246,9 @@ public class SimulatorNew extends Application {
 
         // Buttons Init
         connectBtn = new Button("Connect");
-        startExpBtn = new Button("Start");
-        startFPBtn = new Button("Start");
+        startBtn = new Button("Start");
+//        startExpBtn = new Button("Start");
+//        startFPBtn = new Button("Start");
         loadMapBtn = new Button("Load Map");
         newMapBtn = new Button("New Map");
         saveMapBtn = new Button("Save Map");
@@ -256,6 +270,7 @@ public class SimulatorNew extends Application {
         // Radio Buttom Init
         expRB = new RadioButton(EXPLORATION);
         fastPathRB = new RadioButton(FASTEST_PATH);
+        checkListRB = new RadioButton(CHECK_LIST);
         simRB = new RadioButton(SIM);
         realRB = new RadioButton(REAL);
         upRB = new RadioButton("UP");
@@ -270,25 +285,39 @@ public class SimulatorNew extends Application {
         realRB.setToggleGroup(mode);
         simRB.setSelected(true);
 
+        mode.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
+            @Override
+            public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
+                if (simRB.isSelected()) {
+                    sim = true;
+                }
+                else {
+                    sim = false;
+                }
+            }
+        });
+
         task = new ToggleGroup();
         expRB.setToggleGroup(task);
         expRB.setSelected(true);
-        startFPBtn.setVisible(false);
         fastPathRB.setToggleGroup(task);
+        checkListRB.setToggleGroup(task);
+
         task.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
             @Override
             public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
                 if (simRB.isSelected() && fastPathRB.isSelected()) {
-                    exploredMap.resetMap();
-                    mapDescriptor.loadRealMap(exploredMap, defaultMapPath);
-                    exploredMap.setAllExplored(true);
+                    internalHandleResetMap();
+                }
+                if (simRB.isSelected() && expRB.isSelected()) {
+                    internalHandleResetMap();
                 }
                 if (expRB.isSelected()) {
-                    startExpBtn.setVisible(true);
-                    startFPBtn.setVisible(false);
-                } else {
-                    startFPBtn.setVisible(true);
-                    startExpBtn.setVisible(false);
+                    taskSelected = EXPLORATION;
+                } else if (fastPathRB.isSelected()) {
+                    taskSelected = FASTEST_PATH;
+                } else if (checkListRB.isSelected()) {
+                    taskSelected = CHECK_LIST;
                 }
             }
         });
@@ -337,8 +366,7 @@ public class SimulatorNew extends Application {
         coverageLimitSB.setMax(100);
 
         connectBtn.setMaxWidth(MAX_WIDTH);
-        startExpBtn.setMaxWidth(MAX_WIDTH);
-        startFPBtn.setMaxWidth(MAX_WIDTH);
+        startBtn.setMaxWidth(MAX_WIDTH);
         loadMapBtn.setMaxWidth(MAX_WIDTH);
         resetMapBtn.setMaxWidth(MAX_WIDTH);
 //        setObstacleBtn.setMaxWidth(MAX_WIDTH);
@@ -364,9 +392,7 @@ public class SimulatorNew extends Application {
 
         // Button ActionListeners
         resetMapBtn.setOnMouseClicked(resetMapBtnClick);
-//        startBtn.setOnMouseClicked(startBtnClick);    // to be uncommented after the class is uncommented
-        startExpBtn.setOnMouseClicked(startExpBtnClick);
-        startFPBtn.setOnMouseClicked(startFPBtnClick);
+        startBtn.setOnMouseClicked(startBtnClick);    // to be uncommented after the class is uncommented
         setRobotBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
             public void handle(MouseEvent e) {
                 exploredMap.resetMap();
@@ -549,13 +575,12 @@ public class SimulatorNew extends Application {
         controlGrid.add(genSetLbl, 0, 0, 5, 1);
         controlGrid.add(modeChoiceLbl, 0, 1);
         controlGrid.add(simRB, 1, 1);
-        controlGrid.add(realRB, 3, 1);
+        controlGrid.add(realRB, 2, 1);
 
         controlGrid.add(taskChoiceLbl, 0, 2);
         controlGrid.add(expRB, 1, 2);
-        controlGrid.add(startExpBtn, 2, 2);
-        controlGrid.add(fastPathRB, 3, 2);
-        controlGrid.add(startFPBtn, 4, 2);
+        controlGrid.add(fastPathRB, 2, 2);
+        controlGrid.add(startBtn, 4, 2);
 
         controlGrid.add(arenaSetLbl, 0, 3, 5, 1);
 
@@ -962,60 +987,76 @@ public class SimulatorNew extends Application {
     }
 
     // Event Handler for StartExpButton
-    private EventHandler<MouseEvent> startExpBtnClick = new EventHandler<MouseEvent>() {
+    // not for actual
+    private EventHandler<MouseEvent> startBtnClick = new EventHandler<MouseEvent>() {
         @Override
         public void handle(MouseEvent event) {
-            String selectedMode;
-            timerTextLbl.setText("" + 0 + " s");
-            if (expRB.isSelected()) {
-                try {
-                    if (simRB.isSelected()) {
-                        selectedMode = SIM;
-                        sim = true;
-                        expMapDraw = true;
-                        // reset to empty map
-                        exploredMap.resetMap();
-                        robot.setStartPos(startPos.y, startPos.x, exploredMap);
-                        TimeUnit.MILLISECONDS.sleep(1000);
 
-                        robot.sense(exploredMap, map);
-                        expMapDraw = true;
-                        expTask = new Thread(new ExplorationTask());
-                        expTask.start();
-                        displayTimer.startTimer();
+            // a new task
+            if (taskStarted == false && taskPaused == false) {
+                startBtn.setText("Pause");
+                displayTimer.stop();
+                displayTimer.initialize();
+                switch (taskSelected) {
+                    case EXPLORATION:
+                        if (sim) {
+                            expMapDraw = true;
+                            // reset to empty map
+                            exploredMap.resetMap();
+                            robot.setStartPos(startPos.y, startPos.x, exploredMap);
+                            robot.sense(exploredMap, map);
+                            expMapDraw = true;
+                            // start thread
+                            expTask = new Thread(new ExplorationTask());
+                            startedTask = expTask;
+                            taskStarted = true;
+                            taskPaused = false;
+                            expTask.start();
+                            displayTimer.start();
+                            break;
+                        }
+//                        else {    // to be added for real case
+//
+//                        }
 
-                    } else {
-                        selectedMode = REAL;
-                    }
+                    case FASTEST_PATH:
+                        if (sim) {
+                            expMapDraw = true;
+                            robot.setFindingFP(true);
+                            exploredMap.removeAllPaths();
+                            fastTask = new Thread(new FastTask());
+                            startedTask = fastTask;
+                            taskStarted = true;
+                            taskPaused = false;
+                            fastTask.start();
+                            displayTimer.start();
+                            break;
+                        }
+//                        else {    // to be added for real case
+//
+//                        }
 
-                } catch (InterruptedException e) {
-                    LOGGER.warning("Interrupt Exception.");
-                    e.printStackTrace();
+                    // TODO: add check list case
+
                 }
+            } // end of if started a new task
+
+            // pause a task
+            else if (taskStarted == true && taskPaused == false) {
+                startBtn.setText("Resume");
+                startedTask.suspend();
+                displayTimer.pause();
+                taskStarted = false;
+                taskPaused = true;
             }
-        }
-    };
 
-
-    private EventHandler<MouseEvent> startFPBtnClick = new EventHandler<MouseEvent>() {
-        @Override
-        public void handle(MouseEvent event) {
-            String selectedMode;
-            timerTextLbl.setText("" + 0 + " s");
-            displayTimer.stopTimer();
-            displayTimer.startTimer();
-            if (fastPathRB.isSelected()) {
-                if (simRB.isSelected()) {
-                    selectedMode = SIM;
-                    sim = true;
-                    expMapDraw = true;
-                    robot.setFindingFP(true);
-                    exploredMap.removeAllPaths();
-                    fastTask = new Thread(new FastTask());
-                    fastTask.start();
-                } else {
-                    selectedMode = REAL;
-                }
+            // resume a task
+            else if (taskStarted == false && taskPaused == true) {
+                startBtn.setText("Pause");
+                startedTask.resume();
+                displayTimer.resume();
+                taskStarted = true;
+                taskPaused = false;
             }
         }
     };
@@ -1220,7 +1261,7 @@ public class SimulatorNew extends Application {
             endT = System.currentTimeMillis();
             int seconds = (int)((endT - startT)/1000%60);
             int minutes = (int)((endT - startT)/1000/60);
-            displayTimer.stopTimer();
+            displayTimer.stop();
             System.out.println("Total Time: "+minutes+"mins "+seconds+"seconds");
             return 1;
         }
@@ -1229,23 +1270,42 @@ public class SimulatorNew extends Application {
     // Event Handler for resetMapBtn
     private EventHandler<MouseEvent> resetMapBtnClick = new EventHandler<MouseEvent>() {
         public void handle(MouseEvent event) {
-            exploredMap.resetMap();
-            mapDescriptor.loadRealMap(exploredMap, defaultMapPath);
-            expRB.setSelected(true);
-            startPos.setLocation(1, 1);
-            startPosTxt.setText(String.format("(%d, %d)", 1, 1));
-            if (wayPoint != null)
-                exploredMap.getCell(wayPoint).setWayPoint(false);
-            wayPoint.setLocation(13, 18);
-//            if (!setObstacle)
-//                expMapDraw = false;
-            wayPointTxt.setText(String.format("(%d, %d)", 13, 18));
-            upRB.setSelected(true);
-            robot = new Robot(sim, false, 1, 1, Direction.UP);
-            robot.setStatus("Reset to start zone");
-            System.out.println(robot.getDir());
+            internalHandleResetMap();
         }
     };
+
+    private void internalHandleResetMap() {
+
+        // stop existing task and set startedTask to null if any
+        // so that the startBtn is not set to not visible
+        if (startedTask != null) {
+            startedTask.stop();
+            startedTask = null;
+        }
+        taskStarted = false;
+        taskPaused = false;
+        startBtn.setText("Start");
+        displayTimer.stop();
+        displayTimer.initialize();
+
+        // reset the map and robot
+        startBtn.setVisible(true);
+        exploredMap.resetMap();
+        mapDescriptor.loadRealMap(exploredMap, defaultMapPath);
+//        expRB.setSelected(true);
+        startPos.setLocation(1, 1);
+        startPosTxt.setText(String.format("(%d, %d)", 1, 1));
+        if (wayPoint != null)
+            exploredMap.getCell(wayPoint).setWayPoint(false);
+        wayPoint.setLocation(13, 18);
+//            if (!setObstacle)
+//                expMapDraw = false;
+        wayPointTxt.setText(String.format("(%d, %d)", 13, 18));
+        upRB.setSelected(true);
+        robot = new Robot(sim, false, 1, 1, Direction.UP);
+        robot.setStatus("Reset to start zone");
+
+    }
 
     // Draw Method for Robot
     public void drawRobot() {
