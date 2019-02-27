@@ -62,7 +62,7 @@ public class FastestPath {
         while(!toVisit.isEmpty()) {
             cur = getMinCostCell(toVisit, goal);
             if (prevCellMap.containsKey(cur)) {
-                curDir = getCellDir(prevCellMap.get(cur).getPos(), cur.getPos());
+                curDir = exploredMap.getCellDir(prevCellMap.get(cur).getPos(), cur.getPos());
             }
             visited.add(cur);
             toVisit.remove(cur);
@@ -143,7 +143,7 @@ public class FastestPath {
 
     //Returns the movements required to execute the path
     //TODO modify?
-    public ArrayList<Command> getPathCommands(ArrayList<Cell> path) {
+    public ArrayList<Command> getPathCommands(ArrayList<Cell> path) throws InterruptedException {
         Robot tempRobot = new Robot(true, true,robot.getPos().y, robot.getPos().x, robot.getDir());
         ArrayList<Command> moves = new ArrayList<Command>();
 
@@ -155,33 +155,33 @@ public class FastestPath {
         //Iterate through the path
         for (int i = 0; i < path.size(); i++) {
             newCell = path.get(i);
-            cellDir = getCellDir(cell.getPos(), newCell.getPos());
+            cellDir = exploredMap.getCellDir(cell.getPos(), newCell.getPos());
 
             // If the TempRobot and cell direction not the same
             if (tempRobot.getDir()!=cellDir) {
                 if( Direction.getOpposite(tempRobot.getDir()) == cellDir) {
                     move = Command.TURN_LEFT;
-                    tempRobot.turn(move);
+                    tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
                     moves.add(move);
-                    tempRobot.turn(move);
+                    tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
                     moves.add(move);
                 }
                 else {
 //                    move = getTurnMovement(tempRobot.getDir(), cellDir);
                     if (Direction.getClockwise(tempRobot.getDir()) == cellDir) {
                         move = Command.TURN_RIGHT;
-                        tempRobot.turn(move);
+                        tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
                         moves.add(move);
                     }
                     else if (Direction.getAntiClockwise(tempRobot.getDir()) == cellDir) {
                         move = Command.TURN_LEFT;
-                        tempRobot.turn(move);
+                        tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
                         moves.add(move);
                     }
                 }
             }
             move = Command.FORWARD;
-            tempRobot.move(move, RobotConstants.MOVE_STEPS, exploredMap);
+            tempRobot.move(move, RobotConstants.MOVE_STEPS, exploredMap, RobotConstants.STEP_PER_SECOND);
             moves.add(move);
             cell = newCell;
 
@@ -220,7 +220,7 @@ public class FastestPath {
      * @return  cost from A to B
      */
     private double getG(Point A, Point B, Direction dir) {
-        return getMoveCost(A, B) + getTurnCost(dir, getCellDir(A, B));
+        return getMoveCost(A, B) + getTurnCost(dir, exploredMap.getCellDir(A, B));
     }
 
     /**
@@ -233,28 +233,6 @@ public class FastestPath {
      */
     private double getH(Point pt, Point goal) {
         return pt.distance(goal);
-    }
-
-    /**
-     * Get the moving direction from point A to point B.
-     * Assuming A and B are not the same point.
-     * @param A
-     * @param B
-     * @return
-     */
-    private Direction getCellDir(Point A, Point B) {
-        if (A.y - B.y > 0) {
-            return Direction.DOWN;
-        }
-        else if (A.y - B.y < 0) {
-            return Direction.UP;
-        }
-        else if (A.x - B.x > 0) {
-            return Direction.LEFT;
-        }
-        else {
-            return Direction.RIGHT;
-        }
     }
 
     private double getMoveCost(Point A, Point B) {

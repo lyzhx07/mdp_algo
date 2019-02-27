@@ -292,4 +292,26 @@ public class Map {
             }
         }
     }
+
+    /**
+     * Get the moving direction from point A to point B. (provided A or B has same x or y)
+     * Assuming A and B are not the same point.
+     * @param A
+     * @param B
+     * @return
+     */
+    public Direction getCellDir(Point A, Point B) {
+        if (A.y - B.y > 0) {
+            return Direction.DOWN;
+        }
+        else if (A.y - B.y < 0) {
+            return Direction.UP;
+        }
+        else if (A.x - B.x > 0) {
+            return Direction.LEFT;
+        }
+        else {
+            return Direction.RIGHT;
+        }
+    }
 }

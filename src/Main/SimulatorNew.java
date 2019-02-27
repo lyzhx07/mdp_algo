@@ -5,11 +5,13 @@ import Algorithm.FastestPath;
 import Map.Cell;
 import Map.*;
 import Network.NetMgr;
+import Network.NetworkConstants;
 import Robot.Command;
 import Robot.Robot;
 import Robot.RobotConstants;
 import Robot.Sensor;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
@@ -65,9 +67,7 @@ public class SimulatorNew extends Application {
     private MapDescriptor mapDescriptor = new MapDescriptor();
     private String defaultMapPath = "defaultMap.txt";
 
-    private final static String ip = "192.168.9.9";
-    private final static int port = 1273;
-    private static final NetMgr netMgr = NetMgr.getInstance(ip, port);
+    private static final NetMgr netMgr = NetMgr.getInstance();
 
 //    private boolean setObstacle = false;
     private boolean setWaypoint = false;
@@ -78,7 +78,7 @@ public class SimulatorNew extends Application {
     private final String REAL = "Actual Run";
     private final String FASTEST_PATH = "Fastest Path";
     private final String EXPLORATION = "Exploration";
-    private final String CHECK_LIST = "Check list";
+    private final String CHECK_LIST = "Check List 1";
     private final int MAX_WIDTH = 1000;
 
     // initial task set to exploration
@@ -292,7 +292,10 @@ public class SimulatorNew extends Application {
                     sim = true;
                 }
                 else {
+                    System.out.println("Actual run selected, connecting to RPI");
+                    netMgr.initConn();
                     sim = false;
+                    stepsSB.setValue(30);   // set to max to avoid any delay
                 }
             }
         });
@@ -310,6 +313,9 @@ public class SimulatorNew extends Application {
                     internalHandleResetMap();
                 }
                 if (simRB.isSelected() && expRB.isSelected()) {
+                    internalHandleResetMap();
+                }
+                if (simRB.isSelected() && checkListRB.isSelected()) {
                     internalHandleResetMap();
                 }
                 if (expRB.isSelected()) {
@@ -333,17 +339,20 @@ public class SimulatorNew extends Application {
             public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
                 RadioButton button = (RadioButton) startDir.getSelectedToggle();
                 Direction newDir = Direction.valueOf(button.getText());
-                if (Direction.getAntiClockwise(robot.getDir()) == newDir) {
-                    robot.turn(Command.TURN_LEFT);
+                try {
+                    if (Direction.getAntiClockwise(robot.getDir()) == newDir) {
+                        robot.turn(Command.TURN_LEFT, RobotConstants.STEP_PER_SECOND);
+                    } else if (Direction.getClockwise(robot.getDir()) == newDir) {
+                        robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+                    } else {
+                        robot.turn(Command.TURN_LEFT, RobotConstants.STEP_PER_SECOND);
+                        robot.turn(Command.TURN_LEFT, RobotConstants.STEP_PER_SECOND);
+                    }
+                    System.out.println("Setting robot to new direction: " + newDir.toString() + "\n");
+                } catch (InterruptedException e) {
+                    LOGGER.warning("InterruptException");
+                    e.printStackTrace();
                 }
-                else if (Direction.getClockwise(robot.getDir()) == newDir) {
-                    robot.turn(Command.TURN_RIGHT);
-                }
-                else {
-                    robot.turn(Command.TURN_LEFT);
-                    robot.turn(Command.TURN_LEFT);
-                }
-                System.out.println("Setting robot to new direction: " + newDir.toString() + "\n");
             }
         });
 
@@ -580,6 +589,7 @@ public class SimulatorNew extends Application {
         controlGrid.add(taskChoiceLbl, 0, 2);
         controlGrid.add(expRB, 1, 2);
         controlGrid.add(fastPathRB, 2, 2);
+        controlGrid.add(checkListRB, 3, 2);
         controlGrid.add(startBtn, 4, 2);
 
         controlGrid.add(arenaSetLbl, 0, 3, 5, 1);
@@ -671,31 +681,44 @@ public class SimulatorNew extends Application {
                 robot.setSim(sim);
                 System.out.println("System movement");
 
-                switch (e.getCode()) {
-                    case W:
-                        robot.move(Command.FORWARD, 1, exploredMap);
-                        robot.sense(exploredMap, map);
-                        break;
-                    case S:
-                        robot.move(Command.BACKWARD, 1, exploredMap);
-                        robot.sense(exploredMap, map);
-                        break;
-                    case A:
-                        robot.move(Command.TURN_RIGHT, 1, exploredMap);
-                        robot.sense(exploredMap, map);
-                        break;
-                    case D:
-                        robot.move(Command.TURN_LEFT, 1, exploredMap);
-                        robot.sense(exploredMap, map);
-                        break;
-                    default:
-                        break;
+                try {
+                    switch (e.getCode()) {
+                        case W:
+                            robot.move(Command.FORWARD, 1, exploredMap, RobotConstants.STEP_PER_SECOND);
+                            robot.sense(exploredMap, map);
+                            break;
+                        case X:
+                            robot.move(Command.BACKWARD, 1, exploredMap, RobotConstants.STEP_PER_SECOND);
+                            robot.sense(exploredMap, map);
+                            break;
+                        case A:
+                            robot.turn(Command.TURN_LEFT, RobotConstants.STEP_PER_SECOND);
+                            robot.sense(exploredMap, map);
+                            break;
+                        case D:
+                            robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+                            robot.sense(exploredMap, map);
+                            break;
+                        default:
+                            break;
+                    }
+                    System.out.println("Robot Direction AFTER:" + robot.getDir());
+                } catch (InterruptedException ex) {
+                    LOGGER.warning("Interrupt Exception");
+                    ex.printStackTrace();
                 }
-                System.out.println("Robot Direction AFTER:" + robot.getDir());
             }
         });
 
         primaryStage.show();
+
+        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent t) {
+                Platform.exit();
+                System.exit(0);
+            }
+        });
 
     } // end of start
 
@@ -763,6 +786,7 @@ public class SimulatorNew extends Application {
                                 - MapConstants.CELL_CM / 2);
             }
         }
+
     }
 
 
@@ -1001,23 +1025,53 @@ public class SimulatorNew extends Application {
                     case EXPLORATION:
                         if (sim) {
                             expMapDraw = true;
+                            robot.setFindingFP(false);
                             // reset to empty map
                             exploredMap.resetMap();
                             robot.setStartPos(startPos.y, startPos.x, exploredMap);
                             robot.sense(exploredMap, map);
-                            expMapDraw = true;
-                            // start thread
-                            expTask = new Thread(new ExplorationTask());
-                            startedTask = expTask;
-                            taskStarted = true;
-                            taskPaused = false;
-                            expTask.start();
-                            displayTimer.start();
-                            break;
                         }
-//                        else {    // to be added for real case
-//
-//                        }
+                        else {
+                            expMapDraw = true;
+                            robot.setSim(false);
+                            robot.setFindingFP(false);
+                            // reset to unexplored map
+                            exploredMap.resetMap();
+                            map = null;
+                            robot.setStartPos(1, 1, exploredMap);
+                            netMgr.initConn();
+                            // receive start exploration command from android
+                            String msg = null;
+                            do {
+                                do {
+                                    msg = netMgr.receive();
+                                } while (msg == null);
+                            } while(!msg.equals(NetworkConstants.START_EXP));
+                            System.out.println("Receiving command to start exploration: " + msg);
+
+                            // get way point
+                            do {
+                                do {
+                                    msg = netMgr.receive();
+                                } while (msg == null);
+                            } while(!msg.contains(NetworkConstants.WAY_POINT_KEY));
+                            Point wayPoint = robot.parseWayPointJson(msg);
+                            setWayPoint(wayPoint.y, wayPoint.x);
+
+                            // initial sensing
+                            netMgr.send(NetworkConstants.ARDUINO + robot.getCommand(Command.SEND_SENSORS, RobotConstants.MOVE_STEPS));
+                            robot.sense(exploredMap, map);
+
+
+                        }
+                        // start thread
+                        expTask = new Thread(new ExplorationTask());
+                        startedTask = expTask;
+                        taskStarted = true;
+                        taskPaused = false;
+                        expTask.start();
+                        displayTimer.start();
+                        break;
 
                     case FASTEST_PATH:
                         if (sim) {
@@ -1030,13 +1084,54 @@ public class SimulatorNew extends Application {
                             taskPaused = false;
                             fastTask.start();
                             displayTimer.start();
-                            break;
                         }
 //                        else {    // to be added for real case
 //
 //                        }
+                        break;
 
-                    // TODO: add check list case
+                    case CHECK_LIST:
+                        if(sim) {
+                            expMapDraw = true;
+                            robot.setFindingFP(false);
+                            exploredMap.resetMap();
+                            robot.setStartPos(startPos.y, startPos.x, exploredMap);
+                            robot.sense(exploredMap, map);
+                        }
+                        else {
+                            expMapDraw = true;
+                            robot.setSim(false);
+                            robot.setFindingFP(false);
+                            // reset to unexplored map
+                            exploredMap.resetMap();
+                            map = null;
+                            netMgr.initConn();
+                            // receive checklist command from android
+                            String msg = null;
+                            do {
+                                do {
+                                    msg = netMgr.receive();
+                                } while (msg == null);
+                            } while(!msg.equals(NetworkConstants.START_CHECKLIST));
+                            System.out.println("Receiving command to start checklist: " + msg);
+                            // get starting position
+                            do {
+                                do {
+                                    msg = netMgr.receive();
+                                } while (msg == null);
+                            } while(!msg.contains(NetworkConstants.START_POINT_KEY));
+                            Point startPos = robot.parseStartPointJson(msg);
+                            robot.setStartPos(startPos.y, startPos.x, exploredMap);
+                            // initial sensing
+                            netMgr.send(NetworkConstants.ARDUINO + robot.getCommand(Command.SEND_SENSORS, RobotConstants.MOVE_STEPS));
+                            robot.sense(exploredMap, map);
+                        }
+                        // start thread
+                        checklistTask = new Thread(new ChecklistTask());
+                        startedTask = checklistTask;
+                        taskStarted = true;
+                        taskPaused = false;
+                        checklistTask.start();
 
                 }
             } // end of if started a new task
@@ -1107,25 +1202,11 @@ public class SimulatorNew extends Application {
 //                    }
 //                } while (c != Command.START_EXP);
 //            } // end of if
-            robot.sense(exploredMap, map);
             System.out.println("coverage: " + coverageLimitSB.getValue());
             System.out.println("time: " + timeLimitSB.getValue());
             double coverageLimit = (int) (coverageLimitSB.getValue());
             int timeLimit = (int) (timeLimitSB.getValue() * 1000);
             int steps = (int) (stepsSB.getValue());
-            // Limits not set
-            if (coverageLimit == 0) {
-                coverageLimit = 100;
-                coverageLimitTxt.setText("" + (int) coverageLimit + " s");
-            }
-            if (timeLimit == 0) {
-                timeLimit = 240000;
-                timeLimitTxt.setText("" + (int) timeLimit / 1000 + " %");
-            }
-            if (steps == 0) {
-                steps = 5;
-                stepsTxt.setText("" + (int) steps + " steps");
-            }
 
             Exploration explore = new Exploration(exploredMap, map, robot, coverageLimit, timeLimit, steps, sim);
             explore.exploration(new Point(MapConstants.STARTZONE_COL, MapConstants.STARTZONE_COL));
@@ -1216,7 +1297,7 @@ public class SimulatorNew extends Application {
                             robot.move(c, moves, exploredMap, steps);
                         }
                         else {
-                            robot.move(c, moves, exploredMap);
+                            robot.move(c, moves, exploredMap, RobotConstants.STEP_PER_SECOND);
                         }
                         //netMgr.receive();
                         //robot.sense(exploredMap, Map);
@@ -1229,7 +1310,7 @@ public class SimulatorNew extends Application {
                             robot.move(Command.FORWARD, moves, exploredMap, steps);
                         }
                         else {
-                            robot.move(Command.FORWARD, moves, exploredMap);
+                            robot.move(Command.FORWARD, moves, exploredMap, RobotConstants.STEP_PER_SECOND);
                             netMgr.receive();
                         }
 
@@ -1249,7 +1330,7 @@ public class SimulatorNew extends Application {
                             robot.turn(c, steps);
                         }
                         else {
-                            robot.turn(c);
+                            robot.turn(c, RobotConstants.STEP_PER_SECOND);
                         }
                     }
                     else {
@@ -1258,7 +1339,7 @@ public class SimulatorNew extends Application {
 
                         }
                         else {
-                            robot.move(c, RobotConstants.MOVE_STEPS, exploredMap);
+                            robot.move(c, RobotConstants.MOVE_STEPS, exploredMap, RobotConstants.STEP_PER_SECOND);
                         }
                     }
                     if (!sim) {
@@ -1288,6 +1369,83 @@ public class SimulatorNew extends Application {
             int minutes = (int)((endT - startT)/1000/60);
             displayTimer.stop();
             System.out.println("Total Time: "+minutes+"mins "+seconds+"seconds");
+            return 1;
+        }
+    }
+
+    class ChecklistTask extends Task<Integer> {
+        @Override
+        protected Integer call() throws Exception {
+            String msg = null;
+            Command c;
+//            // Wait for Start Command
+//            if (!sim) {
+//                do {
+//                    robot.setFindingFP(false);
+//                    msg = netMgr.receive();
+//                    String[] msgArr = msg.split("\\|");
+//                    System.out.println("Calibrating: " + msgArr[2]);
+//                    c = Command.ERROR;
+//                    if (msgArr[2].compareToIgnoreCase("C") == 0) {
+//                        System.out.println("Calibrating");
+//                        for (int i = 0; i < 4; i++) {
+//                            robot.move(Command.TURN_RIGHT, RobotConstants.MOVE_STEPS, exploredMap);
+//                            senseAndAlign();
+//                        }
+//                        netMgr.send("Alg|Ard|" + Command.ALIGN_RIGHT.ordinal() + "|0");
+//                        msg = netMgr.receive();
+//                        System.out.println("Done Calibrating");
+//                    } else {
+//                        c = Command.values()[Integer.parseInt(msgArr[2])];
+//                    }
+//
+//                    if (c == Command.ROBOT_POS) {
+//                        String[] data = msgArr[3].split("\\,");
+//                        int col = Integer.parseInt(data[0]);
+//                        int row = Integer.parseInt(data[1]);
+//                        Direction dir = Direction.values()[Integer.parseInt(data[2])];
+//                        int wayCol = Integer.parseInt(data[3]);
+//                        int wayRow = Integer.parseInt(data[4]);
+//                        robot.setStartPos(row, col exploredMap);
+//                        while(robot.getDir()!=dir) {
+//                            robot.rotateSensors(true);
+//                            robot.setDirection(Direction.getNext(robot.getDir()));
+//                        }
+//
+//                        wayPoint = new Point(wayCol, wayRow);
+//                    } else if (c == Command.START_EXP) {
+//                        netMgr.send("Alg|Ard|S|0");
+//                    }
+//                } while (c != Command.START_EXP);
+//            } // end of if
+
+
+            double coverageLimit = (int) (coverageLimitSB.getValue());
+            int timeLimit = (int) (timeLimitSB.getValue() * 1000);
+            int steps = (int) (stepsSB.getValue());
+
+            Exploration explore = new Exploration(exploredMap, map, robot, coverageLimit, timeLimit, steps, sim);
+            explore.checklist_straightLine();
+//            explore.exploration2(new Point(MapConstants.STARTZONE_COL, MapConstants.STARTZONE_COL));
+
+//            if (!sim) {
+//                netMgr.send("Alg|And|DONE|"+exploredMap.detectedImgToString());
+//                netMgr.send("Alg|And|" + Command.ENDEXP + "|");
+//                Command com = null;
+//                do {
+//                    String[] msgArr = NetMgr.getInstance().receive().split("\\|");
+//                    com = Command.values()[Integer.parseInt(msgArr[2])];
+//                    System.out.println("Fastest path msg :" + msgArr[2]);
+//                    if (com == Command.START_FAST) {
+//                        sim = false;
+//                        System.out.println("RF Here");
+//                        fastTask = new Thread(new FastTask());
+//                        fastTask.start();
+//                        break;
+//                    }
+//                } while (com != Command.START_FAST);
+//            }
+
             return 1;
         }
     }
@@ -1385,4 +1543,5 @@ public class SimulatorNew extends Application {
         }
 
     }
+
 }

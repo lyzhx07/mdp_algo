@@ -17,7 +17,6 @@ import Helper.*;
 public class Exploration {
 
     private static final Logger LOGGER = Logger.getLogger(Exploration.class.getName());
-    private static DisplayTimer helperTimer = new DisplayTimer();
 
     private Map exploredMap;
     private Map realMap;
@@ -67,6 +66,60 @@ public class Exploration {
         this.timeLimit = timeLimit;
     }
 
+
+    public void checklist_straightLine() throws InterruptedException {
+        int startPosX = robot.getPos().x;
+        Direction preDir = robot.getDir();
+
+        while(movable(robot.getDir())) {
+            robot.move(Command.FORWARD, 1, exploredMap, stepPerSecond);
+            robot.sense(exploredMap, realMap);
+        }
+
+        // if encounter an obstacle
+        robot.turn(Command.TURN_LEFT, stepPerSecond);
+        robot.sense(exploredMap, realMap);
+
+
+        // move forward until able to turn left
+        while(!movable(Direction.getClockwise(robot.getDir()))) {
+            robot.move(Command.FORWARD, 1, exploredMap, stepPerSecond);
+            robot.sense(exploredMap, realMap);
+
+        }
+
+        robot.turn(Command.TURN_RIGHT, stepPerSecond);
+        robot.sense(exploredMap, realMap);
+
+
+        // move forward until able to turn right again
+        do {
+            robot.move(Command.FORWARD, 1, exploredMap, stepPerSecond);
+            robot.sense(exploredMap, realMap);
+        }
+        while(!movable(Direction.getClockwise(robot.getDir())));
+
+        // return to original line
+        robot.turn(Command.TURN_RIGHT, stepPerSecond);
+        robot.sense(exploredMap, realMap);
+
+        while(robot.getPos().x != startPosX) {
+            robot.move(Command.FORWARD, 1, exploredMap, stepPerSecond);
+            robot.sense(exploredMap, realMap);
+        }
+
+
+        robot.turn(Command.TURN_LEFT, stepPerSecond);
+        robot.sense(exploredMap, realMap);
+
+        while(movable(robot.getDir())) {
+            robot.move(Command.FORWARD, 1, exploredMap, stepPerSecond);
+            robot.sense(exploredMap, realMap);
+        }
+
+    }
+
+
     //TODO clean this
     public void exploration(Point start) throws InterruptedException {
         areaExplored = exploredMap.getExploredPercentage();
@@ -76,6 +129,7 @@ public class Exploration {
         int moves = 1;
         int checkingStep = RobotConstants.CHECKSTEPS;
         this.start = start;
+
 
         // Loop to explore the map
         outer:
@@ -322,10 +376,12 @@ public class Exploration {
 
                 //Get direction of the nearest virtual wall
                 Direction dir = nearestVirtualWall(robot.getPos());
+                System.out.println(dir);
 
                 //If not at a virtual wall
                 if (movable(dir))
                 {
+                    System.out.println("ininin");
                     //Orient the robot to face the wall
                     while(dir != robot.getDir()) {
                         //Check the difference in the direction enum

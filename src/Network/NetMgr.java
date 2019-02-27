@@ -16,15 +16,12 @@ public class NetMgr {
 
     private String ip;
     private int port;
-    private static Socket socket = null;
+    public static Socket socket = null;
     private String prevMsg = null;
 
     private BufferedWriter out;
     private BufferedReader in;
     private int msgCounter = 0;
-
-    private Timer wait = new Timer();
-
 
     private static NetMgr netMgr = null;
 
@@ -33,9 +30,9 @@ public class NetMgr {
         this.port = port;
     }
 
-    public static NetMgr getInstance(String ip, int port) {
+    public static NetMgr getInstance() {
         if (netMgr == null) {
-            netMgr = new NetMgr(ip, port);
+            netMgr = new NetMgr(NetworkConstants.IP, NetworkConstants.PORT);
         }
         return netMgr;
     }
@@ -179,8 +176,8 @@ public class NetMgr {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        String ip = "192.168.9.9";
-//        String ip = "127.0.0.1";
+//        String ip = "192.168.9.9";
+        String ip = "127.0.0.1";
         int port = 1273;
         String data;
         NetMgr netMgr = new NetMgr(ip, port);
@@ -188,16 +185,19 @@ public class NetMgr {
 
         while(true){
             //String msg = Command.FORWARD.toString();
-            do {
-                data = netMgr.receive();
-            } while(data == null);
+//            do {
+//                data = netMgr.receive();
+//            } while(data == null);
+            netMgr.send("aaaaa\n");
+            netMgr.send("aaaa");
+            netMgr.receive();
+            netMgr.receive();
 
-            System.out.println("\nReceived: " + data);
-            String msg = "AW3|D|W3|D|W3|D|W3|D|";
-            if (data.equals("checklist")) {
-                netMgr.send(msg);
-            }
-            //TimeUnit.MILLISECONDS.sleep(1000);
+//            System.out.println("\nReceived: " + data);
+//            String msg = "AW3|D|W3|D|W3|D|W3|D|";
+//            if (data.equals("checklist")) {
+//                netMgr.send(msg);
+//            }
 
 //            netMgr.closeConn();
         }

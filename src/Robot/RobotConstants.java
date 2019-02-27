@@ -15,6 +15,7 @@ public class RobotConstants {
     public static final int MOVE_STEPS = 1;
     public static final long WAIT_TIME = 1000;    //Time waiting before retransmitting in milliseconds
     public static final short CAMERA_RANGE = 4;
+    public static final int STEP_PER_SECOND = 30; // default large step per second to avoid any delay
 
     // Sensors default range (In grids)
     public static final int SHORT_MIN = 1;
