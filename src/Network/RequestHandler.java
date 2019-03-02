@@ -32,10 +32,10 @@ public class RequestHandler extends Thread {
     private Robot robot;
 
     // hard coded for testing checklist
-//    private Point startPoint = new Point(7, 2);
+    private Point startPoint = new Point(7, 2);
 
     // hard coded for testing exploration
-    private Point startPoint = new Point(1, 1);
+//    private Point startPoint = new Point(1, 1);
 
     private Point wayPoint = new Point(13, 18);
 
@@ -62,24 +62,18 @@ public class RequestHandler extends Thread {
     public void sendStartMsg() {
 
         JSONObject startPoint = new JSONObject()
-               .put(NetworkConstants.START_POINT_KEY, new JSONArray()
-                       .put(new JSONObject()
-                               .put("x", robot.getPos().x)
-                               .put("y", robot.getPos().y)
-                       )
-               );
+                .put("starting", "starting")
+                .put("x", robot.getPos().x)
+                .put("y", robot.getPos().y);
         send(startPoint.toString());
     }
 
     public void sendWayPoint() {
 
         JSONObject wayPoint = new JSONObject()
-                .put(NetworkConstants.WAY_POINT_KEY, new JSONArray()
-                        .put(new JSONObject()
-                                .put("x", this.wayPoint.x)
-                                .put("y", this.wayPoint.y)
-                        )
-                );
+                .put("waypoint", "waypoint")
+                .put("x", this.wayPoint.x)
+                .put("y", this.wayPoint.y);
         send(wayPoint.toString());
     }
 
@@ -92,12 +86,14 @@ public class RequestHandler extends Thread {
 //            TimeUnit.MILLISECONDS.sleep(1000);
 
             // For checklist
-//            send(NetworkConstants.START_CHECKLIST);
-//            sendStartMsg();
+            sendStartMsg();
+            send(NetworkConstants.START_CHECKLIST);
+
 
             // For exploration
-            send(NetworkConstants.START_EXP);
-            sendWayPoint();
+//            sendWayPoint();
+//            send(NetworkConstants.START_EXP);
+
 
             while (true) {
                 // wait for incoming data

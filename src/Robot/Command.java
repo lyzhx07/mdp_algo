@@ -9,6 +9,6 @@ public enum Command {
     }
 
     public enum ArduinoMove {
-        W, X, A, D, U
+        W, S, A, D, U
     }
 }

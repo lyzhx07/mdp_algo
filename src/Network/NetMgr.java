@@ -1,5 +1,11 @@
 package Network;
 
+import Map.Map;
+import Map.MapDescriptor;
+import Map.Direction;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -149,12 +155,14 @@ public class NetMgr {
         try {
             LOGGER.log(Level.FINE, "Receving Message...");
             String receivedMsg = in.readLine();
-            if(receivedMsg != null && receivedMsg.length() > 0) {
-                LOGGER.info("Received in receive(): " + receivedMsg);
-                return receivedMsg;
+            while(receivedMsg == null || receivedMsg.isEmpty()) {
+                receivedMsg = in.readLine();
             }
+            LOGGER.info("Received in receive(): " + receivedMsg);
+            return receivedMsg;
         } catch(IOException e) {
             LOGGER.info("Receiving Message Failed (IOException)!");
+            return receive();
         } catch(Exception e) {
             LOGGER.info("Receiving Message Failed!");
             e.printStackTrace();
@@ -176,22 +184,21 @@ public class NetMgr {
     }
 
     public static void main(String[] args) throws InterruptedException {
-//        String ip = "192.168.9.9";
-        String ip = "127.0.0.1";
+        String ip = "192.168.9.9";
+//        String ip = "127.0.0.1";
         int port = 1273;
+        Map exploredMap = new Map();
+        MapDescriptor MDF = new MapDescriptor();
+        MDF.loadRealMap(exploredMap, "defaultMap.txt");
         String data;
         NetMgr netMgr = new NetMgr(ip, port);
         netMgr.initConn();
 
-        while(true){
+//        while(true){
             //String msg = Command.FORWARD.toString();
 //            do {
 //                data = netMgr.receive();
 //            } while(data == null);
-            netMgr.send("aaaaa\n");
-            netMgr.send("aaaa");
-            netMgr.receive();
-            netMgr.receive();
 
 //            System.out.println("\nReceived: " + data);
 //            String msg = "AW3|D|W3|D|W3|D|W3|D|";
@@ -200,8 +207,29 @@ public class NetMgr {
 //            }
 
 //            netMgr.closeConn();
-        }
+//        }
 
+        JSONObject androidJson = new JSONObject();
+
+        // robot
+        JSONArray robotArray = new JSONArray();
+        JSONObject robotJson = new JSONObject()
+                .put("x", 1+ 1)
+                .put("y", 1 + 1)
+                .put("direction", Direction.LEFT.toString().toLowerCase());
+        robotArray.put(robotJson);
+
+        // map
+        String obstacleString = MDF.generateMDFString2(exploredMap);
+        JSONArray mapArray = new JSONArray();
+        JSONObject mapJson = new JSONObject()
+                .put("explored", MDF.generateMDFString1(exploredMap))
+                .put("obstacle", obstacleString)
+                .put("length", obstacleString.length() * 4);
+        mapArray.put(mapJson);
+
+        androidJson.put("map", mapArray).put("robot", robotArray);
+        netMgr.send(androidJson.toString());
     }
 
 }

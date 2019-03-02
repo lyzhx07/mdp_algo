@@ -1042,21 +1042,19 @@ public class SimulatorNew extends Application {
                             netMgr.initConn();
                             // receive start exploration command from android
                             String msg = null;
+                            // get way point
                             do {
-                                do {
-                                    msg = netMgr.receive();
-                                } while (msg == null);
+                                msg = netMgr.receive();
+                            } while(!msg.contains(NetworkConstants.WAY_POINT_KEY));
+
+                            Point wayPoint = robot.parseWayPointJson(msg);
+                            setWayPoint(wayPoint.y, wayPoint.x);
+
+                            do {
+                                msg = netMgr.receive();
                             } while(!msg.equals(NetworkConstants.START_EXP));
                             System.out.println("Receiving command to start exploration: " + msg);
 
-                            // get way point
-                            do {
-                                do {
-                                    msg = netMgr.receive();
-                                } while (msg == null);
-                            } while(!msg.contains(NetworkConstants.WAY_POINT_KEY));
-                            Point wayPoint = robot.parseWayPointJson(msg);
-                            setWayPoint(wayPoint.y, wayPoint.x);
 
                             // initial sensing
                             netMgr.send(NetworkConstants.ARDUINO + robot.getCommand(Command.SEND_SENSORS, RobotConstants.MOVE_STEPS));
@@ -1108,20 +1106,18 @@ public class SimulatorNew extends Application {
                             netMgr.initConn();
                             // receive checklist command from android
                             String msg = null;
-                            do {
-                                do {
-                                    msg = netMgr.receive();
-                                } while (msg == null);
-                            } while(!msg.equals(NetworkConstants.START_CHECKLIST));
-                            System.out.println("Receiving command to start checklist: " + msg);
                             // get starting position
                             do {
-                                do {
-                                    msg = netMgr.receive();
-                                } while (msg == null);
+                                msg = netMgr.receive();
                             } while(!msg.contains(NetworkConstants.START_POINT_KEY));
                             Point startPos = robot.parseStartPointJson(msg);
+                            System.out.println(startPos);
                             robot.setStartPos(startPos.y, startPos.x, exploredMap);
+                            do {
+                                msg = netMgr.receive();
+                            } while(!msg.equals(NetworkConstants.START_CHECKLIST));
+                            System.out.println("Receiving command to start checklist: " + msg);
+
                             // initial sensing
                             netMgr.send(NetworkConstants.ARDUINO + robot.getCommand(Command.SEND_SENSORS, RobotConstants.MOVE_STEPS));
                             robot.sense(exploredMap, map);

@@ -2,8 +2,8 @@ package Network;
 
 public class NetworkConstants {
 
-    public static final String IP = "127.0.0.1";
-//    public final String ip = "192.168.9.9";
+//    public static final String IP = "127.0.0.1";
+    public static final String IP = "192.168.9.9";
     public static final int PORT = 1273;
 
     // msg related
@@ -14,8 +14,8 @@ public class NetworkConstants {
     public static final String ANDROID = "B";
     public static final String ARDUINO = "A";
 
-    public static final String START_POINT_KEY = "startPoint";
-    public static final String WAY_POINT_KEY = "wayPoint";
+    public static final String START_POINT_KEY = "starting";
+    public static final String WAY_POINT_KEY = "waypoint";
 
 
 }

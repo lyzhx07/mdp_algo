@@ -76,6 +76,26 @@ public class MapDescriptor {
     }
 
     /**
+     * Right pad "0" to the binary string so that its length is in multiple of 4
+     * @param biStr
+     * @return
+     */
+    private String rightPadTo4(String biStr) {
+        int check = biStr.length() % 4;
+        if (check != 0) {
+            int to_pad = 4 - check;
+            LOGGER.log(Level.FINER, "Length of binary string not divisible by 4.");
+            LOGGER.log(Level.FINER, "Length of string: {0}, Right Padding: {1}", new Object[]{biStr.length(), to_pad});
+            StringBuilder padding = new StringBuilder();
+            for (int i = 0; i < to_pad; i++) {
+                padding.append('0');
+            }
+            biStr += padding.toString();
+        }
+        return biStr;
+    }
+
+    /**
      * Left pad "0" to the binary string until its length is multiple of 4 (one hex = 4 bits)
      * @param biStr
      * @return
@@ -96,17 +116,17 @@ public class MapDescriptor {
     }
 
     /**
-     * Convert 8-bit binary to 2-bit hex
+     * Convert 4-bit binary to 1-bit hex
      * @param biStr 8-bit binary string
      * @return 2-bit hex string
      */
     private String biToHex(String biStr) {
         int dec = Integer.parseInt(biStr, 2);
         String hexStr = Integer.toHexString(dec);
-        // pad left 0 if length is 1
-        if (hexStr.length() < 2) {
-            hexStr = "0" + hexStr;
-        }
+//        // pad left 0 if length is 1
+//        if (hexStr.length() < 2) {
+//            hexStr = "0" + hexStr;
+//        }
         return hexStr;
     }
 
@@ -135,7 +155,7 @@ public class MapDescriptor {
             for (int c = 0; c < MapConstants.MAP_WIDTH; c++) {
                 temp.append(map.getCell(r, c).isExplored() ? '1':'0');
                 // convert to hex every 8 bits to avoid overflow
-                if(temp.length() == 8) {
+                if(temp.length() == 4) {
                     MDFcreator1.append(biToHex(temp.toString()));
                     temp.setLength(0);
                 }
@@ -155,7 +175,7 @@ public class MapDescriptor {
             for (int c = 0; c < MapConstants.MAP_WIDTH; c++) {
                 if (map.getCell(r, c).isExplored()) {
                     temp.append(map.getCell(r, c).isObstacle() ? '1' : '0');
-                    if (temp.length() == 8) {
+                    if (temp.length() == 4) {
                         MDFcreator2.append(biToHex(temp.toString()));
                         temp.setLength(0);
                     }
@@ -164,9 +184,9 @@ public class MapDescriptor {
         }
 
         // last byte
-        if(temp.length() % 8 != 0) {
-            // right pad to 8
-            String tempBiStr = rightPadTo8(temp.toString());
+        if(temp.length() % 4 != 0) {
+            // right pad to 4 // previously 8
+            String tempBiStr = rightPadTo4(temp.toString());
             MDFcreator2.append(biToHex(tempBiStr));
         }
 

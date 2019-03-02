@@ -432,14 +432,12 @@ public class Robot {
     }
 
     public Point parseStartPointJson(String jsonMsg) {
-
+        System.out.println(jsonMsg);
         // double check to make sure that it is a start msg
         if (jsonMsg.contains(NetworkConstants.START_POINT_KEY)) {
             // parse json
             JSONObject startPointJson = new JSONObject(new JSONTokener(jsonMsg));
-            JSONArray startPointArray = (JSONArray) startPointJson.get(NetworkConstants.START_POINT_KEY);
-            startPointJson = (JSONObject) startPointArray.get(0);
-            Point startPoint = new Point((int) startPointJson.get("x"), (int) startPointJson.get("y"));
+            Point startPoint = new Point((int) startPointJson.get("x") - 1, (int) startPointJson.get("y") - 1);
             return startPoint;
         }
         else {
@@ -454,9 +452,7 @@ public class Robot {
         if (jsonMsg.contains(NetworkConstants.WAY_POINT_KEY)) {
             // parse json
             JSONObject wayPointJson = new JSONObject(new JSONTokener(jsonMsg));
-            JSONArray wayPointArray = (JSONArray) wayPointJson.get(NetworkConstants.WAY_POINT_KEY);
-            wayPointJson = (JSONObject) wayPointArray.get(0);
-            Point wayPoint = new Point((int) wayPointJson.get("x"), (int) wayPointJson.get("y"));
+            Point wayPoint = new Point((int) wayPointJson.get("x") - 1, (int) wayPointJson.get("y") - 1);
             return wayPoint;
         }
         else {
@@ -602,8 +598,8 @@ public class Robot {
                     .put("obstacle", obstacleString)
                     .put("length", obstacleString.length() * 4);
             mapArray.put(mapJson);
-
-            androidJson.put("map", mapArray).put("robot", robotArray);
+            androidJson.put("robot", robotArray);
+            androidJson.put("map", mapArray);
             NetMgr.getInstance().send(NetworkConstants.ANDROID + androidJson.toString());
         }
 
