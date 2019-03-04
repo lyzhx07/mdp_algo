@@ -1083,7 +1083,7 @@ public class SimulatorNew extends Application {
                             fastTask.start();
                             displayTimer.start();
                         }
-//                        else {    // to be added for real case
+//                        else {    // TODO to be added for real case
 //
 //                        }
                         break;

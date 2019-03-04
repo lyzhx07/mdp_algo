@@ -146,11 +146,11 @@ public class Map {
      * Create new virtual wall around new found obstacles
      * @param obstacle cell object of new found obstacles
      */
-    public void setVirtualWall(Cell obstacle) {
+    public void setVirtualWall(Cell obstacle, boolean isVirtualWall) {
         for (int r = obstacle.getPos().y - 1; r <= obstacle.getPos().y + 1; r++) {
             for (int c = obstacle.getPos().x - 1; c <= obstacle.getPos().x + 1; c++) {
                 if(checkValidCell(r, c)) {
-                    grid[r][c].setVirtualWall(true);
+                    grid[r][c].setVirtualWall(isVirtualWall);
                 }
             }
         }
@@ -312,6 +312,26 @@ public class Map {
         }
         else {
             return Direction.RIGHT;
+        }
+    }
+
+    /**
+     * reinit virtual wall when removing phanton blocks
+     */
+    public void reinitVirtualWall() {
+        for (int row = 0; row < MapConstants.MAP_HEIGHT; row++) {
+            for (int col = 0; col < MapConstants.MAP_WIDTH; col++) {
+                // Init Virtual wall
+                if (row == 0 || col == 0 || row == MapConstants.MAP_HEIGHT - 1 || col == MapConstants.MAP_WIDTH - 1) {
+                    grid[row][col].setVirtualWall(true);
+                }
+                if (grid[row][col].isObstacle()) {
+                    for (int r = row - 1; r <= row + 1; r++)
+                        for (int c = col - 1; c <= col + 1; c++)
+                            if (checkValidCell(r, c))
+                                grid[row][col].setVirtualWall(true);
+                }
+            }
         }
     }
 }

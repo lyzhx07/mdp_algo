@@ -222,7 +222,7 @@ public class MapDescriptor {
                     if (obsStr.charAt(index) == '1') {
                         cell.setObstacle(true);
                         // create virtual wall
-                        map.setVirtualWall(cell);
+                        map.setVirtualWall(cell, true);
                     }
                     index++;
                 }

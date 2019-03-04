@@ -308,8 +308,6 @@ public class Exploration {
         return exploredMap.checkValidMove(robot.getPos().y + rowInc, robot.getPos().x + colInc);
     }
 
-    // TODO add nearestVirtualWall (if the robot get lost, go to the nearest wall
-
     // TODO clean this
     public boolean goToPoint(Point loc) throws InterruptedException {
         robot.setStatus("Go to point: " + loc.toString());
