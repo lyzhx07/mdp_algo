@@ -534,6 +534,12 @@ public class Robot {
         }
         else {
             String msg = NetMgr.getInstance().receive();
+//            while (msg.charAt(0) == 'L') {
+//                LOGGER.warning("Unknow character received. Get sensor again.");
+//                NetMgr.getInstance().send(NetworkConstants.ARDUINO + getCommand(Command.SEND_SENSORS, RobotConstants.MOVE_STEPS));
+//                msg = NetMgr.getInstance().receive();
+//
+//            }
             sensorRes = getSensorRes(msg);
             if(sensorRes == null) {
                 LOGGER.warning("Invalid msg. Map not updated");
@@ -623,11 +629,17 @@ public class Robot {
             androidJson.put("robot", robotArray);
             androidJson.put("map", mapArray);
             NetMgr.getInstance().send(NetworkConstants.ANDROID + androidJson.toString());
-            
+
+            try {
+                TimeUnit.MILLISECONDS.sleep(10);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             // Realignment
             if (alignCount > RobotConstants.CALIBRATE_AFTER && !findingFP) {
-                // TODO
-//                align_front(exploredMap, realMap);
+                // TODO: Alignment
+                align_front(exploredMap, realMap);
                 align_right(exploredMap, realMap);
             }
         }

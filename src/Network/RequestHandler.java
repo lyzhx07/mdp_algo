@@ -3,6 +3,7 @@ package Network;
 import Map.Map;
 import Map.MapDescriptor;
 import Map.Direction;
+import Map.MapConstants;
 import Robot.*;
 
 import java.awt.*;
@@ -32,12 +33,12 @@ public class RequestHandler extends Thread {
     private Robot robot;
 
     // hard coded for testing checklist
-    private Point startPoint = new Point(7, 2);
+//    private Point startPoint = new Point(7, 2);
 
     // hard coded for testing exploration
-//    private Point startPoint = new Point(1, 1);
+    private Point startPoint = new Point(MapConstants.STARTZONE_COL, MapConstants.STARTZONE_ROW);
 
-    private Point wayPoint = new Point(13, 18);
+    private Point wayPoint = new Point(MapConstants.GOALZONE_COL, MapConstants.GOALZONE_ROW);
 
     public RequestHandler(Socket socket) throws IOException {
         this.socket = socket;
@@ -56,15 +57,15 @@ public class RequestHandler extends Thread {
         robot.sense(exploredMap, realMap);
         System.out.println(exploredMap.getExploredPercentage());
         System.out.println(realMap.getExploredPercentage());
-        System.out.println(realMap.getCell(8, 7));
+//        System.out.println(realMap.getCell(8, 7));
     }
 
     public void sendStartMsg() {
 
         JSONObject startPoint = new JSONObject()
                 .put("starting", "starting")
-                .put("x", robot.getPos().x)
-                .put("y", robot.getPos().y);
+                .put("x", robot.getPos().x + 1)
+                .put("y", robot.getPos().y + 1);
         send(startPoint.toString());
     }
 
@@ -72,8 +73,8 @@ public class RequestHandler extends Thread {
 
         JSONObject wayPoint = new JSONObject()
                 .put("waypoint", "waypoint")
-                .put("x", this.wayPoint.x)
-                .put("y", this.wayPoint.y);
+                .put("x", this.wayPoint.x + 1)
+                .put("y", this.wayPoint.y + 1);
         send(wayPoint.toString());
     }
 
@@ -125,6 +126,10 @@ public class RequestHandler extends Thread {
         if (firstChar == '{') {
             System.out.println("Unhandled: " + msg);
         }
+        else if (msg.contains("fastest")) {
+            System.out.println("Starting fastest path");
+            send(NetworkConstants.START_FP);
+        }
         else {
             String[] commands = msg.split("\\|");
             for (String cmd: commands) {
@@ -140,7 +145,7 @@ public class RequestHandler extends Thread {
             step = Integer.parseInt(cmd.substring(1));
         }
         switch (firstChar) {
-            case 'U':
+            case 'K':
                 sendSensorRes();
                 break;
             case 'W':

@@ -103,7 +103,7 @@ public class SimulatorNew extends Application {
     private TextField startPosTxt, wayPointTxt, timeLimitTxt, coverageLimitTxt, stepsTxt, mapTxt;
     private Label genSetLbl, simSetLbl, arenaSetLbl, startPosLbl, startDirLbl, wayPointLbl, timeLimitLbl, coverageLimitLbl, stepsLbl;
     private Label modeChoiceLbl, taskChoiceLbl, mapChoiceLbl, statusLbl, timerLbl;
-    private Label timerTextLbl = displayTimer.getTimerLbl();
+    private Label timerTextLbl;
     private FileChooser fileChooser;
 //    private VBox timerVBox;
 
@@ -164,6 +164,7 @@ public class SimulatorNew extends Application {
                 drawMap(expMapDraw);
                 drawRobot();
                 debugOutput.setText(robot.getStatus() + "\n" + robot.toString());
+                timerTextLbl.setText(displayTimer.getTimerLbl());
                 if (startedTask != null) {
                     if (!startedTask.isAlive()) {
                         startBtn.setVisible(false);
@@ -564,11 +565,13 @@ public class SimulatorNew extends Application {
         });
 
         // TIMER
+        timerTextLbl = new Label();
         timerTextLbl.setTextFill(Color.RED);
         timerTextLbl.setStyle("-fx-font-size: 4em;");
         timerTextLbl.setMaxWidth(MAX_WIDTH);
-        timerTextLbl.setTextAlignment(TextAlignment.CENTER);
+        timerTextLbl.setTextAlignment(TextAlignment.LEFT);
         timerTextLbl.setAlignment(Pos.CENTER);
+        timerTextLbl.setText(displayTimer.getTimerLbl());
 
         // Layer 1 (6 Grids)
         // controlGrid.add(ipLbl, 0, 0, 1, 1);
@@ -1032,12 +1035,17 @@ public class SimulatorNew extends Application {
                 switch (taskSelected) {
                     case EXPLORATION:
                         if (sim) {
+                            System.out.println('1');
                             expMapDraw = true;
+                            robot.setSim(true);
                             robot.setFindingFP(false);
+                            System.out.println('2');
                             // reset to empty map
                             exploredMap.resetMap();
                             robot.setStartPos(startPos.y, startPos.x, exploredMap);
+                            System.out.println('3');
                             robot.sense(exploredMap, map);
+                            System.out.println('4');
                         }
                         else {
                             expMapDraw = true;
@@ -1048,27 +1056,27 @@ public class SimulatorNew extends Application {
                             map = null;
                             robot.setStartPos(1, 1, exploredMap);
                             netMgr.initConn();
+                            String msg;
+                            wayPoint = null;
                             // receive start exploration command from android
-                            String msg = null;
-                            // get way point
-                            do {
-                                msg = netMgr.receive();
-                            } while(!msg.contains(NetworkConstants.WAY_POINT_KEY));
+                            // TODO check whether starting from startzone?
+                            // TODO check whether any calibration allowed
+                            if (!sim) {
+                                do {
+                                    msg = netMgr.receive();
+                                    // set wayPoint
+                                    if (msg.contains(NetworkConstants.WAY_POINT_KEY)) {
+                                        wayPoint = robot.parseWayPointJson(msg);
+                                        setWayPoint(wayPoint.y, wayPoint.x);
+                                    }
+                                } while (!msg.equals(NetworkConstants.START_EXP) || wayPoint == null);
 
-                            Point wayPoint = robot.parseWayPointJson(msg);
-                            setWayPoint(wayPoint.y, wayPoint.x);
-
-                            do {
-                                msg = netMgr.receive();
-                            } while(!msg.equals(NetworkConstants.START_EXP));
-                            System.out.println("Receiving command to start exploration: " + msg);
-
-
-                            // initial sensing
-                            netMgr.send(NetworkConstants.ARDUINO + robot.getCommand(Command.SEND_SENSORS, RobotConstants.MOVE_STEPS));
-                            robot.sense(exploredMap, map);
-
-
+                                LOGGER.info("Receiving command to start exploration: " + msg);
+                                displayTimer.start();
+                                // initial sensing
+                                netMgr.send(NetworkConstants.ARDUINO + robot.getCommand(Command.SEND_SENSORS, RobotConstants.MOVE_STEPS));
+                                robot.sense(exploredMap, map);
+                            } // end of if
                         }
                         // start thread
                         expTask = new Thread(new ExplorationTask());
@@ -1076,7 +1084,9 @@ public class SimulatorNew extends Application {
                         taskStarted = true;
                         taskPaused = false;
                         expTask.start();
-                        displayTimer.start();
+                        if(sim) {
+                            displayTimer.start();
+                        }
                         break;
 
                     case FASTEST_PATH:
@@ -1084,16 +1094,27 @@ public class SimulatorNew extends Application {
                             expMapDraw = true;
                             robot.setFindingFP(true);
                             exploredMap.removeAllPaths();
-                            fastTask = new Thread(new FastTask());
-                            startedTask = fastTask;
-                            taskStarted = true;
-                            taskPaused = false;
-                            fastTask.start();
+
+                        }
+                        else {
+                            expMapDraw = true;
+                            robot.setSim(false);
+                            robot.setFindingFP(true);
+                            exploredMap.removeAllPaths();
+                            netMgr.initConn();
+                            robot.setStatus("Ready to start fastest path. Waiting for command.\n");
+                            // TODO: check send to who and the formats
+//                            netMgr.send(NetworkConstants.ANDROID + robot.getStatus());
+                        }
+                        fastTask = new Thread(new FastTask());
+                        startedTask = fastTask;
+                        taskStarted = true;
+                        taskPaused = false;
+                        fastTask.start();
+                        if (sim) {
                             displayTimer.start();
                         }
-//                        else {    // TODO to be added for real case
-//
-//                        }
+
                         break;
 
                     case CHECK_LIST:
@@ -1164,76 +1185,39 @@ public class SimulatorNew extends Application {
     class ExplorationTask extends Task<Integer> {
         @Override
         protected Integer call() throws Exception {
-            String msg = null;
-            Command c;
-//            // Wait for Start Command
-//            if (!sim) {
-//                do {
-//                    robot.setFindingFP(false);
-//                    msg = netMgr.receive();
-//                    String[] msgArr = msg.split("\\|");
-//                    System.out.println("Calibrating: " + msgArr[2]);
-//                    c = Command.ERROR;
-//                    if (msgArr[2].compareToIgnoreCase("C") == 0) {
-//                        System.out.println("Calibrating");
-//                        for (int i = 0; i < 4; i++) {
-//                            robot.move(Command.TURN_RIGHT, RobotConstants.MOVE_STEPS, exploredMap);
-//                            senseAndAlign();
-//                        }
-//                        netMgr.send("Alg|Ard|" + Command.ALIGN_RIGHT.ordinal() + "|0");
-//                        msg = netMgr.receive();
-//                        System.out.println("Done Calibrating");
-//                    } else {
-//                        c = Command.values()[Integer.parseInt(msgArr[2])];
-//                    }
-//
-//                    if (c == Command.ROBOT_POS) {
-//                        String[] data = msgArr[3].split("\\,");
-//                        int col = Integer.parseInt(data[0]);
-//                        int row = Integer.parseInt(data[1]);
-//                        Direction dir = Direction.values()[Integer.parseInt(data[2])];
-//                        int wayCol = Integer.parseInt(data[3]);
-//                        int wayRow = Integer.parseInt(data[4]);
-//                        robot.setStartPos(row, col exploredMap);
-//                        while(robot.getDir()!=dir) {
-//                            robot.rotateSensors(true);
-//                            robot.setDirection(Direction.getNext(robot.getDir()));
-//                        }
-//
-//                        wayPoint = new Point(wayCol, wayRow);
-//                    } else if (c == Command.START_EXP) {
-//                        netMgr.send("Alg|Ard|S|0");
-//                    }
-//                } while (c != Command.START_EXP);
-//            } // end of if
-            System.out.println("coverage: " + coverageLimitSB.getValue());
-            System.out.println("time: " + timeLimitSB.getValue());
-            double coverageLimit = (int) (coverageLimitSB.getValue());
+//            Command c;
+
+            double coverageLimit = (double) (coverageLimitSB.getValue());
             int timeLimit = (int) (timeLimitSB.getValue() * 1000);
             int steps = (int) (stepsSB.getValue());
 
             Exploration explore = new Exploration(exploredMap, map, robot, coverageLimit, timeLimit, steps, sim);
             explore.exploration(new Point(MapConstants.STARTZONE_COL, MapConstants.STARTZONE_COL));
-//            explore.exploration2(new Point(MapConstants.STARTZONE_COL, MapConstants.STARTZONE_COL));
-
+            System.out.println(Thread.currentThread().getName());
+            robot.setStatus("Done exploration\n");
+            displayTimer.stop();
+            // TODO check msg format for android
 //            if (!sim) {
-//                netMgr.send("Alg|And|DONE|"+exploredMap.detectedImgToString());
+//                netMgr.send("Alg|And|DONE|" + exploredMap.detectedImgToString());
 //                netMgr.send("Alg|And|" + Command.ENDEXP + "|");
-//                Command com = null;
-//                do {
-//                    String[] msgArr = NetMgr.getInstance().receive().split("\\|");
-//                    com = Command.values()[Integer.parseInt(msgArr[2])];
-//                    System.out.println("Fastest path msg :" + msgArr[2]);
-//                    if (com == Command.START_FAST) {
-//                        sim = false;
-//                        System.out.println("RF Here");
-//                        fastTask = new Thread(new FastTask());
-//                        fastTask.start();
-//                        break;
-//                    }
-//                } while (com != Command.START_FAST);
 //            }
 
+          // Prepare for fastest path and wait for command from arduino
+            if(!sim) {
+                expMapDraw = true;
+                robot.setFindingFP(true);
+                exploredMap.removeAllPaths();
+                robot.setStatus("Ready to start fastest path. Waiting for command.\n");
+                // TODO: check send to who and the formats
+                netMgr.send(NetworkConstants.ANDROID + robot.getStatus());
+
+                fastTask = new Thread(new FastTask());
+                startedTask = fastTask;
+                taskStarted = true;
+                taskPaused = false;
+                fastTask.start();
+
+            }
             return 1;
         }
     }
@@ -1264,7 +1248,18 @@ public class SimulatorNew extends Application {
     class FastTask extends Task<Integer> {
         @Override
         protected Integer call() throws Exception {
-            robot.setFindingFP(true);
+            if(!sim) {
+                // waiting for the fastest path command
+                String msg;
+                do {
+                    msg = netMgr.receive();
+                } while (!msg.equals(NetworkConstants.START_FP));
+                LOGGER.info("Receiving command to start fastest path: " + msg);
+                System.out.println(Thread.currentThread().getName());
+                robot.setFindingFP(true);
+                displayTimer.initialize();
+                displayTimer.start();
+            }
             double startT = System.currentTimeMillis();
             double endT = 0;
             FastestPath fp = new FastestPath(exploredMap, robot, sim);
@@ -1277,6 +1272,8 @@ public class SimulatorNew extends Application {
 //						robot.getDir());
 
             fp.displayFastestPath(path, true);
+
+            // TODO: check to send one single command or one by one
             ArrayList<Command> commands = fp.getPathCommands(path);
 
             int steps = (int) (stepsSB.getValue());
@@ -1291,8 +1288,7 @@ public class SimulatorNew extends Application {
                 c = commands.get(i);
 //				System.out.println("c:"+commands.get(i)+" Condition:"+(commands.get(i)==Command.FORWARD|| commands.get(i) == Command.BACKWARD));
 //				System.out.println("index: "+i+" condition: "+(i==(commands.size()-1)));
-//                if (c == Command.FORWARD && moves<9) {
-                if (c == Command.FORWARD) {
+                if (c == Command.FORWARD && moves<9) {
                     // System.out.println("moves "+moves);
                     moves++;
                     // If last command
@@ -1302,11 +1298,12 @@ public class SimulatorNew extends Application {
                         }
                         else {
                             robot.move(c, moves, exploredMap, RobotConstants.STEP_PER_SECOND);
+                            netMgr.receive();
+                            //robot.sense(exploredMap, Map);
                         }
-                        //netMgr.receive();
-                        //robot.sense(exploredMap, Map);
                     }
-                } else {
+                }
+                else {
 
                     if (moves > 0) {
                         System.out.println("Moving Forwards "+moves+" steps.");
@@ -1335,6 +1332,7 @@ public class SimulatorNew extends Application {
                         }
                         else {
                             robot.turn(c, RobotConstants.STEP_PER_SECOND);
+                            netMgr.receive();
                         }
                     }
                     else {
@@ -1344,10 +1342,8 @@ public class SimulatorNew extends Application {
                         }
                         else {
                             robot.move(c, RobotConstants.MOVE_STEPS, exploredMap, RobotConstants.STEP_PER_SECOND);
+                            netMgr.receive();
                         }
-                    }
-                    if (!sim) {
-                        netMgr.receive();
                     }
 
 //					robot.sense(exploredMap, Map);
@@ -1361,9 +1357,10 @@ public class SimulatorNew extends Application {
 //                    }
 //
 //                }
-            }
+            } // endfor
 
 //            if (!sim) {
+//                // TODO: check format
 //                netMgr.send("Alg|Ard|"+Command.ALIGN_FRONT.ordinal()+"|");
 //                netMgr.send("Alg|And|" + Command.ENDFAST+"|");
 //            }
@@ -1479,15 +1476,18 @@ public class SimulatorNew extends Application {
         startBtn.setVisible(true);
         exploredMap.resetMap();
         mapDescriptor.loadRealMap(exploredMap, defaultMapPath);
+        // just in case previously in actual mode map=null
+        map = new Map();
+        mapDescriptor.loadRealMap(map, defaultMapPath);
 //        expRB.setSelected(true);
         startPos.setLocation(1, 1);
         startPosTxt.setText(String.format("(%d, %d)", 1, 1));
         if (wayPoint != null)
             exploredMap.getCell(wayPoint).setWayPoint(false);
-        wayPoint.setLocation(13, 18);
+        wayPoint.setLocation(MapConstants.GOALZONE_COL, MapConstants.GOALZONE_ROW);
 //            if (!setObstacle)
 //                expMapDraw = false;
-        wayPointTxt.setText(String.format("(%d, %d)", 13, 18));
+        wayPointTxt.setText(String.format("(%d, %d)", MapConstants.GOALZONE_COL, MapConstants.GOALZONE_ROW));
         upRB.setSelected(true);
         robot = new Robot(sim, false, 1, 1, Direction.UP);
         robot.setStatus("Reset to start zone");

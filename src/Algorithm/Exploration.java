@@ -29,8 +29,7 @@ public class Exploration {
     private long startTime;
     private long endTime;
     private Point start;
-
-
+    private boolean firstMove = false;  // for aligning right when it is firstMove
     public Exploration(Map exploredMap, Map realMap, Robot robot, double coverageLimit, int timeLimit, int stepPerSecond,
                        boolean sim) {
         this.exploredMap = exploredMap;
@@ -129,7 +128,7 @@ public class Exploration {
         int moves = 1;
         int checkingStep = RobotConstants.CHECKSTEPS;
         this.start = start;
-
+        this.firstMove = true;
 
         // Loop to explore the map
         outer:
@@ -152,7 +151,8 @@ public class Exploration {
 
             LOGGER.info(Double.toString(areaExplored));
             LOGGER.info(Integer.toString(moves));
-            if (moves % checkingStep == 0 || robot.getPos().distance(start)==0) {
+//            if (moves % checkingStep == 0 || robot.getPos().distance(start)==0) {
+            if (moves % checkingStep == 0) {
                 do{
                     prevArea = areaExplored;
                     if(!goToUnexplored())
@@ -163,7 +163,9 @@ public class Exploration {
                 checkingStep = RobotConstants.CHECKSTEPS;
             }
         } while (areaExplored < coverageLimit && System.currentTimeMillis() < endTime);
-        Main.SimulatorNew.displayTimer.stop();
+        if (sim) {  // for actual run, just let the timer run
+            Main.SimulatorNew.displayTimer.stop();
+        }
         goToPoint(start);
         endTime = System.currentTimeMillis();
         int seconds = (int)((endTime - startTime)/1000%60);
@@ -210,30 +212,63 @@ public class Exploration {
 //        if (sim) {
 //            TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
 //        }
-
+        
         // if right movable
         if (movable(Direction.getClockwise(robotDir))) {
             robot.turn(Command.TURN_RIGHT, stepPerSecond);
             robot.sense(exploredMap, realMap);
+            
+            // if firstMove, align right
+            if (firstMove) {
+                LOGGER.info("First Move, align right.");
+                robot.align_right(exploredMap, realMap);
+                firstMove = false;
+            }
+            
             moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
         }
 
         // else if front movable
         else if (movable(robotDir)) {
+
+            // if firstMove, align right
+            if (firstMove) {
+                LOGGER.info("First Move, align right.");
+                robot.align_right(exploredMap, realMap);
+                firstMove = false;
+            }
+
             robot.move(Command.FORWARD, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
             robot.sense(exploredMap, realMap);
         }
 
         // else if left movable
         else if (movable(Direction.getAntiClockwise(robotDir))) {
+            // try to align front and right if possible before and after turning left
+            LOGGER.info("Right and front not movable, try to align.");
+
+            robot.align_front(exploredMap, realMap);
+
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
+
+            robot.align_right(exploredMap, realMap);
+
             moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
         }
 
         // else move backwards
         else {
+            Boolean firstBackward = true;
             do {
+                // try to align front and right if possible before moving backwards for the first time
+                if (firstBackward) {
+                    LOGGER.info("Before moving backwards, try to align");
+                    robot.align_front(exploredMap, realMap);
+                    robot.align_right(exploredMap, realMap);
+                    firstBackward = false;
+                }
+
                 robot.move(Command.BACKWARD, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
                 robot.sense(exploredMap, realMap);
 
@@ -464,6 +499,13 @@ public class Exploration {
             // Orient robot to face UP
             if (loc.equals(start)) {
                 while (robot.getDir() != Direction.UP) {
+                    // TODO: check
+                    // align if possible
+                    if (!sim) {
+                        robot.align_front(exploredMap, realMap);
+                        robot.align_right(exploredMap, realMap);
+                    }
+
                     robot.turn(Command.TURN_RIGHT, stepPerSecond);
 //                    if (sim) {
 //                        try {

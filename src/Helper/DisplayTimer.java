@@ -6,7 +6,7 @@ import javafx.animation.AnimationTimer;
 
 public class DisplayTimer extends AnimationTimer {
 
-    private Label timerTextLbl = new Label("0 s");
+    private String timerText ="0.00";
 
     private long startTime;
     private long pauseDuration = 0;
@@ -15,7 +15,6 @@ public class DisplayTimer extends AnimationTimer {
 
     @Override
     public void start() {
-        System.out.println("In timer start");
         pauseDuration = 0;
         startTime = System.currentTimeMillis();
         super.start();
@@ -38,15 +37,15 @@ public class DisplayTimer extends AnimationTimer {
         // timeSeconds.set((now - startTime) / 1000.0);
         // Duration duration = ((KeyFrame)t.getSource()).getTime();
         // timerTime = timerTime.add(duration);
-        int duration = (int) ((now - startTime - pauseDuration) / 1000) % 240;
-        timerTextLbl.setText(duration + " s");
+        double duration = (now - startTime - pauseDuration) / 1000.0;
+        timerText = String.format("%.2f", duration);
     }
 
-    public Label getTimerLbl() {
-        return this.timerTextLbl;
+    public String getTimerLbl() {
+        return this.timerText;
     }
 
     public void initialize() {
-        timerTextLbl.setText("0 s");
+        timerText = "0.00";
     }
 }
