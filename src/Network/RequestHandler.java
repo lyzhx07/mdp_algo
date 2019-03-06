@@ -86,13 +86,13 @@ public class RequestHandler extends Thread {
 //            TimeUnit.MILLISECONDS.sleep(1000);
 
             // For checklist
-            sendStartMsg();
-            send(NetworkConstants.START_CHECKLIST);
+//            sendStartMsg();
+//            send(NetworkConstants.START_CHECKLIST);
 
 
             // For exploration
-//            sendWayPoint();
-//            send(NetworkConstants.START_EXP);
+            sendWayPoint();
+            send(NetworkConstants.START_EXP);
 
 
             while (true) {
@@ -157,6 +157,12 @@ public class RequestHandler extends Thread {
                 break;
             case 'A':
                 robot.turn(Command.TURN_LEFT, RobotConstants.STEP_PER_SECOND);
+                sendSensorRes();
+                break;
+            case 'O':
+                sendSensorRes();
+                break;
+            case 'P':
                 sendSensorRes();
                 break;
             default:

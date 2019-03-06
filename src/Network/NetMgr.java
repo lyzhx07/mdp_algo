@@ -194,42 +194,43 @@ public class NetMgr {
         NetMgr netMgr = new NetMgr(ip, port);
         netMgr.initConn();
 
-//        while(true){
-            //String msg = Command.FORWARD.toString();
-//            do {
-//                data = netMgr.receive();
-//            } while(data == null);
 
+        while(true){
+//            String msg = Command.FORWARD.toString();
+            do {
+                data = netMgr.receive();
+            } while(data == null);
+//            data = netMgr.receive();
 //            System.out.println("\nReceived: " + data);
-//            String msg = "AW3|D|W3|D|W3|D|W3|D|";
-//            if (data.equals("checklist")) {
-//                netMgr.send(msg);
-//            }
+            String msg = "AW3|D|W3|D|W3|D|W3|D|";
+            if (data.equals("checklist")) {
+                netMgr.send(msg);
+            }
 
 //            netMgr.closeConn();
-//        }
+        }
 
-        JSONObject androidJson = new JSONObject();
-
-        // robot
-        JSONArray robotArray = new JSONArray();
-        JSONObject robotJson = new JSONObject()
-                .put("x", 1+ 1)
-                .put("y", 1 + 1)
-                .put("direction", Direction.LEFT.toString().toLowerCase());
-        robotArray.put(robotJson);
-
-        // map
-        String obstacleString = MDF.generateMDFString2(exploredMap);
-        JSONArray mapArray = new JSONArray();
-        JSONObject mapJson = new JSONObject()
-                .put("explored", MDF.generateMDFString1(exploredMap))
-                .put("obstacle", obstacleString)
-                .put("length", obstacleString.length() * 4);
-        mapArray.put(mapJson);
-
-        androidJson.put("map", mapArray).put("robot", robotArray);
-        netMgr.send(androidJson.toString());
+//        JSONObject androidJson = new JSONObject();
+//
+//        // robot
+//        JSONArray robotArray = new JSONArray();
+//        JSONObject robotJson = new JSONObject()
+//                .put("x", 1+ 1)
+//                .put("y", 1 + 1)
+//                .put("direction", Direction.LEFT.toString().toLowerCase());
+//        robotArray.put(robotJson);
+//
+//        // map
+//        String obstacleString = MDF.generateMDFString2(exploredMap);
+//        JSONArray mapArray = new JSONArray();
+//        JSONObject mapJson = new JSONObject()
+//                .put("explored", MDF.generateMDFString1(exploredMap))
+//                .put("obstacle", obstacleString)
+//                .put("length", obstacleString.length() * 4);
+//        mapArray.put(mapJson);
+//
+//        androidJson.put("map", mapArray).put("robot", robotArray);
+//        netMgr.send(androidJson.toString());
     }
 
 }

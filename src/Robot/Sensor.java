@@ -79,29 +79,37 @@ public class Sensor {
     public int detect(Map map) {
 
         for (int cur = minRange; cur <= maxRange; cur++) {
+
             switch (sensorDir) {
                 case UP:
-                    if (pos.y + cur > MapConstants.MAP_HEIGHT - 1)
-                        return -1;
+//                    if (pos.y + cur > MapConstants.MAP_HEIGHT - 1)
+//                        return -1;
+                    if (pos.y + cur == MapConstants.MAP_HEIGHT)
+                        return cur;
                     else if (map.getCell(pos.y + cur, pos.x).isObstacle())
                         return cur;
                     break;
                 case RIGHT:
-                    if (pos.x + cur > MapConstants.MAP_WIDTH - 1)
-                        return -1;
+//                    if (pos.x + cur > MapConstants.MAP_WIDTH - 1)
+//                        return -1;
+                    if (pos.x + cur == MapConstants.MAP_WIDTH)
+                        return cur;
                     else if (map.getCell(pos.y, pos.x + cur).isObstacle())
-
                         return cur;
                     break;
                 case DOWN:
-                    if (pos.y - cur < 0)
-                        return -1;
+//                    if (pos.y - cur < 0)
+//                        return -1;
+                    if (pos.y - cur == -1)
+                        return cur;
                     else if (map.getCell(pos.y - cur, pos.x).isObstacle())
                         return cur;
                     break;
                 case LEFT:
-                    if (pos.x - cur < 0)
-                        return -1;
+//                    if (pos.x - cur < 0)
+//                        return -1;
+                    if (pos.x - cur == -1)
+                        return cur;
                     else if (map.getCell(pos.y, pos.x - cur).isObstacle())
                         return cur;
                     break;

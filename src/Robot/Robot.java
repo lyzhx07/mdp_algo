@@ -40,6 +40,13 @@ public class Robot {
     // for converting map to send to android
     private MapDescriptor MDF = new MapDescriptor();
 
+    // for storing robot position for image recognition
+    //TODO
+    
+    // for alignment
+    private int alignCount = 0;
+
+
     public Robot(boolean sim, boolean findingFP, int row, int col, Direction dir) {
         this.sim = sim;
         this.findingFP = findingFP;
@@ -274,7 +281,10 @@ public class Robot {
             String cmdStr = getCommand(cmd, steps);
             LOGGER.info("Command String: " + cmdStr);
             NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
-
+            if (!findingFP) {
+                alignCount++;
+                LOGGER.info(String.format("alignCount: %d", alignCount));
+            }
         }
 
         int rowInc = 0, colInc = 0;
@@ -356,8 +366,10 @@ public class Robot {
             String cmdStr = getCommand(cmd, 1);
             LOGGER.info("Command String: " + cmdStr);
             NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
-
-
+            if(!findingFP) {
+                alignCount++;
+                LOGGER.info(String.format("alignCount: %d", alignCount));
+            }
         }
         switch(cmd) {
             case TURN_LEFT:
@@ -611,11 +623,66 @@ public class Robot {
             androidJson.put("robot", robotArray);
             androidJson.put("map", mapArray);
             NetMgr.getInstance().send(NetworkConstants.ANDROID + androidJson.toString());
+            
+            // Realignment
+            if (alignCount > RobotConstants.CALIBRATE_AFTER && !findingFP) {
+                // TODO
+//                align_front(exploredMap, realMap);
+                align_right(exploredMap, realMap);
+            }
         }
 
     }
 
-//    /**
+
+    public void align_front(Map exploredMap, Map realMap) { // realMap is null just to call sense
+        Sensor F1 = sensorMap.get("F1");
+        Sensor F2 = sensorMap.get("F2");
+        Sensor F3 = sensorMap.get("F3");
+
+        if (exploredMap.getCell(F1.getPos()).isVirtualWall() &&
+                exploredMap.getCell(F2.getPos()).isVirtualWall() &&
+                exploredMap.getCell(F3.getPos()).isVirtualWall()) {
+            // send align front
+            String cmdStr = getCommand(Command.ALIGN_FRONT, 0);  // steps set to 0 to avoid appending to cmd
+            LOGGER.info("Command String: " + cmdStr);
+            NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
+            alignCount = 0;
+            status = "Aligning Front\n";
+            LOGGER.info(status);
+            sense(exploredMap, realMap);
+        }
+
+    }
+
+    public void align_right(Map exploredMap, Map realMap) { // realMap is null just to call sense
+        Sensor R1 = sensorMap.get("R1");
+        Sensor R2 = sensorMap.get("R2");
+
+        if (exploredMap.getCell(R1.getPos()).isVirtualWall() &&
+                exploredMap.getCell(R2.getPos()).isVirtualWall()) {
+            // send align right
+            String cmdStr = getCommand(Command.ALIGN_RIGHT, 0);  // steps set to 0 to avoid appending to cmd
+            LOGGER.info("Command String: " + cmdStr);
+            NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
+            alignCount = 0;
+            status = "Aligning Right\n";
+            LOGGER.info(status);
+            sense(exploredMap, realMap);
+        }
+
+    }
+
+    public int getAlignCount() {
+        return alignCount;
+    }
+
+    public void setAlignCount(int alignCount) {
+        this.alignCount = alignCount;
+    }
+
+
+    //    /**
 //     * Robot sensing surrounding obstacles for actual run
 //     * @param exploredMap
 //     */

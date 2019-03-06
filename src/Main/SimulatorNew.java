@@ -687,7 +687,7 @@ public class SimulatorNew extends Application {
                             robot.move(Command.FORWARD, 1, exploredMap, RobotConstants.STEP_PER_SECOND);
                             robot.sense(exploredMap, map);
                             break;
-                        case X:
+                        case S:
                             robot.move(Command.BACKWARD, 1, exploredMap, RobotConstants.STEP_PER_SECOND);
                             robot.sense(exploredMap, map);
                             break;
@@ -698,6 +698,14 @@ public class SimulatorNew extends Application {
                         case D:
                             robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
                             robot.sense(exploredMap, map);
+                            break;
+                        case I:
+                            NetMgr.getInstance().send("I");
+                            String msg;
+                            do {
+                                msg = NetMgr.getInstance().receive();
+                            } while(msg.charAt(0) == 'F');
+                            System.out.println(msg);
                             break;
                         default:
                             break;
