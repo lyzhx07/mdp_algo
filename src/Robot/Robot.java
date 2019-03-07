@@ -41,8 +41,6 @@ public class Robot {
     // for converting map to send to android
     private MapDescriptor MDF = new MapDescriptor();
 
-    // for storing robot position for image recognition
-    //TODO
     
     // for alignment
     private int alignCount = 0;
@@ -490,12 +488,12 @@ public class Robot {
      * Getting sensor result from RPI/Arduino
      * @return HashMap<SensorId, ObsBlockDis>
      */
-    public void updateSensorRes(String msg) {
+    public boolean updateSensorRes(String msg) {
         int obsBlock;
         if (msg.charAt(0) != 'F') {
             // TODO
             // not sensor info sent from arduino
-            return;
+            return false;
         }
         else {
             String[] sensorStrings = msg.split("\\|");
@@ -510,8 +508,25 @@ public class Robot {
                     sensorRes.put(sensorID, -1);
                 }
             }
+            return true;
         }
     }
+
+    /**
+     * Check whether image recognition is possible (front obstacles )
+     * i.e. obstacles found 2 grids in front of any front sensors
+     * if yes, send to RPI
+     * format: I|X|Y|RobotDirection
+     */
+    public void imageRecognition() {
+        if (sensorRes.get("F1") == 2 || sensorRes.get("F2") == 2 || sensorRes.get("F3") == 2) {
+            // TODO: check using android index or algo index
+            Sensor F2 = sensorMap.get("F2");
+            String toSend = String.format("I|%d|%d|%s", F2.getCol() + 1, F2.getRow() + 1, dir);
+            NetMgr.getInstance().send(toSend);
+        }
+    }
+
 
     /**
      * Getting sensor result for simulator
@@ -548,11 +563,14 @@ public class Robot {
 //                msg = NetMgr.getInstance().receive();
 //
 //            }
-            updateSensorRes(msg);
-            if(sensorRes == null) {
+            boolean success = updateSensorRes(msg);
+            if(!success) {
                 LOGGER.warning("Invalid msg. Map not updated");
                 return;
             }
+
+            // TODO: check whether img is needed to be detected and send RPI if needed
+//            imageRecognition();
         }
 
         for(String sname: sensorList) {
