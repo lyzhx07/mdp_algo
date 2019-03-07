@@ -129,6 +129,7 @@ public class RequestHandler extends Thread {
         else if (msg.contains("fastest")) {
             System.out.println("Starting fastest path");
             send(NetworkConstants.START_FP);
+            robot.setFindingFP(true);
         }
         else {
             String[] commands = msg.split("\\|");
@@ -152,7 +153,7 @@ public class RequestHandler extends Thread {
                 robot.move(Command.FORWARD, step, exploredMap, RobotConstants.STEP_PER_SECOND);
                 sendSensorRes();
                 break;
-            case 'X':
+            case 'S':
                 robot.move(Command.BACKWARD, step, exploredMap, RobotConstants.STEP_PER_SECOND);
                 sendSensorRes();
                 break;
@@ -178,8 +179,8 @@ public class RequestHandler extends Thread {
     }
 
     public void sendSensorRes() {
-        HashMap<String, Integer> sensorRes = robot.getSensorRes(exploredMap, realMap);
-        send(formatSensorRes(sensorRes));
+        robot.updateSensorRes(exploredMap, realMap);
+        send(formatSensorRes(robot.getSensorRes()));
     }
 
     public String formatSensorRes(HashMap<String, Integer> sensorRes) {

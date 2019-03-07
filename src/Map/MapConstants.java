@@ -6,8 +6,8 @@ public class MapConstants {
 
     // Public Map Variables
     public static final short CELL_CM = 10;
-    public static final short MAP_HEIGHT = 15;
-    public static final short MAP_WIDTH = 7;
+    public static final short MAP_HEIGHT = 20;
+    public static final short MAP_WIDTH = 15;
     public static final short GOALZONE_ROW = MAP_HEIGHT - 2;
     public static final short GOALZONE_COL = MAP_WIDTH - 2;
     public static final short STARTZONE_ROW = 1;
@@ -26,6 +26,6 @@ public class MapConstants {
 
 
     public static final int MAP_CELL_SZ = 25;			//Size of the Cells on the Map (Pixels)
-    public static final int MAP_OFFSET = 10;
+    public static final int MAP_OFFSET = 25;
 
 }

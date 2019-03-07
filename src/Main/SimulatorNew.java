@@ -1246,6 +1246,43 @@ public class SimulatorNew extends Application {
 
 
     class FastTask extends Task<Integer> {
+
+        public String getFastTaskCmd(ArrayList<Command> commands) {
+            Command tempCmd;
+            int moves = 0;
+            StringBuilder cmdBuilder = new StringBuilder();
+            for (int i = 0; i < commands.size(); i++) {
+                tempCmd = commands.get(i);
+                if (tempCmd == Command.FORWARD && moves <= 9) {
+                    moves++;
+
+                    // if last cmd or moves == 9
+                    if (i == commands.size() - 1 || moves == 9) {
+                        cmdBuilder.append(Command.ArduinoMove.values()[tempCmd.ordinal()]);
+                        cmdBuilder.append(moves);
+                        cmdBuilder.append('|');
+                        moves = 0;
+                    }
+                }
+                else {  // not forward
+                    if (moves > 0) {    // previous forward, append the forward moves first
+                        cmdBuilder.append(Command.ArduinoMove.values()[Command.FORWARD.ordinal()]);
+                        cmdBuilder.append(moves);
+                        cmdBuilder.append('|');
+
+                    }
+                    cmdBuilder.append(Command.ArduinoMove.values()[tempCmd.ordinal()]);
+                    // turn one steop, do not append
+                    cmdBuilder.append('|');
+                    moves = 0;
+                }
+            }
+
+            String cmds = cmdBuilder.toString();
+            return cmds;
+        }
+
+
         @Override
         protected Integer call() throws Exception {
             if(!sim) {
@@ -1275,16 +1312,71 @@ public class SimulatorNew extends Application {
 
             // TODO: check to send one single command or one by one
             ArrayList<Command> commands = fp.getPathCommands(path);
+            //TODO: testing
+            String cmd = getFastTaskCmd(commands);
+            if (!sim) {
+                netMgr.send(NetworkConstants.ARDUINO + cmd);
+            }
+            LOGGER.info("Checking FPCmdString: " + cmd);
+            String[] cmdStr = cmd.split("\\|");
 
-            int steps = (int) (stepsSB.getValue());
-            // Limits not set
-            if (steps == 0)
-                steps = 5;
+            int steps = (int) stepsSB.getValue();
+            char firstChar;
+            int move;
+            for (String c: cmdStr) {
+                firstChar = c.charAt(0);
+                System.out.println(firstChar);
+                if (c.length() > 1) {
+                    move = Integer.parseInt(c.substring(1));
+                }
+                else {
+                    move = 1;
+                }
+                switch (firstChar) {
+                    case 'W':
+                        if (sim) {
+                            robot.move(Command.FORWARD, move, exploredMap, steps);
+                        }
+                        else {
+                            robot.move(Command.FORWARD, move, exploredMap, RobotConstants.STEP_PER_SECOND);
+                            netMgr.receive();
+                        }
+                        break;
+                    case 'S':
+                        if (sim) {
+                            robot.move(Command.BACKWARD, move, exploredMap, steps);
+                        }
+                        else {
+                            robot.move(Command.BACKWARD, move, exploredMap, RobotConstants.STEP_PER_SECOND);
+                            netMgr.receive();
+                        }
+                        break;
+                    case 'D':
+                        if (sim) {
+                            robot.turn(Command.TURN_RIGHT, steps);
+                        }
+                        else {
+                            robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+                            netMgr.receive();
+                        }
+                        break;
+                    case 'A':
+                        if (sim) {
+                            robot.turn(Command.TURN_LEFT, steps);
+                        }
+                        else {
+                            robot.turn(Command.TURN_LEFT, RobotConstants.STEP_PER_SECOND);
+                            netMgr.receive();
+                        }
+                        break;
+                }
 
-            int moves = 0;
-            System.out.println(commands);
+            }
+            /*
             Command c = null;
+            int moves = 0;
             for (int i = 0; i < commands.size(); i++) {
+
                 c = commands.get(i);
 //				System.out.println("c:"+commands.get(i)+" Condition:"+(commands.get(i)==Command.FORWARD|| commands.get(i) == Command.BACKWARD));
 //				System.out.println("index: "+i+" condition: "+(i==(commands.size()-1)));
@@ -1299,6 +1391,7 @@ public class SimulatorNew extends Application {
                         else {
                             robot.move(c, moves, exploredMap, RobotConstants.STEP_PER_SECOND);
                             netMgr.receive();
+                            // TODO send to android
                             //robot.sense(exploredMap, Map);
                         }
                     }
@@ -1358,13 +1451,14 @@ public class SimulatorNew extends Application {
 //
 //                }
             } // endfor
+*/
+
 
 //            if (!sim) {
 //                // TODO: check format
 //                netMgr.send("Alg|Ard|"+Command.ALIGN_FRONT.ordinal()+"|");
 //                netMgr.send("Alg|And|" + Command.ENDFAST+"|");
 //            }
-
             endT = System.currentTimeMillis();
             int seconds = (int)((endT - startT)/1000%60);
             int minutes = (int)((endT - startT)/1000/60);
@@ -1379,46 +1473,6 @@ public class SimulatorNew extends Application {
         protected Integer call() throws Exception {
             String msg = null;
             Command c;
-//            // Wait for Start Command
-//            if (!sim) {
-//                do {
-//                    robot.setFindingFP(false);
-//                    msg = netMgr.receive();
-//                    String[] msgArr = msg.split("\\|");
-//                    System.out.println("Calibrating: " + msgArr[2]);
-//                    c = Command.ERROR;
-//                    if (msgArr[2].compareToIgnoreCase("C") == 0) {
-//                        System.out.println("Calibrating");
-//                        for (int i = 0; i < 4; i++) {
-//                            robot.move(Command.TURN_RIGHT, RobotConstants.MOVE_STEPS, exploredMap);
-//                            senseAndAlign();
-//                        }
-//                        netMgr.send("Alg|Ard|" + Command.ALIGN_RIGHT.ordinal() + "|0");
-//                        msg = netMgr.receive();
-//                        System.out.println("Done Calibrating");
-//                    } else {
-//                        c = Command.values()[Integer.parseInt(msgArr[2])];
-//                    }
-//
-//                    if (c == Command.ROBOT_POS) {
-//                        String[] data = msgArr[3].split("\\,");
-//                        int col = Integer.parseInt(data[0]);
-//                        int row = Integer.parseInt(data[1]);
-//                        Direction dir = Direction.values()[Integer.parseInt(data[2])];
-//                        int wayCol = Integer.parseInt(data[3]);
-//                        int wayRow = Integer.parseInt(data[4]);
-//                        robot.setStartPos(row, col exploredMap);
-//                        while(robot.getDir()!=dir) {
-//                            robot.rotateSensors(true);
-//                            robot.setDirection(Direction.getNext(robot.getDir()));
-//                        }
-//
-//                        wayPoint = new Point(wayCol, wayRow);
-//                    } else if (c == Command.START_EXP) {
-//                        netMgr.send("Alg|Ard|S|0");
-//                    }
-//                } while (c != Command.START_EXP);
-//            } // end of if
 
 
             double coverageLimit = (int) (coverageLimitSB.getValue());

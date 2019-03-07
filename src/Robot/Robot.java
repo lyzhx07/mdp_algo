@@ -32,6 +32,7 @@ public class Robot {
 
     private ArrayList<String> sensorList;
     private HashMap<String, Sensor> sensorMap;
+    private HashMap<String, Integer> sensorRes;
 //    private static PrintManager printer = new PrintManager();
 
     // for delay in sim
@@ -55,6 +56,7 @@ public class Robot {
         this.reachedGoal = false;  // may need to amend
         this.sensorList = new ArrayList<String>();
         this.sensorMap = new HashMap<String, Sensor>();
+        this.sensorRes = new HashMap<String, Integer>();
         initSensors();
         this.status = String.format("Initialization completed.\n");
 //        printer.setText(printer.getText() + this.status + "\n");
@@ -134,6 +136,14 @@ public class Robot {
 
     public Sensor getSensor(String sensorId) {
         return sensorMap.get(sensorId);
+    }
+
+    public HashMap<String, Integer> getSensorRes() {
+        return sensorRes;
+    }
+
+    public void setSensorRes(HashMap<String, Integer> sensorRes) {
+        this.sensorRes = sensorRes;
     }
 
 
@@ -275,12 +285,13 @@ public class Robot {
 
         tempStartTime = System.currentTimeMillis();
 
-        if (!sim) {
+        if (!sim && !findingFP) {
             // TODO to send fast forward
             // send command to Arduino
             String cmdStr = getCommand(cmd, steps);
             LOGGER.info("Command String: " + cmdStr);
             NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
+            // TODO if can delete if
             if (!findingFP) {
                 alignCount++;
                 LOGGER.info(String.format("alignCount: %d", alignCount));
@@ -360,12 +371,14 @@ public class Robot {
     public void turn(Command cmd, int stepsPerSecond) throws InterruptedException {
 
         tempStartTime = System.currentTimeMillis();
-        if (!sim) {
+//        if (!sim) {
+        if (!sim && !findingFP) {
             // send command to Arduino
             // TODO: add turning degree
             String cmdStr = getCommand(cmd, 1);
             LOGGER.info("Command String: " + cmdStr);
             NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
+            // TODO if can delete if
             if(!findingFP) {
                 alignCount++;
                 LOGGER.info(String.format("alignCount: %d", alignCount));
@@ -477,12 +490,12 @@ public class Robot {
      * Getting sensor result from RPI/Arduino
      * @return HashMap<SensorId, ObsBlockDis>
      */
-    public HashMap<String, Integer> getSensorRes(String msg) {
+    public void updateSensorRes(String msg) {
         int obsBlock;
-        HashMap<String, Integer> sensorRes = new HashMap<String, Integer>();
         if (msg.charAt(0) != 'F') {
+            // TODO
             // not sensor info sent from arduino
-            return null;
+            return;
         }
         else {
             String[] sensorStrings = msg.split("\\|");
@@ -498,8 +511,6 @@ public class Robot {
                 }
             }
         }
-
-        return sensorRes;
     }
 
     /**
@@ -508,14 +519,12 @@ public class Robot {
      * @param realMap
      * @return HashMap<SensorId, ObsBlockDis>
      */
-    public HashMap<String, Integer> getSensorRes(Map exploredMap, Map realMap) {
+    public void updateSensorRes(Map exploredMap, Map realMap) {
         int obsBlock;
-        HashMap<String, Integer> sensorRes = new HashMap<String, Integer>();
         for(String sname: sensorList) {
             obsBlock = sensorMap.get(sname).detect(realMap);
             sensorRes.put(sname, obsBlock);
         }
-        return sensorRes;
     }
 
     /**
@@ -525,12 +534,11 @@ public class Robot {
      */
     public void sense(Map exploredMap, Map realMap){
 
-        HashMap<String, Integer> sensorRes;
         int obsBlock;
         int rowInc=0, colInc=0, row, col;
 
         if(sim) {
-            sensorRes = getSensorRes(exploredMap, realMap);
+            updateSensorRes(exploredMap, realMap);
         }
         else {
             String msg = NetMgr.getInstance().receive();
@@ -540,7 +548,7 @@ public class Robot {
 //                msg = NetMgr.getInstance().receive();
 //
 //            }
-            sensorRes = getSensorRes(msg);
+            updateSensorRes(msg);
             if(sensorRes == null) {
                 LOGGER.warning("Invalid msg. Map not updated");
                 return;
@@ -648,13 +656,8 @@ public class Robot {
 
 
     public void align_front(Map exploredMap, Map realMap) { // realMap is null just to call sense
-        Sensor F1 = sensorMap.get("F1");
-        Sensor F2 = sensorMap.get("F2");
-        Sensor F3 = sensorMap.get("F3");
 
-        if (exploredMap.getCell(F1.getPos()).isVirtualWall() &&
-                exploredMap.getCell(F2.getPos()).isVirtualWall() &&
-                exploredMap.getCell(F3.getPos()).isVirtualWall()) {
+        if (sensorRes.get("F1") == 1 && sensorRes.get("F2") == 1 && sensorRes.get("F3") == 1) {
             // send align front
             String cmdStr = getCommand(Command.ALIGN_FRONT, 0);  // steps set to 0 to avoid appending to cmd
             LOGGER.info("Command String: " + cmdStr);
@@ -668,11 +671,8 @@ public class Robot {
     }
 
     public void align_right(Map exploredMap, Map realMap) { // realMap is null just to call sense
-        Sensor R1 = sensorMap.get("R1");
-        Sensor R2 = sensorMap.get("R2");
 
-        if (exploredMap.getCell(R1.getPos()).isVirtualWall() &&
-                exploredMap.getCell(R2.getPos()).isVirtualWall()) {
+        if (sensorRes.get("R1") == 1 && sensorRes.get("R2") == 1) {
             // send align right
             String cmdStr = getCommand(Command.ALIGN_RIGHT, 0);  // steps set to 0 to avoid appending to cmd
             LOGGER.info("Command String: " + cmdStr);

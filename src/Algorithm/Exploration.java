@@ -10,6 +10,7 @@ import Robot.RobotConstants;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 import Helper.*;
@@ -207,6 +208,7 @@ public class Exploration {
      * Basic right wall hugging algo
      */
     public void rightWallHug() throws InterruptedException {
+        HashMap<String, Integer> sensorRes;
         Direction robotDir = robot.getDir();
 //
 //        if (sim) {
@@ -499,12 +501,12 @@ public class Exploration {
             // Orient robot to face UP
             if (loc.equals(start)) {
                 while (robot.getDir() != Direction.UP) {
-                    // TODO: check
+                    // TODO: check - arduino dont want
                     // align if possible
-                    if (!sim) {
-                        robot.align_front(exploredMap, realMap);
-                        robot.align_right(exploredMap, realMap);
-                    }
+//                    if (!sim) {
+//                        robot.align_front(exploredMap, realMap);
+//                        robot.align_right(exploredMap, realMap);
+//                    }
 
                     robot.turn(Command.TURN_RIGHT, stepPerSecond);
 //                    if (sim) {
