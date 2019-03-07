@@ -153,39 +153,25 @@ public class FastestPath {
         for (int i = 0; i < path.size(); i++) {
             newCell = path.get(i);
             cellDir = exploredMap.getCellDir(cell.getPos(), newCell.getPos());
-
             // If the TempRobot and cell direction not the same
-            if (tempRobot.getDir()!=cellDir) {
-                if( Direction.getOpposite(tempRobot.getDir()) == cellDir) {
-                    // move = Command.TURN_LEFT;
-                    // tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
-                    // moves.add(move);
-                    // tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
-                    // moves.add(move);
-                    move = Command.BACKWARD;
-                    tempRobot.move(move, RobotConstants.MOVE_STEPS, exploredMap, RobotConstants.STEP_PER_SECOND);
-                    moves.add(move);
-                    continue;
-                }
-                else {
-//                    move = getTurnMovement(tempRobot.getDir(), cellDir);
-                    if (Direction.getClockwise(tempRobot.getDir()) == cellDir) {
-                        move = Command.TURN_RIGHT;
-                        tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
-                        moves.add(move);
-                    }
-                    else if (Direction.getAntiClockwise(tempRobot.getDir()) == cellDir) {
-                        move = Command.TURN_LEFT;
-                        tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
-                        moves.add(move);
-                    }
-                }
+            if (Direction.getOpposite(tempRobot.getDir()) == cellDir) {
+                move = Command.BACKWARD;
+            } else if (Direction.getClockwise(tempRobot.getDir()) == cellDir) {
+                move = Command.TURN_RIGHT; //first move
+                tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
+                moves.add(move); //second move
+                move = Command.FORWARD;
+            } else if (Direction.getAntiClockwise(tempRobot.getDir()) == cellDir) {
+                move = Command.TURN_LEFT; //first move
+                tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
+                moves.add(move);
+                move = Command.FORWARD; //second move
+            } else {
+                move = Command.FORWARD;
             }
-            move = Command.FORWARD;
             tempRobot.move(move, RobotConstants.MOVE_STEPS, exploredMap, RobotConstants.STEP_PER_SECOND);
             moves.add(move);
             cell = newCell;
-
         }
         System.out.println("Generated Moves: " + moves.toString());
         return moves;
