@@ -91,7 +91,6 @@ public class FastestPath {
                             costGMap.put(n.getPos(), newGtemp);
                             toVisit.add(n);
                         }
-
                     }
                 }
             }
@@ -158,11 +157,15 @@ public class FastestPath {
             // If the TempRobot and cell direction not the same
             if (tempRobot.getDir()!=cellDir) {
                 if( Direction.getOpposite(tempRobot.getDir()) == cellDir) {
-                    move = Command.TURN_LEFT;
-                    tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
+                    // move = Command.TURN_LEFT;
+                    // tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
+                    // moves.add(move);
+                    // tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
+                    // moves.add(move);
+                    move = Command.BACKWARD;
+                    tempRobot.move(move, RobotConstants.MOVE_STEPS, exploredMap, RobotConstants.STEP_PER_SECOND);
                     moves.add(move);
-                    tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
-                    moves.add(move);
+                    continue;
                 }
                 else {
 //                    move = getTurnMovement(tempRobot.getDir(), cellDir);
@@ -232,7 +235,8 @@ public class FastestPath {
     private double getH(Point pt, Point goal) {
         return pt.distance(goal);
     }
-
+    //https://www.geeksforgeeks.org/a-search-algorithm/
+    //using Manhattan Distance
     private double getMoveCost(Point A, Point B) {
         double steps =  abs(A.x - B.x) + abs(A.y - B.y);
         return RobotConstants.MOVE_COST * steps;
