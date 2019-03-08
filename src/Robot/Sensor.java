@@ -84,7 +84,7 @@ public class Sensor {
                 case UP:
 //                    if (pos.y + cur > MapConstants.MAP_HEIGHT - 1)
 //                        return -1;
-                    if (pos.y + cur == MapConstants.MAP_HEIGHT)
+                    if (pos.y + cur >= MapConstants.MAP_HEIGHT)
                         return cur;
                     else if (map.getCell(pos.y + cur, pos.x).isObstacle())
                         return cur;
@@ -92,7 +92,7 @@ public class Sensor {
                 case RIGHT:
 //                    if (pos.x + cur > MapConstants.MAP_WIDTH - 1)
 //                        return -1;
-                    if (pos.x + cur == MapConstants.MAP_WIDTH)
+                    if (pos.x + cur >= MapConstants.MAP_WIDTH)
                         return cur;
                     else if (map.getCell(pos.y, pos.x + cur).isObstacle())
                         return cur;
@@ -100,7 +100,7 @@ public class Sensor {
                 case DOWN:
 //                    if (pos.y - cur < 0)
 //                        return -1;
-                    if (pos.y - cur == -1)
+                    if (pos.y - cur <= -1)
                         return cur;
                     else if (map.getCell(pos.y - cur, pos.x).isObstacle())
                         return cur;
@@ -108,7 +108,7 @@ public class Sensor {
                 case LEFT:
 //                    if (pos.x - cur < 0)
 //                        return -1;
-                    if (pos.x - cur == -1)
+                    if (pos.x - cur <= -1)
                         return cur;
                     else if (map.getCell(pos.y, pos.x - cur).isObstacle())
                         return cur;
