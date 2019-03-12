@@ -713,18 +713,18 @@ public class Robot {
 
     }
 
-    public void send_android(Map exploredMap) {
-        JSONObject androidJson = new JSONObject();
+    private JSONArray getRobotArray() {
 
-        // robot
         JSONArray robotArray = new JSONArray();
         JSONObject robotJson = new JSONObject()
                 .put("x", pos.x + 1)
                 .put("y", pos.y + 1)
                 .put("direction", dir.toString().toLowerCase());
         robotArray.put(robotJson);
+        return robotArray;
+    }
 
-        // map
+    private JSONArray getMapArray(Map exploredMap) {
         String obstacleString = MDF.generateMDFString2(exploredMap);
         JSONArray mapArray = new JSONArray();
         JSONObject mapJson = new JSONObject()
@@ -732,17 +732,39 @@ public class Robot {
                 .put("obstacle", obstacleString)
                 .put("length", obstacleString.length() * 4);
         mapArray.put(mapJson);
+        return mapArray;
+    }
 
-        // status
-//            JSONArray statusArray = new JSONArray();
-//            JSONObject statusJson = new JSONObject()
-//                    .put("status", status.replaceAll("\\s",""));
-//            statusArray.put(statusJson);
+    private JSONArray getStatusArray() {
+        JSONArray statusArray = new JSONArray();
+        JSONObject statusJson = new JSONObject()
+                .put("status", status.replaceAll("\\s",""));
+        statusArray.put(statusJson);
+        return statusArray;
+    }
 
+    /**
+     * Send the current robot position/direction and status (if uncomment) to android
+     */
+    public void send_android() {
+        JSONObject androidJson = new JSONObject();
 
-        androidJson.put("robot", robotArray);
-        androidJson.put("map", mapArray);
-//            androidJson.put("status", statusArray);
+        androidJson.put("robot", getRobotArray());
+        androidJson.put("status", getStatusArray());
+        NetMgr.getInstance().send(NetworkConstants.ANDROID + androidJson.toString() + "\n");
+
+    }
+
+    /**
+     * Send the current explored map and robot position/direciton, status (if uncomment) to android
+     * @param exploredMap
+     */
+    public void send_android(Map exploredMap) {
+        JSONObject androidJson = new JSONObject();
+
+        androidJson.put("robot", getRobotArray());
+        androidJson.put("map", getMapArray(exploredMap));
+        androidJson.put("status", getStatusArray());
         NetMgr.getInstance().send(NetworkConstants.ANDROID + androidJson.toString() + "\n");
 
 //            try {

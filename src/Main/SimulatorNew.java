@@ -1341,6 +1341,7 @@ public class SimulatorNew extends Application {
                         }
                         else {
                             robot.move(Command.FORWARD, move, exploredMap, RobotConstants.STEP_PER_SECOND);
+                            robot.send_android();
                             netMgr.receive();
                         }
                         break;
@@ -1350,6 +1351,7 @@ public class SimulatorNew extends Application {
                         }
                         else {
                             robot.move(Command.BACKWARD, move, exploredMap, RobotConstants.STEP_PER_SECOND);
+                            robot.send_android();
                             netMgr.receive();
                         }
                         break;
@@ -1359,6 +1361,7 @@ public class SimulatorNew extends Application {
                         }
                         else {
                             robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+                            robot.send_android();
                             netMgr.receive();
                         }
                         break;
@@ -1368,6 +1371,7 @@ public class SimulatorNew extends Application {
                         }
                         else {
                             robot.turn(Command.TURN_LEFT, RobotConstants.STEP_PER_SECOND);
+                            robot.send_android();
                             netMgr.receive();
                         }
                         break;
