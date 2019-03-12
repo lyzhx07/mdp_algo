@@ -152,8 +152,12 @@ public class Exploration {
 
             LOGGER.info(Double.toString(areaExplored));
             LOGGER.info(Integer.toString(moves));
-//            if (moves % checkingStep == 0 || robot.getPos().distance(start)==0) {
-            if (moves % checkingStep == 0) {
+
+            // TODO: for week 8 only, do not go out again if returning to start and areaExplored > target percentage
+            if (robot.getPos().distance(start) == 0 && areaExplored > RobotConstants.TARGETED_COVERAGE) {
+                break outer;
+            }
+
                 do{
                     prevArea = areaExplored;
                     if(!goToUnexplored())
