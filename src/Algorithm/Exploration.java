@@ -283,12 +283,14 @@ public class Exploration {
             // turn left if possible
             if (movable(Direction.getAntiClockwise(robotDir))) {
                 robot.turn(Command.TURN_LEFT, stepPerSecond);
+                robot.sense(exploredMap, realMap);
                 moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
             }
 
             // else turn right
             else {
                 robot.turn(Command.TURN_RIGHT, stepPerSecond);
+                robot.sense(exploredMap, realMap);
                 moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
             }
         }

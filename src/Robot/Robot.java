@@ -623,7 +623,7 @@ public class Robot {
                     // (1) j != obsBlock && cell isMoveThru     // do not need to update
                     // (2) j == obsBlock && cell isMoveThru     // cannot be the case
                     // (3) j != obsBlock && cell !isMoveThru    // need to check
-                    else if (exploredMap.getCell(row, col).isObstacle()) {      // (3)
+                    else if (j != obsBlock && exploredMap.getCell(row, col).isObstacle()) {      // (3)
                         exploredMap.getCell(row, col).setObstacle(false);
                         exploredMap.setVirtualWall(exploredMap.getCell(row, col), false);
                         exploredMap.reinitVirtualWall();
