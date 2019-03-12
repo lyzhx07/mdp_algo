@@ -548,8 +548,9 @@ public class Robot {
                 Cell temp_cell = exploredMap.getCell(temp_row, temp_col);
                 if (temp_cell.isExplored() && temp_cell.isObstacle()) {
                     // send to RPI to do image recognition
-                    String to_send = String.format("I%d|%d|%s", temp_col + 1, temp_row + 1, Direction.getClockwise(dir).toString());
-                    NetMgr.getInstance().send(to_send);
+                    String to_send = String.format("I%d|%d|%s", camera_col + 1, camera_row + 1, Direction.getClockwise(dir).toString());
+                    System.out.println(to_send);
+//                    NetMgr.getInstance().send(to_send);
                     break;
                 }
             }
