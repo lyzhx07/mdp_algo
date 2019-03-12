@@ -512,7 +512,7 @@ public class Robot {
         }
     }
 
-    /**
+    /** TODO
      * Check whether image recognition is possible (front obstacles )
      * i.e. obstacles found 2 grids in front of any front sensors
      * if yes, send to RPI
@@ -641,42 +641,8 @@ public class Robot {
 
         // send to Android
         if (!sim) {
-            JSONObject androidJson = new JSONObject();
 
-            // robot
-            JSONArray robotArray = new JSONArray();
-            JSONObject robotJson = new JSONObject()
-                    .put("x", pos.x + 1)
-                    .put("y", pos.y + 1)
-                    .put("direction", dir.toString().toLowerCase());
-            robotArray.put(robotJson);
-
-            // map
-            String obstacleString = MDF.generateMDFString2(exploredMap);
-            JSONArray mapArray = new JSONArray();
-            JSONObject mapJson = new JSONObject()
-                    .put("explored", MDF.generateMDFString1(exploredMap))
-                    .put("obstacle", obstacleString)
-                    .put("length", obstacleString.length() * 4);
-            mapArray.put(mapJson);
-
-            // status
-//            JSONArray statusArray = new JSONArray();
-//            JSONObject statusJson = new JSONObject()
-//                    .put("status", status.replaceAll("\\s",""));
-//            statusArray.put(statusJson);
-
-
-            androidJson.put("robot", robotArray);
-            androidJson.put("map", mapArray);
-//            androidJson.put("status", statusArray);
-            NetMgr.getInstance().send(NetworkConstants.ANDROID + androidJson.toString() + "\n");
-
-//            try {
-//                TimeUnit.MILLISECONDS.sleep(10);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
+            send_android(exploredMap);
 
             // Realignment
             if (alignCount > RobotConstants.CALIBRATE_AFTER && !findingFP) {
@@ -687,6 +653,46 @@ public class Robot {
         }
 
     }
+
+    public void send_android(Map exploredMap) {
+        JSONObject androidJson = new JSONObject();
+
+        // robot
+        JSONArray robotArray = new JSONArray();
+        JSONObject robotJson = new JSONObject()
+                .put("x", pos.x + 1)
+                .put("y", pos.y + 1)
+                .put("direction", dir.toString().toLowerCase());
+        robotArray.put(robotJson);
+
+        // map
+        String obstacleString = MDF.generateMDFString2(exploredMap);
+        JSONArray mapArray = new JSONArray();
+        JSONObject mapJson = new JSONObject()
+                .put("explored", MDF.generateMDFString1(exploredMap))
+                .put("obstacle", obstacleString)
+                .put("length", obstacleString.length() * 4);
+        mapArray.put(mapJson);
+
+        // status
+//            JSONArray statusArray = new JSONArray();
+//            JSONObject statusJson = new JSONObject()
+//                    .put("status", status.replaceAll("\\s",""));
+//            statusArray.put(statusJson);
+
+
+        androidJson.put("robot", robotArray);
+        androidJson.put("map", mapArray);
+//            androidJson.put("status", statusArray);
+        NetMgr.getInstance().send(NetworkConstants.ANDROID + androidJson.toString() + "\n");
+
+//            try {
+//                TimeUnit.MILLISECONDS.sleep(10);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+    }
+
 
 
     public void align_front(Map exploredMap, Map realMap) { // realMap is null just to call sense
