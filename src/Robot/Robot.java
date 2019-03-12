@@ -764,14 +764,32 @@ public class Robot {
     }
 
     public void align_right(Map exploredMap, Map realMap) { // realMap is null just to call sense
-
+        int aligning_index = 0;
+        switch(preMove) {
+            case FORWARD:
+                aligning_index = 1;
+                break;
+            case BACKWARD:
+                aligning_index = 1;
+                break;
+            case TURN_RIGHT:
+                aligning_index = 3;
+                break;
+            case TURN_LEFT:
+                aligning_index = 2;
+                break;
+            default:
+                LOGGER.info("Invalid preMove!! Please check!\n\n");
+                aligning_index = 1;
+                break;
+        }
         if (sensorRes.get("R1") == 1 && sensorRes.get("R2") == 1) {
             // send align right
-            String cmdStr = getCommand(Command.ALIGN_RIGHT, 1);  // steps set to 0 to avoid appending to cmd
+            String cmdStr = getCommand(Command.ALIGN_RIGHT, aligning_index);  // steps set to 0 to avoid appending to cmd
             LOGGER.info("Command String: " + cmdStr);
             NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
             alignCount = 0;
-            status = "Aligning Right\n";
+            status = String.format("Aligning Right: %d", aligning_index);
             LOGGER.info(status);
             sense(exploredMap, realMap);
         }
