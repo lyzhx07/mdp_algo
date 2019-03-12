@@ -556,6 +556,8 @@ public class Robot {
             updateSensorRes(exploredMap, realMap);
         }
         else {
+            String temp = NetMgr.getInstance().receive();
+//            String temp2 = NetMgr.getInstance().receive();
             String msg = NetMgr.getInstance().receive();
 //            while (msg.charAt(0) == 'L') {
 //                LOGGER.warning("Unknow character received. Get sensor again.");
@@ -691,7 +693,7 @@ public class Robot {
 
         if (sensorRes.get("F1") == 1 && sensorRes.get("F2") == 1 && sensorRes.get("F3") == 1) {
             // send align front
-            String cmdStr = getCommand(Command.ALIGN_FRONT, 0);  // steps set to 0 to avoid appending to cmd
+            String cmdStr = getCommand(Command.ALIGN_FRONT, 1);  // steps set to 0 to avoid appending to cmd
             LOGGER.info("Command String: " + cmdStr);
             NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
             alignCount = 0;
@@ -706,7 +708,7 @@ public class Robot {
 
         if (sensorRes.get("R1") == 1 && sensorRes.get("R2") == 1) {
             // send align right
-            String cmdStr = getCommand(Command.ALIGN_RIGHT, 0);  // steps set to 0 to avoid appending to cmd
+            String cmdStr = getCommand(Command.ALIGN_RIGHT, 1);  // steps set to 0 to avoid appending to cmd
             LOGGER.info("Command String: " + cmdStr);
             NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
             alignCount = 0;
@@ -761,9 +763,10 @@ public class Robot {
         StringBuilder cmdStr = new StringBuilder();
 
         cmdStr.append(Command.ArduinoMove.values()[cmd.ordinal()]);
-        if (steps > 1) {
-            cmdStr.append(steps);
-        }
+//        if (steps > 1) {
+//            cmdStr.append(steps);
+//        }
+        cmdStr.append(steps);
         cmdStr.append('|');
 
         return cmdStr.toString();
