@@ -292,7 +292,7 @@ public class Robot {
             NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
             // TODO if can delete if
             if (!findingFP) {
-                alignCount++;
+                alignCount += steps;
                 LOGGER.info(String.format("alignCount: %d", alignCount));
             }
         }
