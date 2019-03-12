@@ -522,7 +522,7 @@ public class Robot {
         if (sensorRes.get("F1") == 2 || sensorRes.get("F2") == 2 || sensorRes.get("F3") == 2) {
             // TODO: check using android index or algo index
             Sensor F2 = sensorMap.get("F2");
-            String toSend = String.format("I|%d|%d|%s", F2.getCol() + 1, F2.getRow() + 1, dir);
+            String toSend = String.format("I%d|%d|%s", F2.getCol() + 1, F2.getRow() + 1, dir.toString());
             NetMgr.getInstance().send(toSend);
         }
     }
@@ -570,7 +570,12 @@ public class Robot {
             }
 
             // TODO: check whether img is needed to be detected and send RPI if needed
-//            imageRecognition();
+            imageRecognition();
+//            try {
+//                TimeUnit.MILLISECONDS.sleep(10);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
         }
 
         for(String sname: sensorList) {

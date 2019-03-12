@@ -96,6 +96,10 @@ public class RequestHandler extends Thread {
             send(NetworkConstants.START_EXP);
 
 
+            // For fastest path
+//            robot.setFindingFP(true);
+//            send(NetworkConstants.START_FP);
+
             while (true) {
                 // wait for incoming data
                 do {
@@ -120,11 +124,15 @@ public class RequestHandler extends Thread {
 
     public void handle(String msg) throws InterruptedException {
         char firstChar;
+        char imgChar = msg.charAt(0);
         msg = msg.substring(1);
         firstChar = msg.charAt(0);
         LOGGER.info(Character.toString(firstChar));
         if (firstChar == '{') {
             System.out.println("Unhandled: " + msg);
+        }
+        else if (imgChar == 'I') {
+            System.out.println("Receive img recognition\n");
         }
         else if (msg.contains("fastest")) {
             System.out.println("Starting fastest path");
