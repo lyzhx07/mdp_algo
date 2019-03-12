@@ -657,15 +657,24 @@ public class Robot {
                     .put("obstacle", obstacleString)
                     .put("length", obstacleString.length() * 4);
             mapArray.put(mapJson);
+
+            // status
+//            JSONArray statusArray = new JSONArray();
+//            JSONObject statusJson = new JSONObject()
+//                    .put("status", status.replaceAll("\\s",""));
+//            statusArray.put(statusJson);
+
+
             androidJson.put("robot", robotArray);
             androidJson.put("map", mapArray);
-            NetMgr.getInstance().send(NetworkConstants.ANDROID + androidJson.toString());
+//            androidJson.put("status", statusArray);
+            NetMgr.getInstance().send(NetworkConstants.ANDROID + androidJson.toString() + "\n");
 
-            try {
-                TimeUnit.MILLISECONDS.sleep(10);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+//            try {
+//                TimeUnit.MILLISECONDS.sleep(10);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
 
             // Realignment
             if (alignCount > RobotConstants.CALIBRATE_AFTER && !findingFP) {
