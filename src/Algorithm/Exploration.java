@@ -31,6 +31,9 @@ public class Exploration {
     private long endTime;
     private Point start;
 
+    private int right_move = 0;     // checking for four consecutive right + forward move
+
+//    private boolean firstMove = false;  // for aligning right when it is firstMove
     public Exploration(Map exploredMap, Map realMap, Robot robot, double coverageLimit, int timeLimit, int stepPerSecond,
                        boolean sim) {
         this.exploredMap = exploredMap;
@@ -158,6 +161,9 @@ public class Exploration {
                 break outer;
             }
 
+            if (moves % checkingStep == 0 || right_move > 3) {      // prevent from keep turning right and forward
+//            if (moves % checkingStep == 0 || robot.getPos().distance(start)==0) {     // original
+//            if (moves % checkingStep == 0) {
                 do{
                     prevArea = areaExplored;
                     if(!goToUnexplored())
@@ -232,6 +238,7 @@ public class Exploration {
 //            }
             
             moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
+            right_move++;
         }
 
         // else if front movable
@@ -246,6 +253,8 @@ public class Exploration {
 
             robot.move(Command.FORWARD, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
             robot.sense(exploredMap, realMap);
+            right_move = 0;
+
         }
 
         // else if left movable
@@ -261,12 +270,16 @@ public class Exploration {
             robot.align_right(exploredMap, realMap);
 
             moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
+            right_move = 0;
+
         }
 
         // else move backwards
         else {
             Boolean firstBackward = true;
             do {
+                right_move = 0;
+
                 // try to align front and right if possible before moving backwards for the first time
                 if (firstBackward) {
                     LOGGER.info("Before moving backwards, try to align");
@@ -289,6 +302,7 @@ public class Exploration {
                 robot.turn(Command.TURN_LEFT, stepPerSecond);
                 robot.sense(exploredMap, realMap);
                 moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
+                right_move = 0;
             }
 
             // else turn right
@@ -296,6 +310,7 @@ public class Exploration {
                 robot.turn(Command.TURN_RIGHT, stepPerSecond);
                 robot.sense(exploredMap, realMap);
                 moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
+                right_move++;
             }
         }
 
