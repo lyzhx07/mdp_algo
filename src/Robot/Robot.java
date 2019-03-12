@@ -3,6 +3,7 @@ package Robot;
 import Map.Map;
 import Map.Direction;
 import Map.MapDescriptor;
+import Map.Cell;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -512,18 +513,66 @@ public class Robot {
         }
     }
 
+
+    public void imageRecognitionRight(Map exploredMap) {
+        int rowInc = 0, colInc = 0;
+        int camera_row, camera_col, temp_row, temp_col;
+
+        switch (dir) {
+            case UP:
+                rowInc = 0;
+                colInc = 1;
+                break;
+            case DOWN:
+                rowInc = 0;
+                colInc = -1;
+                break;
+            case LEFT:
+                colInc = 0;
+                rowInc = 1;
+                break;
+            case RIGHT:
+                colInc = 0;
+                rowInc = -1;
+                break;
+        }
+
+        camera_row = pos.y + rowInc;
+        camera_col = pos.x + colInc;
+
+        for (int i = RobotConstants.CAMERA_MIN; i <= RobotConstants.CAMERA_MAX; i++) {
+            temp_row = camera_row + rowInc * i;
+            temp_col = camera_col + colInc * i;
+
+            if (exploredMap.checkValidCell(temp_row, temp_col)) {
+                Cell temp_cell = exploredMap.getCell(temp_row, temp_col);
+                if (temp_cell.isExplored() && temp_cell.isObstacle()) {
+                    // send to RPI to do image recognition
+                    String to_send = String.format("I%d|%d|%s", temp_col + 1, temp_row + 1, Direction.getClockwise(dir).toString());
+                    NetMgr.getInstance().send(to_send);
+                    break;
+                }
+            }
+            else {      // invalid cell
+                break;
+            }
+
+        }
+
+    }
+
     /** TODO
      * Check whether image recognition is possible (front obstacles )
      * i.e. obstacles found 2 grids in front of any front sensors
      * if yes, send to RPI
      * format: I|X|Y|RobotDirection
      */
-    public void imageRecognition() {
+    public void imageRecognitionFront() {
         if (sensorRes.get("F1") == 2 || sensorRes.get("F2") == 2 || sensorRes.get("F3") == 2) {
             // TODO: check using android index or algo index
             Sensor F2 = sensorMap.get("F2");
-            String toSend = String.format("I%d|%d|%s", F2.getCol() + 1, F2.getRow() + 1, dir.toString());
-            NetMgr.getInstance().send(toSend);
+            String to_send = String.format("I%d|%d|%s", F2.getCol() + 1, F2.getRow() + 1, dir.toString());
+            NetMgr.getInstance().send(to_send);
         }
     }
 
@@ -571,8 +620,8 @@ public class Robot {
                 return;
             }
 
-            // TODO: check whether img is needed to be detected and send RPI if needed
-            imageRecognition();
+            // TODO: Camera facing front - check whether img is needed to be detected and send RPI if needed
+//            imageRecognitionFront();
 //            try {
 //                TimeUnit.MILLISECONDS.sleep(10);
 //            } catch (Exception e) {
@@ -641,6 +690,9 @@ public class Robot {
 
         // send to Android
         if (!sim) {
+
+            // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
+            imageRecognitionRight(exploredMap);
 
             send_android(exploredMap);
 
