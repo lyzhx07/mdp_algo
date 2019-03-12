@@ -52,7 +52,7 @@ public class RequestHandler extends Thread {
         exploredMap = new Map();
         realMap = new Map();
         MDF.loadRealMap(realMap, "defaultMap.txt");
-        robot = new Robot(true, false, 1, 1, Direction.UP);
+        robot = new Robot(true, false, 1, 1, Direction.RIGHT);
         robot.setStartPos(startPoint.y, startPoint.x, exploredMap);
         robot.sense(exploredMap, realMap);
         System.out.println(exploredMap.getExploredPercentage());

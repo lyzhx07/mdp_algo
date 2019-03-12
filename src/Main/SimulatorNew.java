@@ -122,7 +122,7 @@ public class SimulatorNew extends Application {
 
 
         // Default Location at the startzone
-        robot = new Robot(sim, false, 1, 1, Direction.UP);
+        robot = new Robot(sim, false, 1, 1, Direction.RIGHT);
         robot.setStartPos(robot.getPos().y, robot.getPos().x, exploredMap);
 
         // Threads
@@ -334,7 +334,7 @@ public class SimulatorNew extends Application {
         downRB.setToggleGroup(startDir);
         leftRB.setToggleGroup(startDir);
         rightRB.setToggleGroup(startDir);
-        upRB.setSelected(true);
+        rightRB.setSelected(true);
         startDir.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
             @Override
             public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
@@ -1120,6 +1120,7 @@ public class SimulatorNew extends Application {
                     case CHECK_LIST:
                         if(sim) {
                             expMapDraw = true;
+                            robot.setDir(Direction.RIGHT);
                             robot.setFindingFP(false);
                             exploredMap.resetMap();
                             robot.setStartPos(startPos.y, startPos.x, exploredMap);
@@ -1127,6 +1128,7 @@ public class SimulatorNew extends Application {
                         }
                         else {
                             expMapDraw = true;
+                            robot.setDir(Direction.RIGHT);
                             robot.setSim(false);
                             robot.setFindingFP(false);
                             // reset to unexplored map
@@ -1542,8 +1544,9 @@ public class SimulatorNew extends Application {
 //            if (!setObstacle)
 //                expMapDraw = false;
         wayPointTxt.setText(String.format("(%d, %d)", MapConstants.GOALZONE_COL, MapConstants.GOALZONE_ROW));
-        upRB.setSelected(true);
-        robot = new Robot(sim, false, 1, 1, Direction.UP);
+        rightRB.setSelected(true);
+        // TODO starting direction is right
+        robot = new Robot(sim, false, 1, 1, Direction.RIGHT);
         robot.setStatus("Reset to start zone");
 
     }
