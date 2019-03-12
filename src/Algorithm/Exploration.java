@@ -30,7 +30,7 @@ public class Exploration {
     private long startTime;
     private long endTime;
     private Point start;
-    private boolean firstMove = false;  // for aligning right when it is firstMove
+
     public Exploration(Map exploredMap, Map realMap, Robot robot, double coverageLimit, int timeLimit, int stepPerSecond,
                        boolean sim) {
         this.exploredMap = exploredMap;
@@ -129,7 +129,7 @@ public class Exploration {
         int moves = 1;
         int checkingStep = RobotConstants.CHECKSTEPS;
         this.start = start;
-        this.firstMove = true;
+//        this.firstMove = true;
 
         // Loop to explore the map
         outer:
@@ -221,11 +221,11 @@ public class Exploration {
             robot.sense(exploredMap, realMap);
             
             // if firstMove, align right
-            if (firstMove) {
-                LOGGER.info("First Move, align right.");
-                robot.align_right(exploredMap, realMap);
-                firstMove = false;
-            }
+//            if (firstMove) {
+//                LOGGER.info("First Move, align right.");
+//                robot.align_right(exploredMap, realMap);
+//                firstMove = false;
+//            }
             
             moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
         }
@@ -233,12 +233,12 @@ public class Exploration {
         // else if front movable
         else if (movable(robotDir)) {
 
-            // if firstMove, align right
-            if (firstMove) {
-                LOGGER.info("First Move, align right.");
-                robot.align_right(exploredMap, realMap);
-                firstMove = false;
-            }
+//            // if firstMove, align right
+//            if (firstMove) {
+//                LOGGER.info("First Move, align right.");
+//                robot.align_right(exploredMap, realMap);
+//                firstMove = false;
+//            }
 
             robot.move(Command.FORWARD, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
             robot.sense(exploredMap, realMap);
