@@ -540,6 +540,14 @@ public class Robot {
         camera_row = pos.y + rowInc;
         camera_col = pos.x + colInc;
 
+        String to_send = String.format("I%d|%d|%s", camera_col + 1, camera_row + 1, Direction.getClockwise(dir).toString());
+
+        // send RPI if sensor reading wthin the camera range
+        if (sensorRes.get("R1") <= RobotConstants.CAMERA_MAX || sensorRes.get("R2") <= RobotConstants.CAMERA_MAX) {
+            NetMgr.getInstance().send(to_send);
+            return;
+        }
+        // else check for middle obstacles
         for (int i = RobotConstants.CAMERA_MIN; i <= RobotConstants.CAMERA_MAX; i++) {
             temp_row = camera_row + rowInc * i;
             temp_col = camera_col + colInc * i;
@@ -548,9 +556,7 @@ public class Robot {
                 Cell temp_cell = exploredMap.getCell(temp_row, temp_col);
                 if (temp_cell.isExplored() && temp_cell.isObstacle()) {
                     // send to RPI to do image recognition
-                    String to_send = String.format("I%d|%d|%s", camera_col + 1, camera_row + 1, Direction.getClockwise(dir).toString());
-                    System.out.println(to_send);
-//                    NetMgr.getInstance().send(to_send);
+                    NetMgr.getInstance().send(to_send);
                     break;
                 }
             }
