@@ -398,7 +398,10 @@ public class Exploration {
         System.out.println("Exploration Fastest Commands: "+commands);
 
         //Not moving back to start single moves
-        if (!loc.equals(start)) {
+
+        // TODO: temporarily disable
+        if (true) {
+//        if (!loc.equals(start)) {
             for (Command c : commands) {
                 System.out.println("Command: "+c);
                 if ((c == Command.FORWARD) && !movable(robot.getDir())) {
@@ -474,6 +477,8 @@ public class Exploration {
 
             }
         }
+
+        /* TODO: temporarily disable
         //Moving back to Start multiple moves
         else {
             int moves = 0;
@@ -519,6 +524,10 @@ public class Exploration {
                     }
                 }
             }
+        */
+
+        //TODO: temp code
+        if (loc.equals(start)) {
             // Orient robot to face UP
             if (loc.equals(start)) {
                 while (robot.getDir() != Direction.UP) {
