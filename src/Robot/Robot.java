@@ -612,6 +612,7 @@ public class Robot {
             updateSensorRes(exploredMap, realMap);
         }
         else {
+            // TODO: add in case arduino send
             String temp = NetMgr.getInstance().receive();
 //            String temp2 = NetMgr.getInstance().receive();
             String msg = NetMgr.getInstance().receive();
@@ -696,7 +697,7 @@ public class Robot {
         }
 
         // send to Android
-        if (!sim) {
+        if (!sim && !findingFP) {
 
             // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
             imageRecognitionRight(exploredMap);
@@ -704,7 +705,7 @@ public class Robot {
             send_android(exploredMap);
 
             // Realignment
-            if (alignCount > RobotConstants.CALIBRATE_AFTER && !findingFP) {
+            if (alignCount > RobotConstants.CALIBRATE_AFTER) {
                 // TODO: Alignment
                 align_front(exploredMap, realMap);
                 align_right(exploredMap, realMap);
@@ -713,7 +714,7 @@ public class Robot {
 
     }
 
-    private JSONArray getRobotArray() {
+    public JSONArray getRobotArray() {
 
         JSONArray robotArray = new JSONArray();
         JSONObject robotJson = new JSONObject()
@@ -724,7 +725,7 @@ public class Robot {
         return robotArray;
     }
 
-    private JSONArray getMapArray(Map exploredMap) {
+    public JSONArray getMapArray(Map exploredMap) {
         String obstacleString = MDF.generateMDFString2(exploredMap);
         JSONArray mapArray = new JSONArray();
         JSONObject mapJson = new JSONObject()
@@ -735,10 +736,10 @@ public class Robot {
         return mapArray;
     }
 
-    private JSONArray getStatusArray() {
+    public JSONArray getStatusArray() {
         JSONArray statusArray = new JSONArray();
         JSONObject statusJson = new JSONObject()
-                .put("status", status.replaceAll("\\s",""));
+                .put("status", status.replaceAll("\\n",""));
         statusArray.put(statusJson);
         return statusArray;
     }

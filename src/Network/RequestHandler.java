@@ -128,7 +128,7 @@ public class RequestHandler extends Thread {
         msg = msg.substring(1);
         firstChar = msg.charAt(0);
         LOGGER.info(Character.toString(firstChar));
-        if (firstChar == '{') {
+        if (firstChar == '{' && !msg.contains("fastest")) {
             System.out.println("Unhandled: " + msg);
         }
         else if (imgChar == 'I') {
