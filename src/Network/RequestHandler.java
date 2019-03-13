@@ -135,6 +135,8 @@ public class RequestHandler extends Thread {
             System.out.println("Receive img recognition\n");
         }
         else if (msg.contains("fastest")) {
+            System.out.println("waiting - 10 seconds");
+            TimeUnit.MILLISECONDS.sleep(10000);
             System.out.println("Starting fastest path");
             send(NetworkConstants.START_FP);
             robot.setFindingFP(true);
@@ -179,7 +181,8 @@ public class RequestHandler extends Thread {
             case 'P':
                 sendSensorRes();
                 break;
-            case 'M':
+            case 'N':
+                System.out.println("Calibrating");
                 robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
                 robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
                 break;

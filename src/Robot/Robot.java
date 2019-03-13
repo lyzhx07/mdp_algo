@@ -817,7 +817,7 @@ public class Robot {
         }
         if (sensorRes.get("R1") == 1 && sensorRes.get("R2") == 1) {
             // send align right
-            String cmdStr = getCommand(Command.ALIGN_RIGHT, aligning_index);  // steps set to 0 to avoid appending to cmd
+            String cmdStr = getCommand(Command.ALIGN_RIGHT, aligning_index);
             LOGGER.info("Command String: " + cmdStr);
             NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
             alignCount = 0;

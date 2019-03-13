@@ -1216,7 +1216,8 @@ public class SimulatorNew extends Application {
                 // Caliberation
                 // pause for 1s, initially facing down, after caliberation, should face up
                 TimeUnit.MILLISECONDS.sleep(1000);
-                netMgr.send(NetworkConstants.ARDUINO + Command.ArduinoMove.values()[Command.INITIAL_CALIBERATE.ordinal()]);
+                String calibrationCmd = robot.getCommand(Command.INITIAL_CALIBERATE, 1);    // steps 1 for consistency
+                netMgr.send(NetworkConstants.ARDUINO + calibrationCmd);
                 expMapDraw = true;
                 robot.setFindingFP(true);
                 // Orient the robot on laptop to face lap as after caliberation, it will face up
@@ -1224,10 +1225,6 @@ public class SimulatorNew extends Application {
                 robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
                 robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
                 exploredMap.removeAllPaths();
-                robot.setStatus("Ready to start fastest path. Waiting for command.\n");
-                LOGGER.info(robot.getStatus());
-                // TODO
-//                robot.send_android();
 
                 fastTask = new Thread(new FastTask());
                 startedTask = fastTask;
@@ -1290,7 +1287,7 @@ public class SimulatorNew extends Application {
 
                     }
                     cmdBuilder.append(Command.ArduinoMove.values()[tempCmd.ordinal()]);
-                    // turn one steop, do not append
+                    cmdBuilder.append('1');
                     cmdBuilder.append('|');
                     moves = 0;
                 }
@@ -1303,18 +1300,8 @@ public class SimulatorNew extends Application {
 
         @Override
         protected Integer call() throws Exception {
-            if(!sim) {
-                // waiting for the fastest path command
-                String msg;
-                do {
-                    msg = netMgr.receive();
-                } while (!msg.equals(NetworkConstants.START_FP));
-                LOGGER.info("Receiving command to start fastest path: " + msg);
-                System.out.println(Thread.currentThread().getName());
-                robot.setFindingFP(true);
-                displayTimer.initialize();
-                displayTimer.start();
-            }
+
+            // calculate the path and make the first turn (if any) first during the 1min interval to save time
             double startT = System.currentTimeMillis();
             double endT = 0;
             FastestPath fp = new FastestPath(exploredMap, robot, sim);
@@ -1330,12 +1317,51 @@ public class SimulatorNew extends Application {
 
             // TODO: check to send one single command or one by one
             ArrayList<Command> commands = fp.getPathCommands(path);
-            //TODO: testing
+
+            // execute the first command if it is turning
+            Command firstCmd = commands.get(0);
+            if (firstCmd == Command.TURN_RIGHT) {
+                robot.turn(firstCmd, RobotConstants.STEP_PER_SECOND);
+
+                if (!sim) {
+                    // send separate msg to arduino as findingFP == true, no command is sent to arduino
+                    String turnRigntCmdStr = robot.getCommand(Command.TURN_RIGHT, 1);
+                    netMgr.send(NetworkConstants.ARDUINO + turnRigntCmdStr);
+                    netMgr.receive();   // to flush out sensor reading
+
+                    // send align right
+                    String alignRightCmdStr = robot.getCommand(Command.ALIGN_RIGHT, 3);   // align index is 3 for turn right
+                    netMgr.send(NetworkConstants.ARDUINO + alignRightCmdStr);
+                    netMgr.receive();   // to flush out sensor reading
+                }
+                // remove it from commands ArrayList
+                commands.remove(0);
+            }
+
             String cmd = getFastTaskCmd(commands);
+            LOGGER.info("Checking FPCmdString: " + cmd);
+
+            robot.setStatus("Ready to start fastest path. Waiting for command.\n");
+            LOGGER.info(robot.getStatus());
+            // TODO: do not send due to MDF - for dummy rpi debugging
+//            robot.send_android();
+
+            if(!sim) {
+                // waiting for the fastest path command
+                String msg;
+                do {
+                    msg = netMgr.receive();
+                } while (!msg.equals(NetworkConstants.START_FP));
+                LOGGER.info("Receiving command to start fastest path: " + msg);
+                System.out.println(Thread.currentThread().getName());
+                robot.setFindingFP(true);
+                displayTimer.initialize();
+                displayTimer.start();
+            }
+
             if (!sim) {
                 netMgr.send(NetworkConstants.ARDUINO + cmd);
             }
-            LOGGER.info("Checking FPCmdString: " + cmd);
             String[] cmdStr = cmd.split("\\|");
 
             int steps = (int) stepsSB.getValue();
