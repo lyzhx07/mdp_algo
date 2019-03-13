@@ -704,12 +704,14 @@ public class SimulatorNew extends Application {
                             robot.sense(exploredMap, map);
                             break;
                         case I:
-                            NetMgr.getInstance().send("I");
-                            String msg;
-                            do {
-                                msg = NetMgr.getInstance().receive();
-                            } while(msg.charAt(0) == 'F');
-                            System.out.println(msg);
+//                            NetMgr.getInstance().send("I");
+//                            String msg;
+//                            do {
+//                                msg = NetMgr.getInstance().receive();
+//                            } while(msg.charAt(0) == 'F');
+//                            System.out.println(msg);
+                            String to_send = String.format("I%d|%d|%s", 6, 3, Direction.getClockwise(Direction.UP).toString());
+                            netMgr.send(to_send);
                             break;
                         default:
                             break;
@@ -1271,11 +1273,11 @@ public class SimulatorNew extends Application {
             StringBuilder cmdBuilder = new StringBuilder();
             for (int i = 0; i < commands.size(); i++) {
                 tempCmd = commands.get(i);
-                if (tempCmd == Command.FORWARD && moves <= 9) {
+                if (tempCmd == Command.FORWARD && moves <= RobotConstants.MAX_MOVE) {
                     moves++;
 
                     // if last cmd or moves == 9
-                    if (i == commands.size() - 1 || moves == 9) {
+                    if (i == commands.size() - 1 || moves == RobotConstants.MAX_MOVE) {
                         cmdBuilder.append(Command.ArduinoMove.values()[tempCmd.ordinal()]);
                         cmdBuilder.append(moves);
                         cmdBuilder.append('|');

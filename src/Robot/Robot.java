@@ -489,12 +489,12 @@ public class Robot {
      * Getting sensor result from RPI/Arduino
      * @return HashMap<SensorId, ObsBlockDis>
      */
-    public boolean updateSensorRes(String msg) {
+    public HashMap<String, Integer> updateSensorRes(String msg) {
         int obsBlock;
         if (msg.charAt(0) != 'F') {
             // TODO
             // not sensor info sent from arduino
-            return false;
+            return null;
         }
         else {
             String[] sensorStrings = msg.split("\\|");
@@ -509,7 +509,7 @@ public class Robot {
                     sensorRes.put(sensorID, -1);
                 }
             }
-            return true;
+            return sensorRes;
         }
     }
 
@@ -590,12 +590,13 @@ public class Robot {
      * @param realMap
      * @return HashMap<SensorId, ObsBlockDis>
      */
-    public void updateSensorRes(Map exploredMap, Map realMap) {
+    public HashMap<String, Integer> updateSensorRes(Map exploredMap, Map realMap) {
         int obsBlock;
         for(String sname: sensorList) {
             obsBlock = sensorMap.get(sname).detect(realMap);
             sensorRes.put(sname, obsBlock);
         }
+        return sensorRes;
     }
 
     /**
@@ -607,13 +608,14 @@ public class Robot {
 
         int obsBlock;
         int rowInc=0, colInc=0, row, col;
+        HashMap<String, Integer> sensorResult;
 
         if(sim) {
-            updateSensorRes(exploredMap, realMap);
+            sensorResult = updateSensorRes(exploredMap, realMap);
         }
         else {
             // TODO: add in case arduino send
-            String temp = NetMgr.getInstance().receive();
+//            String temp = NetMgr.getInstance().receive();
 //            String temp2 = NetMgr.getInstance().receive();
             String msg = NetMgr.getInstance().receive();
 //            while (msg.charAt(0) == 'L') {
@@ -622,8 +624,8 @@ public class Robot {
 //                msg = NetMgr.getInstance().receive();
 //
 //            }
-            boolean success = updateSensorRes(msg);
-            if(!success) {
+            sensorResult = updateSensorRes(msg);
+            if(sensorResult == null) {
                 LOGGER.warning("Invalid msg. Map not updated");
                 return;
             }
@@ -639,7 +641,7 @@ public class Robot {
 
         for(String sname: sensorList) {
             Sensor s = sensorMap.get(sname);
-            obsBlock = sensorRes.get(sname);
+            obsBlock = sensorResult.get(sname);
 
             // Assign the rowInc and colInc based on sensor Direction
             switch (s.getSensorDir()) {
@@ -676,6 +678,7 @@ public class Robot {
                     if(j == obsBlock && !exploredMap.getCell(row, col).isMoveThru()) {
                         exploredMap.getCell(row, col).setObstacle(true);
                         exploredMap.setVirtualWall(exploredMap.getCell(row, col), true);
+                        exploredMap.reinitVirtualWall();
                         break;
                     }
                     // if not in if
@@ -700,7 +703,7 @@ public class Robot {
         if (!sim && !findingFP) {
 
             // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
-            imageRecognitionRight(exploredMap);
+//            imageRecognitionRight(exploredMap);
 
             send_android(exploredMap);
 
@@ -818,7 +821,7 @@ public class Robot {
             LOGGER.info("Command String: " + cmdStr);
             NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
             alignCount = 0;
-            status = String.format("Aligning Right: %d", aligning_index);
+            status = String.format("Aligning Right: %d\n", aligning_index);
             LOGGER.info(status);
             sense(exploredMap, realMap);
         }
