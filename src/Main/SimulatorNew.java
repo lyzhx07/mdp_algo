@@ -1198,8 +1198,9 @@ public class SimulatorNew extends Application {
             explore.exploration(new Point(MapConstants.STARTZONE_COL, MapConstants.STARTZONE_COL));
             System.out.println(Thread.currentThread().getName());
             robot.setStatus("Done exploration\n");
-            robot.send_android(exploredMap);
-
+            if (!sim) {
+                robot.send_android(exploredMap);
+            }
             displayTimer.stop();
             // TODO check msg format for android
 //            if (!sim) {
