@@ -43,6 +43,7 @@ import java.util.logging.Logger;
 
 import static java.lang.Math.abs;
 import Helper.*;
+import org.json.JSONObject;
 
 //JavaFX Libraries
 
@@ -1197,6 +1198,8 @@ public class SimulatorNew extends Application {
             explore.exploration(new Point(MapConstants.STARTZONE_COL, MapConstants.STARTZONE_COL));
             System.out.println(Thread.currentThread().getName());
             robot.setStatus("Done exploration\n");
+            robot.send_android(exploredMap);
+
             displayTimer.stop();
             // TODO check msg format for android
 //            if (!sim) {
@@ -1206,12 +1209,24 @@ public class SimulatorNew extends Application {
 
           // Prepare for fastest path and wait for command from arduino
             if(!sim) {
+
+                // caliberation
+
+                // pause for 1s, turn right, send N to caliberate, turn left
+                TimeUnit.MILLISECONDS.sleep(1000);
+                robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+                netMgr.receive();
+                netMgr.send(NetworkConstants.ARDUINO + "M|");
+                robot.turn(Command.TURN_LEFT, RobotConstants.STEP_PER_SECOND);
+                netMgr.receive();
+
                 expMapDraw = true;
                 robot.setFindingFP(true);
                 exploredMap.removeAllPaths();
                 robot.setStatus("Ready to start fastest path. Waiting for command.\n");
-                // TODO: check send to who and the formats
-                netMgr.send(NetworkConstants.ANDROID + robot.getStatus());
+                LOGGER.info(robot.getStatus());
+                // TODO
+//                robot.send_android();
 
                 fastTask = new Thread(new FastTask());
                 startedTask = fastTask;
