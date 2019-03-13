@@ -227,6 +227,8 @@ public class Exploration {
         
         // if right movable
         if (movable(Direction.getClockwise(robotDir))) {
+            LOGGER.info("DEBUG: In right movable");
+
             robot.turn(Command.TURN_RIGHT, stepPerSecond);
             robot.sense(exploredMap, realMap);
             
@@ -243,7 +245,7 @@ public class Exploration {
 
         // else if front movable
         else if (movable(robotDir)) {
-
+            LOGGER.info("DEBUG: In front movable");
 //            // if firstMove, align right
 //            if (firstMove) {
 //                LOGGER.info("First Move, align right.");
@@ -259,6 +261,8 @@ public class Exploration {
 
         // else if left movable
         else if (movable(Direction.getAntiClockwise(robotDir))) {
+            LOGGER.info("DEBUG: In right movable");
+
             // try to align front and right if possible before and after turning left
             LOGGER.info("Right and front not movable, try to align.");
 
@@ -276,6 +280,8 @@ public class Exploration {
 
         // else move backwards
         else {
+            LOGGER.info("DEBUG: In else");
+
             Boolean firstBackward = true;
             do {
                 right_move = 0;
@@ -362,7 +368,7 @@ public class Exploration {
                 colInc = 0;
                 break;
         }
-
+        LOGGER.info(String.format("DEBUG: checking movable row: %d, col: %d", robot.getPos().y + rowInc, robot.getPos().x + colInc));
         return exploredMap.checkValidMove(robot.getPos().y + rowInc, robot.getPos().x + colInc);
     }
 
