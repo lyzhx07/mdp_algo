@@ -1213,18 +1213,16 @@ public class SimulatorNew extends Application {
           // Prepare for fastest path and wait for command from arduino
             if(!sim) {
 
-                // caliberation
-
-                // pause for 1s, turn right, send N to caliberate, turn left
+                // Caliberation
+                // pause for 1s, initially facing down, after caliberation, should face up
                 TimeUnit.MILLISECONDS.sleep(1000);
-                robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
-                netMgr.receive();
-                netMgr.send(NetworkConstants.ARDUINO + "M|");
-                robot.turn(Command.TURN_LEFT, RobotConstants.STEP_PER_SECOND);
-                netMgr.receive();
-
+                netMgr.send(NetworkConstants.ARDUINO + Command.ArduinoMove.values()[Command.INITIAL_CALIBERATE.ordinal()]);
                 expMapDraw = true;
                 robot.setFindingFP(true);
+                // Orient the robot on laptop to face lap as after caliberation, it will face up
+                // need to turn after setFindingFP(true) as it will not send command to arduino
+                robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+                robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
                 exploredMap.removeAllPaths();
                 robot.setStatus("Ready to start fastest path. Waiting for command.\n");
                 LOGGER.info(robot.getStatus());

@@ -541,7 +541,10 @@ public class Exploration {
         if (loc.equals(start)) {
             // Orient robot to face UP
             if (loc.equals(start)) {
-                while (robot.getDir() != Direction.UP) {
+
+                // TODO: Changed - orient the robot to face down for caliberation
+//                while (robot.getDir() != Direction.UP) {
+                while (robot.getDir() != Direction.DOWN) {
                     // TODO: check - arduino dont want
                     // align if possible
 //                    if (!sim) {
@@ -549,7 +552,8 @@ public class Exploration {
 //                        robot.align_right(exploredMap, realMap);
 //                    }
 
-                    robot.turn(Command.TURN_RIGHT, stepPerSecond);
+//                    robot.turn(Command.TURN_RIGHT, stepPerSecond);
+                    robot.turn(Command.TURN_LEFT, stepPerSecond);
 //                    if (sim) {
 //                        try {
 //                            TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
@@ -559,7 +563,14 @@ public class Exploration {
 //                    }
 
                     System.out.println(robot.getDir());
-                    robot.sense(exploredMap, realMap);
+
+                    // since it is alr at start, do not update sensor reading just incase the position is wrong and phantom blocks
+                    if (sim) {
+                        robot.sense(exploredMap, realMap);
+                    }
+                    else {
+                        NetMgr.getInstance().receive();
+                    }
                     // actual to be added later
 //                    if(!sim && !movable(robot.getDir())) {
 //                        NetMgr.getInstance().send("Alg|Ard|"+Command.ALIGN_FRONT.ordinal()+"|0");

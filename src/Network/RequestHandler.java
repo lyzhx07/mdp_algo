@@ -179,6 +179,10 @@ public class RequestHandler extends Thread {
             case 'P':
                 sendSensorRes();
                 break;
+            case 'M':
+                robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+                robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+                break;
             default:
                 LOGGER.warning("Wrong char, do nothing");
                 break;
