@@ -4,6 +4,7 @@ import Map.Map;
 import Map.Cell;
 import Map.Direction;
 import Map.MapConstants;
+import Network.NetMgr;
 import Robot.Robot;
 import Robot.Command;
 import Robot.RobotConstants;
@@ -412,6 +413,8 @@ public class Exploration {
                 System.out.println("Command: "+c);
                 if ((c == Command.FORWARD) && !movable(robot.getDir())) {
                     System.out.println("Not Executing Forward Not Movable");
+                    // TODO
+                    goToPoint(loc);
                     break;
                 } else{
                     if(((c == Command.TURN_LEFT && !movable(Direction.getAntiClockwise(robot.getDir())))||
@@ -423,7 +426,9 @@ public class Exploration {
                     else {
                         robot.move(c, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
                     }
+
                     robot.sense(exploredMap, realMap);
+
                 }
 //                if (sim) {
 //                    try {
