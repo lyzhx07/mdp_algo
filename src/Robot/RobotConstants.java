@@ -12,7 +12,7 @@ public class RobotConstants {
 	public static final int CALIBRATE_AFTER = 1; //Calibrate After number of moves
 
     // max move
-    public static final int MAX_MOVE = 9;   //9
+    public static final int MAX_MOVE = 7;   //9
 
     // targeted coverage
     public static final int TARGETED_COVERAGE = 97;
