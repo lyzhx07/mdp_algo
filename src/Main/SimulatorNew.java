@@ -1218,6 +1218,8 @@ public class SimulatorNew extends Application {
                 TimeUnit.MILLISECONDS.sleep(1000);
                 String calibrationCmd = robot.getCommand(Command.INITIAL_CALIBERATE, 1);    // steps 1 for consistency
                 netMgr.send(NetworkConstants.ARDUINO + calibrationCmd);
+
+
                 expMapDraw = true;
                 robot.setFindingFP(true);
                 // Orient the robot on laptop to face lap as after caliberation, it will face up
@@ -1286,9 +1288,24 @@ public class SimulatorNew extends Application {
                         cmdBuilder.append('|');
 
                     }
+
+//                    // align_front first and align_right then turn
+//                    cmdBuilder.append(Command.ArduinoMove.values()[Command.ALIGN_FRONT.ordinal()]);
+//                    cmdBuilder.append(1);
+//                    cmdBuilder.append('|');
+//
+//                    // align_right
+//                    cmdBuilder.append(Command.ArduinoMove.values()[Command.ALIGN_RIGHT.ordinal()]);
+//                    cmdBuilder.append('1');
+//                    cmdBuilder.append('|');
+
+
+                    // turning
                     cmdBuilder.append(Command.ArduinoMove.values()[tempCmd.ordinal()]);
                     cmdBuilder.append('1');
                     cmdBuilder.append('|');
+
+
                     moves = 0;
                 }
             }
@@ -1404,7 +1421,10 @@ public class SimulatorNew extends Application {
                         else {
                             robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
                             robot.send_android();
+                            // flush 3 sensor reading: align_front, turn, align_right
                             netMgr.receive();
+//                            netMgr.receive();
+//                            netMgr.receive();
                         }
                         break;
                     case 'A':
@@ -1414,7 +1434,10 @@ public class SimulatorNew extends Application {
                         else {
                             robot.turn(Command.TURN_LEFT, RobotConstants.STEP_PER_SECOND);
                             robot.send_android();
+                            // flush 3 sensor reading: align_front, turn, align_right
                             netMgr.receive();
+//                            netMgr.receive();
+//                            netMgr.receive();
                         }
                         break;
                 }
