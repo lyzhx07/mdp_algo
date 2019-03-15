@@ -46,6 +46,8 @@ public class Robot {
     // for alignment
     private int alignCount = 0;
 
+    // for camera taking picture
+
 
     public Robot(boolean sim, boolean findingFP, int row, int col, Direction dir) {
         this.sim = sim;
@@ -703,7 +705,7 @@ public class Robot {
         if (!sim && !findingFP) {
 
             // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
-//            imageRecognitionRight(exploredMap);
+            imageRecognitionRight(exploredMap);
 
             send_android(exploredMap);
 
