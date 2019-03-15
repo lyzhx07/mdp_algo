@@ -543,10 +543,10 @@ public class Robot {
         String to_send = String.format("I%d|%d|%s", camera_col + 1, camera_row + 1, Direction.getClockwise(dir).toString());
 
         // send RPI if sensor reading wthin the camera range
-        if (sensorRes.get("R1") <= RobotConstants.CAMERA_MAX || sensorRes.get("R2") <= RobotConstants.CAMERA_MAX) {
-            NetMgr.getInstance().send(to_send);
-            return;
-        }
+//        if (sensorRes.get("R1") <= RobotConstants.CAMERA_MAX || sensorRes.get("R2") <= RobotConstants.CAMERA_MAX) {
+//            NetMgr.getInstance().send(to_send);
+//            return;
+//        }
         // else check for middle obstacles
         for (int i = RobotConstants.CAMERA_MIN; i <= RobotConstants.CAMERA_MAX; i++) {
             temp_row = camera_row + rowInc * i;
