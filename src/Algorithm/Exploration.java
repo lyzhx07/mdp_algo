@@ -230,6 +230,9 @@ public class Exploration {
         if (movable(Direction.getClockwise(robotDir))) {
             LOGGER.info("DEBUG: In right movable");
 
+            // check front alignment
+            robot.align_front(exploredMap, realMap);
+
             robot.turn(Command.TURN_RIGHT, stepPerSecond);
             robot.sense(exploredMap, realMap);
             
@@ -239,7 +242,11 @@ public class Exploration {
 //                robot.align_right(exploredMap, realMap);
 //                firstMove = false;
 //            }
-            
+
+            // check front alignment
+            robot.align_front(exploredMap, realMap);
+
+
             moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
             right_move++;
         }
@@ -264,8 +271,16 @@ public class Exploration {
         else if (movable(Direction.getAntiClockwise(robotDir))) {
             LOGGER.info("DEBUG: In right movable");
 
-            // try to align front and right if possible before and after turning left
+            // try to turn right, align front, turn left, align front and right if possible before and after turning left
             LOGGER.info("Right and front not movable, try to align.");
+
+            robot.turn(Command.TURN_RIGHT, stepPerSecond);
+            robot.sense(exploredMap, realMap);
+
+            robot.align_front(exploredMap, realMap);
+
+            robot.turn(Command.TURN_LEFT, stepPerSecond);
+            robot.sense(exploredMap, realMap);
 
             robot.align_front(exploredMap, realMap);
 
@@ -296,6 +311,7 @@ public class Exploration {
                 }
 
                 robot.move(Command.BACKWARD, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
+                robot.align_right(exploredMap, realMap);
                 robot.sense(exploredMap, realMap);
 
 //                if (sim) {
@@ -312,12 +328,20 @@ public class Exploration {
                 right_move = 0;
             }
 
-            // else turn right
+            // else turn left twice
             else {
-                robot.turn(Command.TURN_RIGHT, stepPerSecond);
+                robot.turn(Command.TURN_LEFT, stepPerSecond);
                 robot.sense(exploredMap, realMap);
-                moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
-                right_move++;
+
+                robot.align_front(exploredMap, realMap);
+
+                robot.turn(Command.TURN_LEFT, stepPerSecond);
+                robot.sense(exploredMap, realMap);
+
+                robot.align_right(exploredMap, realMap);
+                // then restart, dont move forward
+//                moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
+                right_move = 0;
             }
         }
 
