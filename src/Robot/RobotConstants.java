@@ -28,7 +28,7 @@ public class RobotConstants {
     public static final int SHORT_MAX = 2;
 
     public static final int LONG_MIN = 1;
-    public static final int LONG_MAX = 5;
+    public static final int LONG_MAX = 4;
 
     // Camera default range (In grids)
     public static final int CAMERA_MIN = 1;
