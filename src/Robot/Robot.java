@@ -864,8 +864,8 @@ public class Robot {
             commands.add(Command.TURN_RIGHT);
         }
         else if (newDir == Direction.getOpposite(dir)) {
-            commands.add(Command.TURN_RIGHT);
-            commands.add(Command.TURN_RIGHT);
+            commands.add(Command.TURN_LEFT);
+            commands.add(Command.TURN_LEFT);
         }
         return commands;
     }
