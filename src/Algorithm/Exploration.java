@@ -284,7 +284,12 @@ public class Exploration {
 
             if (!sim) {
                 robot.align_front(exploredMap, realMap);
+                robot.align_right(exploredMap, realMap);
             }
+
+            // before turn left, take image just in case
+            robot.setImageCount(0);
+            robot.imageRecognitionRight(exploredMap);
 
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
@@ -318,12 +323,19 @@ public class Exploration {
                 robot.align_right(exploredMap, realMap);
             }
 
+            // before turn left, take image just in case
+            robot.setImageCount(0);
+            robot.imageRecognitionRight(exploredMap);
+
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
 
             if (!sim) {
                 robot.align_front(exploredMap, realMap);
+                robot.align_right(exploredMap, realMap);
             }
+            robot.setImageCount(0);
+            robot.imageRecognitionRight(exploredMap);
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
             if (!sim) {

@@ -8,6 +8,7 @@ import Map.Cell;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import Helper.*;
@@ -43,6 +44,9 @@ public class Robot {
     // for converting map to send to android
     private MapDescriptor MDF = new MapDescriptor();
 
+    // for image taking
+    private int imageCount = 0;
+    private HashSet<String> imageHashSet = new HashSet<String>();
     
     // for alignment
     private int alignCount = 0;
@@ -543,16 +547,19 @@ public class Robot {
         camera_row = pos.y + rowInc;
         camera_col = pos.x + colInc;
 
-        String to_send = String.format("I%d|%d|%s", camera_col + 1, camera_row + 1, Direction.getClockwise(dir).toString());
+        boolean sendRPI = false;
 
         // send RPI if sensor reading within the camera range
-        if ((sensorRes.get("R1") <= RobotConstants.CAMERA_MAX || sensorRes.get("R2") <= RobotConstants.CAMERA_MAX) &&
-            !isRightHuggingWall()) {
-            NetMgr.getInstance().send(to_send);
-            return;
+        if ((sensorRes.get("R1") > 0 && sensorRes.get("R1") <= RobotConstants.CAMERA_MAX)
+                || (sensorRes.get("R2") > 0 && sensorRes.get("R2") <= RobotConstants.CAMERA_MAX)) {
+            if (!isRightHuggingWall()) {
+                sendRPI = true;
+            }
         }
+//        }
         // else check for middle obstacles
         else {
+//            LOGGER.info("In else");
             for (int i = RobotConstants.CAMERA_MIN; i <= RobotConstants.CAMERA_MAX; i++) {
                 temp_row = camera_row + rowInc * i;
                 temp_col = camera_col + colInc * i;
@@ -561,7 +568,7 @@ public class Robot {
                     Cell temp_cell = exploredMap.getCell(temp_row, temp_col);
                     if (temp_cell.isExplored() && temp_cell.isObstacle()) {
                         // send to RPI to do image recognition
-                        NetMgr.getInstance().send(to_send);
+                        sendRPI = true;
                         break;
                     }
                 }
@@ -571,6 +578,26 @@ public class Robot {
             }
         }
 
+        // imageCount reset to 0 if preMov is turning but not the turning in turnRightAndAlign
+        if (!hasTurnAndAlign && (preMove == Command.TURN_LEFT || preMove == Command.TURN_RIGHT)) {
+            imageCount = 0;
+        }
+
+        if (sendRPI) {
+            if (imageCount == 0) {
+                String to_send = String.format("I%d|%d|%s", camera_col + 1, camera_row + 1, Direction.getClockwise(dir).toString());
+                if (!imageHashSet.contains(to_send)) {
+                    imageHashSet.add(to_send);
+                    NetMgr.getInstance().send(to_send);
+                }
+            }
+            imageCount = (imageCount + 1) % 3;
+        }
+        else {
+            imageCount = 0;
+        }
+        LOGGER.info(Boolean.toString(sendRPI));
+        LOGGER.info(String.format("imageCount: %d", imageCount));
     }
 
     /** TODO
@@ -940,6 +967,14 @@ public class Robot {
 
     public void setHasTurnAndAlign(boolean canTurn) {
         this.hasTurnAndAlign = canTurn;
+    }
+
+    public int getImageCount() {
+        return imageCount;
+    }
+
+    public void setImageCount(int count) {
+        this.imageCount = count;
     }
 
 
