@@ -243,9 +243,6 @@ public class Exploration {
 //                firstMove = false;
 //            }
 
-            // check front alignment
-            robot.align_front(exploredMap, realMap);
-
 
             moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
             right_move++;
