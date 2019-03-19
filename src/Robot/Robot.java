@@ -49,8 +49,6 @@ public class Robot {
     private int turnAndAlignCount = 0;
     private boolean hasTurnAndAlign = false;
 
-    // for camera taking picture
-
 
     public Robot(boolean sim, boolean findingFP, int row, int col, Direction dir) {
         this.sim = sim;
@@ -548,7 +546,8 @@ public class Robot {
         String to_send = String.format("I%d|%d|%s", camera_col + 1, camera_row + 1, Direction.getClockwise(dir).toString());
 
         // send RPI if sensor reading within the camera range
-        if (sensorRes.get("R1") <= RobotConstants.CAMERA_MAX || sensorRes.get("R2") <= RobotConstants.CAMERA_MAX) {
+        if ((sensorRes.get("R1") <= RobotConstants.CAMERA_MAX || sensorRes.get("R2") <= RobotConstants.CAMERA_MAX) &&
+            !isRightHuggingWall()) {
             NetMgr.getInstance().send(to_send);
             return;
         }
@@ -569,7 +568,6 @@ public class Robot {
                 else {      // invalid cell
                     break;
                 }
-
             }
         }
 
@@ -618,9 +616,6 @@ public class Robot {
         // send to Android
         if (!sim && !findingFP) {
 
-            // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
-            imageRecognitionRight(exploredMap);
-
             send_android(exploredMap);
 
             // Realignment for right
@@ -650,9 +645,9 @@ public class Robot {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-
-
             }
+            // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
+            imageRecognitionRight(exploredMap);
         }
     }
 
@@ -670,6 +665,7 @@ public class Robot {
         turn(Command.TURN_LEFT, RobotConstants.STEP_PER_SECOND);
         senseWithoutAlign(exploredMap, realMap);
         align_right(exploredMap, realMap);
+//        imageRecognitionRight(exploredMap);   // try to do before alignment, if cannot, see how
         hasTurnAndAlign = true;
         turnAndAlignCount = 0;
     }
@@ -686,8 +682,8 @@ public class Robot {
         // send to Android
         if (!sim && !findingFP) {
 
-            // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
-            imageRecognitionRight(exploredMap);
+//            // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
+//            imageRecognitionRight(exploredMap);  // do not repeat taking
 
             send_android(exploredMap);
 
