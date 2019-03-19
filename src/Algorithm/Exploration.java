@@ -155,7 +155,7 @@ public class Exploration {
                 moves=1;
 
             LOGGER.info(Double.toString(areaExplored));
-            LOGGER.info(Integer.toString(moves));
+//            LOGGER.info(Integer.toString(moves));
 
             // TODO: for week 8 only, do not go out again if returning to start and areaExplored > target percentage
             if (robot.getPos().distance(start) == 0 && areaExplored > RobotConstants.TARGETED_COVERAGE) {
@@ -228,7 +228,7 @@ public class Exploration {
         
         // if right movable
         if (movable(Direction.getClockwise(robotDir))) {
-            LOGGER.info("DEBUG: In right movable");
+//            LOGGER.info("DEBUG: In right movable");
 
             // check front alignment
             if (!sim) {
@@ -252,7 +252,7 @@ public class Exploration {
 
         // else if front movable
         else if (movable(robotDir)) {
-            LOGGER.info("DEBUG: In front movable");
+//            LOGGER.info("DEBUG: In front movable");
 //            // if firstMove, align right
 //            if (firstMove) {
 //                LOGGER.info("First Move, align right.");
@@ -268,10 +268,10 @@ public class Exploration {
 
         // else if left movable
         else if (movable(Direction.getAntiClockwise(robotDir))) {
-            LOGGER.info("DEBUG: In right movable");
+//            LOGGER.info("DEBUG: In right movable");
 
             // try to turn right, align front, turn left, align front and right if possible before and after turning left
-            LOGGER.info("Right and front not movable, try to align.");
+//            LOGGER.info("Right and front not movable, try to align.");
 
             if ((robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) &&
                     (!robot.getHasTurnAndAlign()) &&
@@ -300,10 +300,9 @@ public class Exploration {
 
         // else move backwards
         else {
-            LOGGER.info("DEBUG: In else");
+//            LOGGER.info("DEBUG: In else");
 
             // Option1. Turn left twice with alignment
-
             // if R1 and R2 == 1, turn right and align first
             if ((robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) &&
                     (!robot.getHasTurnAndAlign()) &&
@@ -427,7 +426,7 @@ public class Exploration {
                 colInc = 0;
                 break;
         }
-        LOGGER.info(String.format("DEBUG: checking movable row: %d, col: %d", robot.getPos().y + rowInc, robot.getPos().x + colInc));
+//        LOGGER.info(String.format("DEBUG: checking movable row: %d, col: %d", robot.getPos().y + rowInc, robot.getPos().x + colInc));
         return exploredMap.checkValidMove(robot.getPos().y + rowInc, robot.getPos().x + colInc);
     }
 

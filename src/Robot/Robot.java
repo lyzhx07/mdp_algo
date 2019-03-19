@@ -291,12 +291,12 @@ public class Robot {
             // TODO to send fast forward
             // send command to Arduino
             String cmdStr = getCommand(cmd, steps);
-            LOGGER.info("Command String: " + cmdStr);
+//            LOGGER.info("Command String: " + cmdStr);
             NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
             // TODO if can delete if
             if (!findingFP) {
                 alignCount += steps;
-                LOGGER.info(String.format("alignCount: %d", alignCount));
+//                LOGGER.info(String.format("alignCount: %d", alignCount));
             }
         }
 
@@ -378,12 +378,12 @@ public class Robot {
             // send command to Arduino
             // TODO: add turning degree
             String cmdStr = getCommand(cmd, 1);
-            LOGGER.info("Command String: " + cmdStr);
+//            LOGGER.info("Command String: " + cmdStr);
             NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
             // TODO if can delete if
             if(!findingFP) {
                 alignCount++;
-                LOGGER.info(String.format("alignCount: %d", alignCount));
+//                LOGGER.info(String.format("alignCount: %d", alignCount));
             }
         }
         switch(cmd) {
@@ -853,7 +853,7 @@ public class Robot {
         if (sensorRes.get("F1") == 1 && sensorRes.get("F3") == 1) {
             // send align front
             String cmdStr = getCommand(Command.ALIGN_FRONT, 1);  // steps set to 0 to avoid appending to cmd
-            LOGGER.info("Command String: " + cmdStr);
+//            LOGGER.info("Command String: " + cmdStr);
             NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
 //            alignCount = 0;
             status = "Aligning Front\n";
@@ -887,7 +887,7 @@ public class Robot {
         if (sensorRes.get("R1") == 1 && sensorRes.get("R2") == 1) {
             // send align right
             String cmdStr = getCommand(Command.ALIGN_RIGHT, aligning_index);
-            LOGGER.info("Command String: " + cmdStr);
+//            LOGGER.info("Command String: " + cmdStr);
             NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
             alignCount = 0;
             status = String.format("Aligning Right: %d\n", aligning_index);
