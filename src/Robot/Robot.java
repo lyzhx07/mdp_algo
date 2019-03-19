@@ -784,7 +784,7 @@ public class Robot {
 
     public void align_front(Map exploredMap, Map realMap) { // realMap is null just to call sense
 
-        if (sensorRes.get("F1") == 1 && sensorRes.get("F2") == 1 && sensorRes.get("F3") == 1) {
+        if (sensorRes.get("F1") == 1 && sensorRes.get("F3") == 1) {
             // send align front
             String cmdStr = getCommand(Command.ALIGN_FRONT, 1);  // steps set to 0 to avoid appending to cmd
             LOGGER.info("Command String: " + cmdStr);
