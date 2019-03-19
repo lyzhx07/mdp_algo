@@ -271,13 +271,14 @@ public class Exploration {
             // try to turn right, align front, turn left, align front and right if possible before and after turning left
             LOGGER.info("Right and front not movable, try to align.");
 
-            robot.turn(Command.TURN_RIGHT, stepPerSecond);
-            robot.sense(exploredMap, realMap);
+            if (robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) {
+                robot.turn(Command.TURN_RIGHT, stepPerSecond);
+                robot.sense(exploredMap, realMap);
+                robot.align_front(exploredMap, realMap);
 
-            robot.align_front(exploredMap, realMap);
-
-            robot.turn(Command.TURN_LEFT, stepPerSecond);
-            robot.sense(exploredMap, realMap);
+                robot.turn(Command.TURN_LEFT, stepPerSecond);
+                robot.sense(exploredMap, realMap);
+            }
 
             robot.align_front(exploredMap, realMap);
 
