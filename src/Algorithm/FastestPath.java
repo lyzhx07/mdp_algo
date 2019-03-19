@@ -155,7 +155,15 @@ public class FastestPath {
             cellDir = exploredMap.getCellDir(cell.getPos(), newCell.getPos());
             // If the TempRobot and cell direction not the same
             if (Direction.getOpposite(tempRobot.getDir()) == cellDir) {
-                move = Command.BACKWARD;
+//                // 1. use backwards
+//                move = Command.BACKWARD;
+                move = Command.TURN_LEFT; //first move
+                tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
+                moves.add(move);
+                tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
+                moves.add(move);
+                move = Command.FORWARD; //second move
+
             } else if (Direction.getClockwise(tempRobot.getDir()) == cellDir) {
                 move = Command.TURN_RIGHT; //first move
                 tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
