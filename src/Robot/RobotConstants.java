@@ -9,7 +9,8 @@ public class RobotConstants {
     public static final int TURN_COST = 3;
     public static final double INFINITE_COST = 10000000;
     public static final int CHECKSTEPS = 10;    // 4
-	public static final int CALIBRATE_AFTER = 2; //Calibrate After number of moves
+	public static final int CALIBRATE_AFTER = 2; //Calibrate After number of moves (for align_right)
+    public static final int TURN_AND_CALIBRATE = 2;
 
     // max move
     public static final int MAX_MOVE = 7;   //9
@@ -21,7 +22,7 @@ public class RobotConstants {
     public static final int MOVE_STEPS = 1;
     public static final long WAIT_TIME = 1000;    //Time waiting before retransmitting in milliseconds
     public static final short CAMERA_RANGE = 4;
-    public static final int STEP_PER_SECOND = 30; // default large step per second to avoid any delay
+    public static final int STEP_PER_SECOND = 5;  // 30; // default large step per second to avoid any delay
 
     // Sensors default range (In grids)
     public static final int SHORT_MIN = 1;

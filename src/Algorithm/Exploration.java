@@ -231,7 +231,9 @@ public class Exploration {
             LOGGER.info("DEBUG: In right movable");
 
             // check front alignment
-            robot.align_front(exploredMap, realMap);
+            if (!sim) {
+                robot.align_front(exploredMap, realMap);
+            }
 
             robot.turn(Command.TURN_RIGHT, stepPerSecond);
             robot.sense(exploredMap, realMap);
@@ -271,21 +273,25 @@ public class Exploration {
             // try to turn right, align front, turn left, align front and right if possible before and after turning left
             LOGGER.info("Right and front not movable, try to align.");
 
-            if (robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) {
-                robot.turn(Command.TURN_RIGHT, stepPerSecond);
-                robot.sense(exploredMap, realMap);
-                robot.align_front(exploredMap, realMap);
-
-                robot.turn(Command.TURN_LEFT, stepPerSecond);
-                robot.sense(exploredMap, realMap);
+            if ((robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) &&
+                    (!robot.getHasTurnAndAlign()) &&
+                    (!sim)) {
+                robot.turnRightAndAlignMethod(exploredMap, realMap);
+            }
+            else if (robot.getHasTurnAndAlign()) {
+                robot.setHasTurnAndAlign(false);
             }
 
-            robot.align_front(exploredMap, realMap);
+            if (!sim) {
+                robot.align_front(exploredMap, realMap);
+            }
 
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
 
-            robot.align_right(exploredMap, realMap);
+            if (!sim) {
+                robot.align_right(exploredMap, realMap);
+            }
 
             moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
             right_move = 0;
@@ -297,16 +303,33 @@ public class Exploration {
             LOGGER.info("DEBUG: In else");
 
             // Option1. Turn left twice with alignment
-            robot.align_front(exploredMap, realMap);
-            robot.align_right(exploredMap, realMap);
+
+            // if R1 and R2 == 1, turn right and align first
+            if ((robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) &&
+                    (!robot.getHasTurnAndAlign()) &&
+                    (!sim)) {
+                robot.turnRightAndAlignMethod(exploredMap, realMap);
+            }
+            else if (robot.getHasTurnAndAlign()) {
+                robot.setHasTurnAndAlign(false);
+            }
+
+            if (!sim) {
+                robot.align_front(exploredMap, realMap);
+                robot.align_right(exploredMap, realMap);
+            }
 
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
-            robot.align_front(exploredMap, realMap);
 
+            if (!sim) {
+                robot.align_front(exploredMap, realMap);
+            }
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
-            robot.align_right(exploredMap, realMap);
+            if (!sim) {
+                robot.align_right(exploredMap, realMap);
+            }
 
 //            // Option2. Move backwards
 //            Boolean firstBackward = true;

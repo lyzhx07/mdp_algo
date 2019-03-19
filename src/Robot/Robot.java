@@ -3,6 +3,7 @@ package Robot;
 import Map.Map;
 import Map.Direction;
 import Map.MapDescriptor;
+import Map.MapConstants;
 import Map.Cell;
 import java.awt.Point;
 import java.util.ArrayList;
@@ -45,6 +46,8 @@ public class Robot {
     
     // for alignment
     private int alignCount = 0;
+    private int turnAndAlignCount = 0;
+    private boolean hasTurnAndAlign = false;
 
     // for camera taking picture
 
@@ -606,8 +609,90 @@ public class Robot {
      * @param exploredMap
      * @param realMap
      */
-    public void sense(Map exploredMap, Map realMap){
+    public void sense(Map exploredMap, Map realMap) {
 
+        updateMap(exploredMap, realMap);
+
+        // send to Android
+        if (!sim && !findingFP) {
+
+            // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
+            imageRecognitionRight(exploredMap);
+
+            send_android(exploredMap);
+
+            // Realignment for right
+            if (alignCount > RobotConstants.CALIBRATE_AFTER) {
+                // TODO: Alignment
+//                align_front(exploredMap, realMap);    // unnecessary, align_front is already added when front not movable
+                align_right(exploredMap, realMap);
+            }
+
+            // Realignment for front - turn right and align when it is not hugging the wall but R1 and R2 == 1 and turnAndAlignCount > CalibrationConstant
+            if (isRightHuggingWall()) {
+                turnAndAlignCount = 0;
+            }
+            else {
+                turnAndAlignCount++;
+            }
+            if (hasTurnAndAlign) {
+                hasTurnAndAlign = false;
+            }
+
+            if ((turnAndAlignCount > RobotConstants.TURN_AND_CALIBRATE) &&
+                    (sensorRes.get("R1") == 1 && sensorRes.get("R2") == 1)) {
+
+                try {
+                    turnRightAndAlignMethod(exploredMap, realMap);
+
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+        }
+    }
+
+    /**
+     * Turn right, align front, turn left, align right
+     * Condition checking is not in the method
+     * @param exploredMap
+     * @param realMap
+     * @throws InterruptedException
+     */
+    public void turnRightAndAlignMethod(Map exploredMap, Map realMap) throws InterruptedException {
+        turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+        senseWithoutAlign(exploredMap, realMap);
+        align_front(exploredMap, realMap);
+        turn(Command.TURN_LEFT, RobotConstants.STEP_PER_SECOND);
+        senseWithoutAlign(exploredMap, realMap);
+        align_right(exploredMap, realMap);
+        hasTurnAndAlign = true;
+        turnAndAlignCount = 0;
+    }
+
+    /**
+     * Robot sensing surrounding obstacles for simulator
+     * @param exploredMap
+     * @param realMap
+     */
+    public void senseWithoutAlign(Map exploredMap, Map realMap) {
+
+        updateMap(exploredMap, realMap);
+
+        // send to Android
+        if (!sim && !findingFP) {
+
+            // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
+            imageRecognitionRight(exploredMap);
+
+            send_android(exploredMap);
+
+        }
+    }
+
+    public void updateMap(Map exploredMap, Map realMap) {
         int obsBlock;
         int rowInc=0, colInc=0, row, col;
         HashMap<String, Integer> sensorResult;
@@ -700,23 +785,6 @@ public class Robot {
 
             }
         }
-
-        // send to Android
-        if (!sim && !findingFP) {
-
-            // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
-            imageRecognitionRight(exploredMap);
-
-            send_android(exploredMap);
-
-            // Realignment
-            if (alignCount > RobotConstants.CALIBRATE_AFTER) {
-                // TODO: Alignment
-                align_front(exploredMap, realMap);
-                align_right(exploredMap, realMap);
-            }
-        }
-
     }
 
     public JSONArray getRobotArray() {
@@ -789,10 +857,11 @@ public class Robot {
             String cmdStr = getCommand(Command.ALIGN_FRONT, 1);  // steps set to 0 to avoid appending to cmd
             LOGGER.info("Command String: " + cmdStr);
             NetMgr.getInstance().send(NetworkConstants.ARDUINO + cmdStr);
-            alignCount = 0;
+//            alignCount = 0;
             status = "Aligning Front\n";
             LOGGER.info(status);
-            sense(exploredMap, realMap);
+            senseWithoutAlign(exploredMap, realMap);
+            turnAndAlignCount = 0;
         }
 
     }
@@ -825,7 +894,28 @@ public class Robot {
             alignCount = 0;
             status = String.format("Aligning Right: %d\n", aligning_index);
             LOGGER.info(status);
-            sense(exploredMap, realMap);
+            senseWithoutAlign(exploredMap, realMap);
+        }
+
+    }
+
+    /**
+     * Robot is right hugging the wall if the right sensor position is equal to
+     * the lowest or highest possible row or col number
+     * @return
+     */
+    public boolean isRightHuggingWall() {
+        Point R1_pos = sensorMap.get("R1").getPos();
+        Point R2_pos = sensorMap.get("R2").getPos();
+
+        if ((R1_pos.x == 0 && R2_pos.x == 0)
+                || (R1_pos.x == MapConstants.MAP_WIDTH - 1 && R2_pos.x == MapConstants.MAP_WIDTH - 1)
+                || (R1_pos.y == 0 && R2_pos.y == 0)
+                || (R1_pos.y == MapConstants.MAP_HEIGHT - 1 && R2_pos.y == MapConstants.MAP_HEIGHT - 1)) {
+            return true;
+        }
+        else {
+            return false;
         }
 
     }
@@ -836,6 +926,22 @@ public class Robot {
 
     public void setAlignCount(int alignCount) {
         this.alignCount = alignCount;
+    }
+
+    public int getTurnAndAlignCount() {
+        return turnAndAlignCount;
+    }
+
+    public void setTurnAndAlignCount(int counter) {
+        this.turnAndAlignCount = counter;
+    }
+
+    public boolean getHasTurnAndAlign() {
+        return hasTurnAndAlign;
+    }
+
+    public void setHasTurnAndAlign(boolean canTurn) {
+        this.hasTurnAndAlign = canTurn;
     }
 
 

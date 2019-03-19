@@ -141,7 +141,7 @@ public class FastestPath {
     //Returns the movements required to execute the path
     //TODO modify?
     public ArrayList<Command> getPathCommands(ArrayList<Cell> path) throws InterruptedException {
-        Robot tempRobot = new Robot(true, true,robot.getPos().y, robot.getPos().x, robot.getDir());
+        Robot tempRobot = new Robot(true, true, robot.getPos().y, robot.getPos().x, robot.getDir());
         ArrayList<Command> moves = new ArrayList<Command>();
 
         Command move;
