@@ -1270,7 +1270,7 @@ public class SimulatorNew extends Application {
             StringBuilder cmdBuilder = new StringBuilder();
             for (int i = 0; i < commands.size(); i++) {
                 tempCmd = commands.get(i);
-                if (tempCmd == Command.FORWARD && moves <= RobotConstants.MAX_MOVE) {
+                if (tempCmd == Command.FORWARD && moves < RobotConstants.MAX_MOVE) {
                     moves++;
 
                     // if last cmd or moves == 9
