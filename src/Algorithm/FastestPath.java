@@ -141,7 +141,7 @@ public class FastestPath {
     //Returns the movements required to execute the path
     //TODO modify?
     public ArrayList<Command> getPathCommands(ArrayList<Cell> path) throws InterruptedException {
-        Robot tempRobot = new Robot(true, true,robot.getPos().y, robot.getPos().x, robot.getDir());
+        Robot tempRobot = new Robot(true, true, robot.getPos().y, robot.getPos().x, robot.getDir());
         ArrayList<Command> moves = new ArrayList<Command>();
 
         Command move;
@@ -155,7 +155,15 @@ public class FastestPath {
             cellDir = exploredMap.getCellDir(cell.getPos(), newCell.getPos());
             // If the TempRobot and cell direction not the same
             if (Direction.getOpposite(tempRobot.getDir()) == cellDir) {
-                move = Command.BACKWARD;
+//                // 1. use backwards
+//                move = Command.BACKWARD;
+                move = Command.TURN_LEFT; //first move
+                tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
+                moves.add(move);
+                tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);
+                moves.add(move);
+                move = Command.FORWARD; //second move
+
             } else if (Direction.getClockwise(tempRobot.getDir()) == cellDir) {
                 move = Command.TURN_RIGHT; //first move
                 tempRobot.turn(move, RobotConstants.STEP_PER_SECOND);

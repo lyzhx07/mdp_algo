@@ -155,7 +155,7 @@ public class Exploration {
                 moves=1;
 
             LOGGER.info(Double.toString(areaExplored));
-            LOGGER.info(Integer.toString(moves));
+//            LOGGER.info(Integer.toString(moves));
 
             // TODO: for week 8 only, do not go out again if returning to start and areaExplored > target percentage
             if (robot.getPos().distance(start) == 0 && areaExplored > RobotConstants.TARGETED_COVERAGE) {
@@ -228,7 +228,12 @@ public class Exploration {
         
         // if right movable
         if (movable(Direction.getClockwise(robotDir))) {
-            LOGGER.info("DEBUG: In right movable");
+//            LOGGER.info("DEBUG: In right movable");
+
+            // check front alignment
+            if (!sim) {
+                robot.align_front(exploredMap, realMap);
+            }
 
             robot.turn(Command.TURN_RIGHT, stepPerSecond);
             robot.sense(exploredMap, realMap);
@@ -239,14 +244,15 @@ public class Exploration {
 //                robot.align_right(exploredMap, realMap);
 //                firstMove = false;
 //            }
-            
+
+
             moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
             right_move++;
         }
 
         // else if front movable
         else if (movable(robotDir)) {
-            LOGGER.info("DEBUG: In front movable");
+//            LOGGER.info("DEBUG: In front movable");
 //            // if firstMove, align right
 //            if (firstMove) {
 //                LOGGER.info("First Move, align right.");
@@ -262,17 +268,35 @@ public class Exploration {
 
         // else if left movable
         else if (movable(Direction.getAntiClockwise(robotDir))) {
-            LOGGER.info("DEBUG: In right movable");
+//            LOGGER.info("DEBUG: In right movable");
 
-            // try to align front and right if possible before and after turning left
-            LOGGER.info("Right and front not movable, try to align.");
+            // try to turn right, align front, turn left, align front and right if possible before and after turning left
+//            LOGGER.info("Right and front not movable, try to align.");
 
-            robot.align_front(exploredMap, realMap);
+            if ((robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) &&
+                    (!robot.getHasTurnAndAlign()) &&
+                    (!sim)) {
+                robot.turnRightAndAlignMethod(exploredMap, realMap);
+            }
+            else if (robot.getHasTurnAndAlign()) {
+                robot.setHasTurnAndAlign(false);
+            }
+
+            if (!sim) {
+                robot.align_front(exploredMap, realMap);
+                robot.align_right(exploredMap, realMap);
+            }
+
+            // before turn left, take image just in case
+            robot.setImageCount(0);
+            robot.imageRecognitionRight(exploredMap);
 
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
 
-            robot.align_right(exploredMap, realMap);
+            if (!sim) {
+                robot.align_right(exploredMap, realMap);
+            }
 
             moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
             right_move = 0;
@@ -281,44 +305,89 @@ public class Exploration {
 
         // else move backwards
         else {
-            LOGGER.info("DEBUG: In else");
+//            LOGGER.info("DEBUG: In else");
 
-            Boolean firstBackward = true;
-            do {
-                right_move = 0;
+            // Option1. Turn left twice with alignment
+            // if R1 and R2 == 1, turn right and align first
+            if ((robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) &&
+                    (!robot.getHasTurnAndAlign()) &&
+                    (!sim)) {
+                robot.turnRightAndAlignMethod(exploredMap, realMap);
+            }
+            else if (robot.getHasTurnAndAlign()) {
+                robot.setHasTurnAndAlign(false);
+            }
 
-                // try to align front and right if possible before moving backwards for the first time
-                if (firstBackward) {
-                    LOGGER.info("Before moving backwards, try to align");
-                    robot.align_front(exploredMap, realMap);
-                    robot.align_right(exploredMap, realMap);
-                    firstBackward = false;
-                }
+            if (!sim) {
+                robot.align_front(exploredMap, realMap);
+                robot.align_right(exploredMap, realMap);
+            }
 
-                robot.move(Command.BACKWARD, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
-                robot.sense(exploredMap, realMap);
+            // before turn left, take image just in case
+            robot.setImageCount(0);
+            robot.imageRecognitionRight(exploredMap);
 
-//                if (sim) {
-//                    TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+            robot.turn(Command.TURN_LEFT, stepPerSecond);
+            robot.sense(exploredMap, realMap);
+
+            if (!sim) {
+                robot.align_front(exploredMap, realMap);
+                robot.align_right(exploredMap, realMap);
+            }
+            robot.setImageCount(0);
+            robot.imageRecognitionRight(exploredMap);
+            robot.turn(Command.TURN_LEFT, stepPerSecond);
+            robot.sense(exploredMap, realMap);
+            if (!sim) {
+                robot.align_right(exploredMap, realMap);
+            }
+
+//            // Option2. Move backwards
+//            Boolean firstBackward = true;
+//            do {
+//                right_move = 0;
+//
+//                // try to align front and right if possible before moving backwards for the first time
+//                if (firstBackward) {
+//                    LOGGER.info("Before moving backwards, try to align");
+//                    robot.align_front(exploredMap, realMap);
+//                    robot.align_right(exploredMap, realMap);
+//                    firstBackward = false;
 //                }
-
-            } while (!movable(Direction.getAntiClockwise(robotDir)) && !movable(Direction.getClockwise(robotDir)));
-
-            // turn left if possible
-            if (movable(Direction.getAntiClockwise(robotDir))) {
-                robot.turn(Command.TURN_LEFT, stepPerSecond);
-                robot.sense(exploredMap, realMap);
-                moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
-                right_move = 0;
-            }
-
-            // else turn right
-            else {
-                robot.turn(Command.TURN_RIGHT, stepPerSecond);
-                robot.sense(exploredMap, realMap);
-                moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
-                right_move++;
-            }
+//
+//                robot.move(Command.BACKWARD, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
+//                robot.align_right(exploredMap, realMap);
+//                robot.sense(exploredMap, realMap);
+//
+////                if (sim) {
+////                    TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+////                }
+//
+//            } while (!movable(Direction.getAntiClockwise(robotDir)) && !movable(Direction.getClockwise(robotDir)));
+//
+//            // turn left if possible
+//            if (movable(Direction.getAntiClockwise(robotDir))) {
+//                robot.turn(Command.TURN_LEFT, stepPerSecond);
+//                robot.sense(exploredMap, realMap);
+//                moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
+//                right_move = 0;
+//            }
+//
+//            // else turn left twice
+//            else {
+//                robot.turn(Command.TURN_LEFT, stepPerSecond);
+//                robot.sense(exploredMap, realMap);
+//
+//                robot.align_front(exploredMap, realMap);
+//
+//                robot.turn(Command.TURN_LEFT, stepPerSecond);
+//                robot.sense(exploredMap, realMap);
+//
+//                robot.align_right(exploredMap, realMap);
+//                // then restart, dont move forward
+////                moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
+//                right_move = 0;
+//            }
         }
 
     }
@@ -369,7 +438,7 @@ public class Exploration {
                 colInc = 0;
                 break;
         }
-        LOGGER.info(String.format("DEBUG: checking movable row: %d, col: %d", robot.getPos().y + rowInc, robot.getPos().x + colInc));
+//        LOGGER.info(String.format("DEBUG: checking movable row: %d, col: %d", robot.getPos().y + rowInc, robot.getPos().x + colInc));
         return exploredMap.checkValidMove(robot.getPos().y + rowInc, robot.getPos().x + colInc);
     }
 
