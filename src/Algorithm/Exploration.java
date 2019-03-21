@@ -5,6 +5,7 @@ import Map.Cell;
 import Map.Direction;
 import Map.MapConstants;
 import Network.NetMgr;
+import Network.NetworkConstants;
 import Robot.Robot;
 import Robot.Command;
 import Robot.RobotConstants;
@@ -476,8 +477,8 @@ public class Exploration {
         //Not moving back to start single moves
 
         // TODO: temporarily disable
-        if (true) {
-//        if (!loc.equals(start)) {
+//        if (true) {
+        if (!loc.equals(start)) {
             for (Command c : commands) {
                 System.out.println("Command: "+c);
                 if ((c == Command.FORWARD) && !movable(robot.getDir())) {
@@ -558,7 +559,7 @@ public class Exploration {
             }
         }
 
-        /* TODO: temporarily disable
+//        /* TODO: temporarily disable
         //Moving back to Start multiple moves
         else {
             int moves = 0;
@@ -578,33 +579,48 @@ public class Exploration {
                     // System.out.println("moves "+moves);
                     System.out.println("Not Executing Forward Not Movable");
                     break;
-                }
-                else {
-                    if(c == Command.FORWARD) {
+                } else {
+                    if (c == Command.FORWARD && moves < 1) {
+//                    if (c == Command.FORWARD && moves < RobotConstants.MAX_MOVE) {
                         moves++;
                         // If last command
                         if (i == (commands.size() - 1)) {
                             robot.move(c, moves, exploredMap, stepPerSecond);
-                            robot.sense(exploredMap, realMap);
+                            if (sim) {
+                                robot.sense(exploredMap, realMap);
+                            }
+                            else {
+                                NetMgr.getInstance().receive();
+                            }
                         }
-                    }
-                    else{
+                    } else {
                         if (moves > 0) {
                             robot.move(Command.FORWARD, moves, exploredMap, stepPerSecond);
-                            robot.sense(exploredMap, realMap);
+                            if (sim) {
+                                robot.sense(exploredMap, realMap);
+                            }
+                            else {
+                                NetMgr.getInstance().receive();
+                            }
+
                         }
-                        if(c == Command.TURN_RIGHT || c == Command.TURN_LEFT) {
+                        if (c == Command.TURN_RIGHT || c == Command.TURN_LEFT) {
                             robot.turn(c, stepPerSecond);
-                        }
-                        else {
+                        } else {
                             robot.move(c, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
                         }
-                        robot.sense(exploredMap, realMap);
+                        if (sim) {
+                            robot.sense(exploredMap, realMap);
+                        }
+                        else {
+                            NetMgr.getInstance().receive();
+                        }
                         moves = 0;
                     }
                 }
             }
-        */
+        }
+//        */
 
         //TODO: temp code
         if (loc.equals(start)) {
