@@ -8,7 +8,7 @@ public class RobotConstants {
     public static final int MOVE_COST = 1;
     public static final int TURN_COST = 3;
     public static final double INFINITE_COST = 10000000;
-    public static final int CHECKSTEPS = 10;    // 4
+    public static final int CHECKSTEPS = 18;    // 4
 	public static final int CALIBRATE_AFTER = 2; //Calibrate After number of moves (for align_right)
     public static final int TURN_AND_CALIBRATE = 2;
 

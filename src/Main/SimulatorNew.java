@@ -1363,6 +1363,9 @@ public class SimulatorNew extends Application {
             // TODO: do not send due to MDF - for dummy rpi debugging
 //            robot.send_android();
 
+            // send align right dummy requested by arduino
+            String alignRightDummy = robot.getCommand(Command.ALIGN_RIGHT, 1);   // align index is 3 for turn right
+
             if(!sim) {
                 // waiting for the fastest path command
                 String msg;
@@ -1377,7 +1380,7 @@ public class SimulatorNew extends Application {
             }
 
             if (!sim) {
-                netMgr.send(NetworkConstants.ARDUINO + cmd);
+                netMgr.send(NetworkConstants.ARDUINO + alignRightDummy + cmd);
             }
             String[] cmdStr = cmd.split("\\|");
 
@@ -1400,7 +1403,7 @@ public class SimulatorNew extends Application {
                         }
                         else {
                             robot.move(Command.FORWARD, move, exploredMap, RobotConstants.STEP_PER_SECOND);
-                            robot.send_android();
+                            robot.send_android(exploredMap);
                             netMgr.receive();
                         }
                         break;
@@ -1410,7 +1413,7 @@ public class SimulatorNew extends Application {
                         }
                         else {
                             robot.move(Command.BACKWARD, move, exploredMap, RobotConstants.STEP_PER_SECOND);
-                            robot.send_android();
+                            robot.send_android(exploredMap);
                             netMgr.receive();
                         }
                         break;
@@ -1420,7 +1423,7 @@ public class SimulatorNew extends Application {
                         }
                         else {
                             robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
-                            robot.send_android();
+                            robot.send_android(exploredMap);
                             // flush 3 sensor reading: align_front, turn, align_right
                             netMgr.receive();
 //                            netMgr.receive();
@@ -1433,7 +1436,7 @@ public class SimulatorNew extends Application {
                         }
                         else {
                             robot.turn(Command.TURN_LEFT, RobotConstants.STEP_PER_SECOND);
-                            robot.send_android();
+                            robot.send_android(exploredMap);
                             // flush 3 sensor reading: align_front, turn, align_right
                             netMgr.receive();
 //                            netMgr.receive();
