@@ -1363,6 +1363,9 @@ public class SimulatorNew extends Application {
             // TODO: do not send due to MDF - for dummy rpi debugging
 //            robot.send_android();
 
+            // send align right dummy requested by arduino
+            String alignRightDummy = robot.getCommand(Command.ALIGN_RIGHT, 1);   // align index is 3 for turn right
+
             if(!sim) {
                 // waiting for the fastest path command
                 String msg;
@@ -1377,7 +1380,7 @@ public class SimulatorNew extends Application {
             }
 
             if (!sim) {
-                netMgr.send(NetworkConstants.ARDUINO + cmd);
+                netMgr.send(NetworkConstants.ARDUINO + alignRightDummy + cmd);
             }
             String[] cmdStr = cmd.split("\\|");
 
