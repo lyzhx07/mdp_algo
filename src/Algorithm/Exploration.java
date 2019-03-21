@@ -591,6 +591,7 @@ public class Exploration {
                             }
                             else {
                                 NetMgr.getInstance().receive();
+                                robot.send_android(exploredMap);
                             }
                         }
                     } else {
@@ -601,6 +602,7 @@ public class Exploration {
                             }
                             else {
                                 NetMgr.getInstance().receive();
+                                robot.send_android(exploredMap);
                             }
 
                         }
@@ -614,6 +616,7 @@ public class Exploration {
                         }
                         else {
                             NetMgr.getInstance().receive();
+                            robot.send_android(exploredMap);
                         }
                         moves = 0;
                     }
