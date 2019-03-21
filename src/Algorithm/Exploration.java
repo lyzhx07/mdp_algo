@@ -449,19 +449,34 @@ public class Exploration {
         LOGGER.info(robot.getStatus());
         // TODO: now ignore robot already at start
         if (robot.getPos().equals(start) && loc.equals(start)) {
-            while (robot.getDir() != Direction.UP) {
-//                if (sim) {
-//                    try {
-//                        TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-                robot.sense(exploredMap, realMap);
-                robot.turn(Command.TURN_RIGHT, stepPerSecond);
-                // hx: to be changed to turn right  / left
+            while (robot.getDir() != Direction.DOWN) {
+                robot.turn(Command.TURN_LEFT, stepPerSecond);
+                System.out.println(robot.getDir());
+                if (sim) {
+                    robot.sense(exploredMap, realMap);
+                }
+                else {
+                    NetMgr.getInstance().receive();
+                }
+
             }
-            return false;
+            return true;
+
+
+            // old
+//            while (robot.getDir() != Direction.UP) {
+////                if (sim) {
+////                    try {
+////                        TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+////                    } catch (InterruptedException e) {
+////                        e.printStackTrace();
+////                    }
+////                }
+//                robot.sense(exploredMap, realMap);
+//                robot.turn(Command.TURN_RIGHT, stepPerSecond);
+//                // hx: to be changed to turn right  / left
+//            }
+//            return false;
         }
 
         ArrayList<Command> commands = new ArrayList<Command>();
