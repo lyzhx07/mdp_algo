@@ -83,7 +83,6 @@ public class Exploration {
             // algo for image
 
         }
-        return;
 
     }
 
@@ -557,9 +556,19 @@ public class Exploration {
 //
 //                }
 
-                if ((c == Command.FORWARD) && !movable(robot.getDir())) {
-                    // System.out.println("moves "+moves);
+//                if ((c == Command.FORWARD) && !movable(robot.getDir())) {
+                // checking sensorRes reading instead since only sensorRes is updated
+                if ((c == Command.FORWARD) &&
+                        (robot.getSensorRes().get("F1") == 1 ||
+                                robot.getSensorRes().get("F2") == 1 ||
+                                robot.getSensorRes().get("F3") == 1)
+                    ) {
+
+                // System.out.println("moves "+moves);
                     System.out.println("Not Executing Forward Not Movable");
+                    // update map (sensorRes is updated)
+                    robot.updateMap(exploredMap, realMap, robot.getSensorRes());
+                    goToPoint(loc);
                     break;
                 } else {
                     if (c == Command.FORWARD && moves < 1) {

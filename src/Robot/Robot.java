@@ -637,8 +637,8 @@ public class Robot {
      * @param realMap
      */
     public void sense(Map exploredMap, Map realMap) {
-
-        updateMap(exploredMap, realMap);
+        HashMap<String, Integer> sensorResult = completeUpdateSensorResult(exploredMap, realMap);
+        updateMap(exploredMap, realMap, sensorResult);
 
         // send to Android
         if (!sim && !findingFP) {
@@ -722,8 +722,8 @@ public class Robot {
      * @param realMap
      */
     public void senseWithoutAlign(Map exploredMap, Map realMap) {
-
-        updateMap(exploredMap, realMap);
+        HashMap<String, Integer> sensorResult = completeUpdateSensorResult(exploredMap, realMap);
+        updateMap(exploredMap, realMap,sensorResult);
 
         // send to Android
         if (!sim && !findingFP) {
@@ -766,11 +766,9 @@ public class Robot {
         return sensorResult;
     }
 
-    public void updateMap(Map exploredMap, Map realMap) {
+    public void updateMap(Map exploredMap, Map realMap, HashMap<String, Integer> sensorResult) {
         int obsBlock;
         int rowInc=0, colInc=0, row, col;
-
-        HashMap<String, Integer> sensorResult = completeUpdateSensorResult(exploredMap, realMap);
 
         if(sensorResult == null) {
             LOGGER.warning("Invalid msg. Map not updated");
