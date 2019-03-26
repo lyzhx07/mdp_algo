@@ -79,7 +79,7 @@ public class SimulatorNew extends Application {
     private final String REAL = "Actual Run";
     private final String FASTEST_PATH = "Fastest Path";
     private final String EXPLORATION = "Exploration";
-    private final String CHECK_LIST = "Check List 1";
+    private final String IMAGE = "Image Rec";
     private final int MAX_WIDTH = 1000;
 
     // initial task set to exploration
@@ -97,7 +97,7 @@ public class SimulatorNew extends Application {
     // UI components
     private Button loadMapBtn, newMapBtn, saveMapBtn, resetMapBtn, startBtn, connectBtn, setWaypointBtn, setRobotBtn,
             setObstacleBtn, cancelBtn, confirmBtn;
-    private RadioButton expRB, fastPathRB, checkListRB, simRB, realRB, upRB, downRB, leftRB, rightRB;
+    private RadioButton expRB, fastPathRB, imageRB, simRB, realRB, upRB, downRB, leftRB, rightRB;
     private ToggleGroup mode, task, startDir;
     private TextArea debugOutput;
     private ScrollBar timeLimitSB, coverageLimitSB, stepsSB;
@@ -109,7 +109,7 @@ public class SimulatorNew extends Application {
 //    private VBox timerVBox;
 
     // Threads for each of the tasks
-    private Thread fastTask, expTask, checklistTask;
+    private Thread fastTask, expTask, imageTask;
     private boolean taskStarted = false, taskPaused = false;
     private Thread startedTask = null;
 
@@ -272,7 +272,7 @@ public class SimulatorNew extends Application {
         // Radio Buttom Init
         expRB = new RadioButton(EXPLORATION);
         fastPathRB = new RadioButton(FASTEST_PATH);
-        checkListRB = new RadioButton(CHECK_LIST);
+        imageRB = new RadioButton(IMAGE);
         simRB = new RadioButton(SIM);
         realRB = new RadioButton(REAL);
         upRB = new RadioButton("UP");
@@ -306,7 +306,7 @@ public class SimulatorNew extends Application {
         expRB.setToggleGroup(task);
         expRB.setSelected(true);
         fastPathRB.setToggleGroup(task);
-        checkListRB.setToggleGroup(task);
+        imageRB.setToggleGroup(task);
 
         task.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
             @Override
@@ -317,15 +317,15 @@ public class SimulatorNew extends Application {
                 if (simRB.isSelected() && expRB.isSelected()) {
                     internalHandleResetMap();
                 }
-                if (simRB.isSelected() && checkListRB.isSelected()) {
+                if (simRB.isSelected() && imageRB.isSelected()) {
                     internalHandleResetMap();
                 }
                 if (expRB.isSelected()) {
                     taskSelected = EXPLORATION;
                 } else if (fastPathRB.isSelected()) {
                     taskSelected = FASTEST_PATH;
-                } else if (checkListRB.isSelected()) {
-                    taskSelected = CHECK_LIST;
+                } else if (imageRB.isSelected()) {
+                    taskSelected = IMAGE;
                 }
             }
         });
@@ -593,7 +593,7 @@ public class SimulatorNew extends Application {
         controlGrid.add(taskChoiceLbl, 0, 2);
         controlGrid.add(expRB, 1, 2);
         controlGrid.add(fastPathRB, 2, 2);
-        controlGrid.add(checkListRB, 3, 2);
+        controlGrid.add(imageRB, 3, 2);
         controlGrid.add(startBtn, 4, 2);
 
         controlGrid.add(arenaSetLbl, 0, 3, 5, 1);
@@ -1024,6 +1024,47 @@ public class SimulatorNew extends Application {
         return false;
     }
 
+    private void init_before_exploration() {
+        if (sim) {
+            expMapDraw = true;
+            robot.setSim(true);
+            robot.setFindingFP(false);
+            // reset to empty map
+            exploredMap.resetMap();
+            robot.setStartPos(startPos.y, startPos.x, exploredMap);
+            robot.sense(exploredMap, map);
+        }
+        else {
+            expMapDraw = true;
+            robot.setSim(false);
+            robot.setFindingFP(false);
+            // reset to unexplored map
+            exploredMap.resetMap();
+            map = null;
+            robot.setStartPos(1, 1, exploredMap);
+            netMgr.initConn();
+            String msg;
+            wayPoint = null;
+            // receive start exploration command from android
+            if (!sim) {
+                do {
+                    msg = netMgr.receive();
+                    // set wayPoint
+                    if (msg.contains(NetworkConstants.WAY_POINT_KEY)) {
+                        wayPoint = robot.parseWayPointJson(msg);
+                        setWayPoint(wayPoint.y, wayPoint.x);
+                    }
+                } while (!msg.equals(NetworkConstants.START_EXP) || wayPoint == null);
+
+                LOGGER.info("Receiving command to start exploration: " + msg);
+                displayTimer.start();
+                // initial sensing
+                netMgr.send(NetworkConstants.ARDUINO + robot.getCommand(Command.SEND_SENSORS, RobotConstants.MOVE_STEPS));
+                robot.sense(exploredMap, map);
+            } // end of if
+        }
+    }
+
     // Event Handler for StartExpButton
     // not for actual
     private EventHandler<MouseEvent> startBtnClick = new EventHandler<MouseEvent>() {
@@ -1037,50 +1078,7 @@ public class SimulatorNew extends Application {
                 displayTimer.initialize();
                 switch (taskSelected) {
                     case EXPLORATION:
-                        if (sim) {
-                            System.out.println('1');
-                            expMapDraw = true;
-                            robot.setSim(true);
-                            robot.setFindingFP(false);
-                            System.out.println('2');
-                            // reset to empty map
-                            exploredMap.resetMap();
-                            robot.setStartPos(startPos.y, startPos.x, exploredMap);
-                            System.out.println('3');
-                            robot.sense(exploredMap, map);
-                            System.out.println('4');
-                        }
-                        else {
-                            expMapDraw = true;
-                            robot.setSim(false);
-                            robot.setFindingFP(false);
-                            // reset to unexplored map
-                            exploredMap.resetMap();
-                            map = null;
-                            robot.setStartPos(1, 1, exploredMap);
-                            netMgr.initConn();
-                            String msg;
-                            wayPoint = null;
-                            // receive start exploration command from android
-                            // TODO check whether starting from startzone?
-                            // TODO check whether any calibration allowed
-                            if (!sim) {
-                                do {
-                                    msg = netMgr.receive();
-                                    // set wayPoint
-                                    if (msg.contains(NetworkConstants.WAY_POINT_KEY)) {
-                                        wayPoint = robot.parseWayPointJson(msg);
-                                        setWayPoint(wayPoint.y, wayPoint.x);
-                                    }
-                                } while (!msg.equals(NetworkConstants.START_EXP) || wayPoint == null);
-
-                                LOGGER.info("Receiving command to start exploration: " + msg);
-                                displayTimer.start();
-                                // initial sensing
-                                netMgr.send(NetworkConstants.ARDUINO + robot.getCommand(Command.SEND_SENSORS, RobotConstants.MOVE_STEPS));
-                                robot.sense(exploredMap, map);
-                            } // end of if
-                        }
+                        init_before_exploration();  // refractor to be reused later in CASE image
                         // start thread
                         expTask = new Thread(new ExplorationTask());
                         startedTask = expTask;
@@ -1120,48 +1118,18 @@ public class SimulatorNew extends Application {
 
                         break;
 
-                    case CHECK_LIST:
-                        if(sim) {
-                            expMapDraw = true;
-                            robot.setDir(Direction.RIGHT);
-                            robot.setFindingFP(false);
-                            exploredMap.resetMap();
-                            robot.setStartPos(startPos.y, startPos.x, exploredMap);
-                            robot.sense(exploredMap, map);
-                        }
-                        else {
-                            expMapDraw = true;
-                            robot.setDir(Direction.RIGHT);
-                            robot.setSim(false);
-                            robot.setFindingFP(false);
-                            // reset to unexplored map
-                            exploredMap.resetMap();
-                            map = null;
-                            netMgr.initConn();
-                            // receive checklist command from android
-                            String msg = null;
-                            // get starting position
-                            do {
-                                msg = netMgr.receive();
-                            } while(!msg.contains(NetworkConstants.START_POINT_KEY));
-                            Point startPos = robot.parseStartPointJson(msg);
-                            System.out.println(startPos);
-                            robot.setStartPos(startPos.y, startPos.x, exploredMap);
-                            do {
-                                msg = netMgr.receive();
-                            } while(!msg.equals(NetworkConstants.START_CHECKLIST));
-                            System.out.println("Receiving command to start checklist: " + msg);
-
-                            // initial sensing
-                            netMgr.send(NetworkConstants.ARDUINO + robot.getCommand(Command.SEND_SENSORS, RobotConstants.MOVE_STEPS));
-                            robot.sense(exploredMap, map);
-                        }
+                    case IMAGE:
+                        init_before_exploration();
                         // start thread
-                        checklistTask = new Thread(new ChecklistTask());
-                        startedTask = checklistTask;
+                        imageTask = new Thread(new ImageTask());
+                        startedTask = imageTask;
                         taskStarted = true;
                         taskPaused = false;
-                        checklistTask.start();
+                        imageTask.start();
+                        if(sim) {
+                            displayTimer.start();
+                        }
+                        break;
 
                 }
             } // end of if started a new task
@@ -1204,36 +1172,11 @@ public class SimulatorNew extends Application {
                 robot.send_android(exploredMap);
             }
             displayTimer.stop();
-            // TODO check msg format for android
-//            if (!sim) {
-//                netMgr.send("Alg|And|DONE|" + exploredMap.detectedImgToString());
-//                netMgr.send("Alg|And|" + Command.ENDEXP + "|");
-//            }
+
 
           // Prepare for fastest path and wait for command from arduino
             if(!sim) {
-
-                // Caliberation
-                // pause for 1s, initially facing down, after caliberation, should face up
-                TimeUnit.MILLISECONDS.sleep(1000);
-                String calibrationCmd = robot.getCommand(Command.INITIAL_CALIBERATE, 1);    // steps 1 for consistency
-                netMgr.send(NetworkConstants.ARDUINO + calibrationCmd);
-
-
-                expMapDraw = true;
-                robot.setFindingFP(true);
-                // Orient the robot on laptop to face lap as after caliberation, it will face up
-                // need to turn after setFindingFP(true) as it will not send command to arduino
-                robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
-                robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
-                exploredMap.removeAllPaths();
-
-                fastTask = new Thread(new FastTask());
-                startedTask = fastTask;
-                taskStarted = true;
-                taskPaused = false;
-                fastTask.start();
-
+                calibrate_and_start_fp();
             }
             return 1;
         }
@@ -1542,41 +1485,56 @@ public class SimulatorNew extends Application {
         }
     }
 
-    class ChecklistTask extends Task<Integer> {
+    //TODO: Algo with focus on image
+    class ImageTask extends Task<Integer> {
         @Override
         protected Integer call() throws Exception {
-            String msg = null;
-            Command c;
+//            Command c;
 
-
-            double coverageLimit = (int) (coverageLimitSB.getValue());
+            double coverageLimit = (double) (coverageLimitSB.getValue());
             int timeLimit = (int) (timeLimitSB.getValue() * 1000);
             int steps = (int) (stepsSB.getValue());
 
             Exploration explore = new Exploration(exploredMap, map, robot, coverageLimit, timeLimit, steps, sim);
-            explore.checklist_straightLine();
-//            explore.exploration2(new Point(MapConstants.STARTZONE_COL, MapConstants.STARTZONE_COL));
+            explore.imageExploration(new Point(MapConstants.STARTZONE_COL, MapConstants.STARTZONE_COL));
 
-//            if (!sim) {
-//                netMgr.send("Alg|And|DONE|"+exploredMap.detectedImgToString());
-//                netMgr.send("Alg|And|" + Command.ENDEXP + "|");
-//                Command com = null;
-//                do {
-//                    String[] msgArr = NetMgr.getInstance().receive().split("\\|");
-//                    com = Command.values()[Integer.parseInt(msgArr[2])];
-//                    System.out.println("Fastest path msg :" + msgArr[2]);
-//                    if (com == Command.START_FAST) {
-//                        sim = false;
-//                        System.out.println("RF Here");
-//                        fastTask = new Thread(new FastTask());
-//                        fastTask.start();
-//                        break;
-//                    }
-//                } while (com != Command.START_FAST);
-//            }
+            robot.setStatus("Done exploration\n");
+            if (!sim) {
+                robot.send_android(exploredMap);
+            }
+            displayTimer.stop();
 
+            // Prepare for fastest path and wait for command from arduino
+            if(!sim) {
+
+                calibrate_and_start_fp();
+
+            }
             return 1;
         }
+    }
+
+    private void calibrate_and_start_fp() throws InterruptedException {
+        // Caliberation
+        // pause for 1s, initially facing down, after caliberation, should face up
+        TimeUnit.MILLISECONDS.sleep(1000);
+        String calibrationCmd = robot.getCommand(Command.INITIAL_CALIBERATE, 1);    // steps 1 for consistency
+        netMgr.send(NetworkConstants.ARDUINO + calibrationCmd);
+
+
+        expMapDraw = true;
+        robot.setFindingFP(true);
+        // Orient the robot on laptop to face lap as after caliberation, it will face up
+        // need to turn after setFindingFP(true) as it will not send command to arduino
+        robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+        robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+        exploredMap.removeAllPaths();
+
+        fastTask = new Thread(new FastTask());
+        startedTask = fastTask;
+        taskStarted = true;
+        taskPaused = false;
+        fastTask.start();
     }
 
     // Event Handler for resetMapBtn

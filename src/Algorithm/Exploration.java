@@ -72,55 +72,8 @@ public class Exploration {
     }
 
 
-    public void checklist_straightLine() throws InterruptedException {
-        int startPosX = robot.getPos().x;
-        Direction preDir = robot.getDir();
+    public void imageExploration(Point start) throws InterruptedException {
 
-        while(movable(robot.getDir())) {
-            robot.move(Command.FORWARD, 1, exploredMap, stepPerSecond);
-            robot.sense(exploredMap, realMap);
-        }
-
-        // if encounter an obstacle
-        robot.turn(Command.TURN_LEFT, stepPerSecond);
-        robot.sense(exploredMap, realMap);
-
-
-        // move forward until able to turn left
-        while(!movable(Direction.getClockwise(robot.getDir()))) {
-            robot.move(Command.FORWARD, 1, exploredMap, stepPerSecond);
-            robot.sense(exploredMap, realMap);
-
-        }
-
-        robot.turn(Command.TURN_RIGHT, stepPerSecond);
-        robot.sense(exploredMap, realMap);
-
-
-        // move forward until able to turn right again
-        do {
-            robot.move(Command.FORWARD, 1, exploredMap, stepPerSecond);
-            robot.sense(exploredMap, realMap);
-        }
-        while(!movable(Direction.getClockwise(robot.getDir())));
-
-        // return to original line
-        robot.turn(Command.TURN_RIGHT, stepPerSecond);
-        robot.sense(exploredMap, realMap);
-
-        while(robot.getPos().x != startPosX) {
-            robot.move(Command.FORWARD, 1, exploredMap, stepPerSecond);
-            robot.sense(exploredMap, realMap);
-        }
-
-
-        robot.turn(Command.TURN_LEFT, stepPerSecond);
-        robot.sense(exploredMap, realMap);
-
-        while(movable(robot.getDir())) {
-            robot.move(Command.FORWARD, 1, exploredMap, stepPerSecond);
-            robot.sense(exploredMap, realMap);
-        }
 
     }
 
@@ -158,10 +111,11 @@ public class Exploration {
             LOGGER.info(Double.toString(areaExplored));
 //            LOGGER.info(Integer.toString(moves));
 
-            // TODO: for week 8 only, do not go out again if returning to start and areaExplored > target percentage
-            if (robot.getPos().distance(start) == 0 && areaExplored > RobotConstants.TARGETED_COVERAGE) {
-                break outer;
-            }
+//            // for week 8 only, do not go out again if returning to start and areaExplored > target percentage
+//            // disable after week 9
+//            if (robot.getPos().distance(start) == 0 && areaExplored > RobotConstants.TARGETED_COVERAGE) {
+//                break outer;
+//            }
 
             if (moves % checkingStep == 0 || right_move > 3) {      // prevent from keep turning right and forward
 //            if (moves % checkingStep == 0 || robot.getPos().distance(start)==0) {     // original
@@ -601,24 +555,13 @@ public class Exploration {
                         // If last command
                         if (i == (commands.size() - 1)) {
                             robot.move(c, moves, exploredMap, stepPerSecond);
-                            if (sim) {
-                                robot.sense(exploredMap, realMap);
-                            }
-                            else {
-                                NetMgr.getInstance().receive();
-                                robot.send_android(exploredMap);
-                            }
+                            robot.senseWithoutMapUpdate(exploredMap, realMap);
                         }
                     } else {
                         if (moves > 0) {
                             robot.move(Command.FORWARD, moves, exploredMap, stepPerSecond);
-                            if (sim) {
-                                robot.sense(exploredMap, realMap);
-                            }
-                            else {
-                                NetMgr.getInstance().receive();
-                                robot.send_android(exploredMap);
-                            }
+                            robot.senseWithoutMapUpdate(exploredMap, realMap);
+
 
                         }
                         if (c == Command.TURN_RIGHT || c == Command.TURN_LEFT) {
@@ -626,13 +569,7 @@ public class Exploration {
                         } else {
                             robot.move(c, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
                         }
-                        if (sim) {
-                            robot.sense(exploredMap, realMap);
-                        }
-                        else {
-                            NetMgr.getInstance().receive();
-                            robot.send_android(exploredMap);
-                        }
+                        robot.senseWithoutMapUpdate(exploredMap, realMap);
                         moves = 0;
                     }
                 }
