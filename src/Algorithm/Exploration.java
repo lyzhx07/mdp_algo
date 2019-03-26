@@ -73,13 +73,23 @@ public class Exploration {
 
 
     public void imageExploration(Point start) throws InterruptedException {
+        int exp_timing = exploration(start);
 
+        // if fastest than previous leaderboard timing -- return to stop (do not go out)
+        if (exp_timing < RobotConstants.BEST_EXP_TIMING) {
+            return;
+        }
+        else {
+            // algo for image
+
+        }
+        return;
 
     }
 
 
     //TODO clean this
-    public void exploration(Point start) throws InterruptedException {
+    public int exploration(Point start) throws InterruptedException {
         areaExplored = exploredMap.getExploredPercentage();
         startTime = System.currentTimeMillis();
         endTime = startTime + timeLimit;
@@ -137,7 +147,10 @@ public class Exploration {
         endTime = System.currentTimeMillis();
         int seconds = (int)((endTime - startTime)/1000%60);
         int minutes = (int)((endTime - startTime)/1000/60);
+        int total_in_seconds = (int)((endTime - startTime)/1000);
+        System.out.println("Total Time: "+total_in_seconds+" seconds");
         System.out.println("Total Time: "+minutes+"mins "+seconds+"seconds");
+        return total_in_seconds;
     }
 
 
