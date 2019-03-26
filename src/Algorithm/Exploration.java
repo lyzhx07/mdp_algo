@@ -240,23 +240,9 @@ public class Exploration {
             // try to turn right, align front, turn left, align front and right if possible before and after turning left
 //            LOGGER.info("Right and front not movable, try to align.");
 
-            if ((robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) &&
-                    (!robot.getHasTurnAndAlign()) &&
-                    (!sim)) {
-                robot.turnRightAndAlignMethod(exploredMap, realMap);
-            }
-            else if (robot.getHasTurnAndAlign()) {
-                robot.setHasTurnAndAlign(false);
-            }
+            turnRightAndAlignBeforeTurnLeft();
 
-            if (!sim) {
-                robot.align_front(exploredMap, realMap);
-                robot.align_right(exploredMap, realMap);
-            }
-
-            // before turn left, take image just in case
-            robot.setImageCount(0);
-            robot.imageRecognitionRight(exploredMap);
+            alignAndImageRecBeforeLeftTurn();
 
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
@@ -276,33 +262,15 @@ public class Exploration {
 
             // Option1. Turn left twice with alignment
             // if R1 and R2 == 1, turn right and align first
-            if ((robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) &&
-                    (!robot.getHasTurnAndAlign()) &&
-                    (!sim)) {
-                robot.turnRightAndAlignMethod(exploredMap, realMap);
-            }
-            else if (robot.getHasTurnAndAlign()) {
-                robot.setHasTurnAndAlign(false);
-            }
+            turnRightAndAlignBeforeTurnLeft();
 
-            if (!sim) {
-                robot.align_front(exploredMap, realMap);
-                robot.align_right(exploredMap, realMap);
-            }
-
-            // before turn left, take image just in case
-            robot.setImageCount(0);
-            robot.imageRecognitionRight(exploredMap);
+            alignAndImageRecBeforeLeftTurn();
 
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
 
-            if (!sim) {
-                robot.align_front(exploredMap, realMap);
-                robot.align_right(exploredMap, realMap);
-            }
-            robot.setImageCount(0);
-            robot.imageRecognitionRight(exploredMap);
+            alignAndImageRecBeforeLeftTurn();
+
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
             if (!sim) {
@@ -357,6 +325,35 @@ public class Exploration {
 //            }
         }
 
+    }
+
+    /**
+     * Turn right, align front, turn left, align front and right if possible before and after turning left
+     * Avoid turning twice with turnAndAlignCount in Robot class
+     * @throws InterruptedException
+     */
+    private void turnRightAndAlignBeforeTurnLeft() throws InterruptedException {
+        if ((robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) &&
+                (!robot.getHasTurnAndAlign()) &&
+                (!sim)) {
+            robot.turnRightAndAlignMethod(exploredMap, realMap);
+        }
+        else if (robot.getHasTurnAndAlign()) {
+            robot.setHasTurnAndAlign(false);
+        }
+    }
+
+    /**
+     * Align front, align right and do image recognition before turning left
+     */
+    private void alignAndImageRecBeforeLeftTurn() {
+        if (!sim) {
+            robot.align_front(exploredMap, realMap);
+            robot.align_right(exploredMap, realMap);
+            // before turn left, take image just in case
+            robot.setImageCount(0);
+            robot.imageRecognitionRight(exploredMap);
+        }
     }
 
     /**
