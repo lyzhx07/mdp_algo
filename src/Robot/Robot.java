@@ -5,6 +5,7 @@ import Map.Direction;
 import Map.MapDescriptor;
 import Map.MapConstants;
 import Map.Cell;
+import Map.ObsSurface;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,6 +48,7 @@ public class Robot {
     // for image taking
     private int imageCount = 0;
     private HashSet<String> imageHashSet = new HashSet<String>();
+    private HashMap<String, ObsSurface> surfaceTaken = new HashMap<String, ObsSurface>();
     
     // for alignment
     private int alignCount = 0;
@@ -152,6 +154,9 @@ public class Robot {
         this.sensorRes = sensorRes;
     }
 
+    public HashMap<String, ObsSurface> getSurfaceTaken() {
+        return surfaceTaken;
+    }
 
     /**
      * Initialization of the Sensors
@@ -521,9 +526,10 @@ public class Robot {
     }
 
 
-    public void imageRecognitionRight(Map exploredMap) {
+    public ArrayList<ObsSurface> imageRecognitionRight(Map exploredMap) {
         int rowInc = 0, colInc = 0;
         int camera_row, camera_col, temp_row, temp_col;
+        int camInc = 0;
 
         switch (dir) {
             case UP:
@@ -547,28 +553,30 @@ public class Robot {
         camera_row = pos.y + rowInc;
         camera_col = pos.x + colInc;
 
-        boolean sendRPI = false;
+        boolean sendRPI = false, hasObsAtCamAxis = false;
 
         // send RPI if sensor reading within the camera range
         if ((sensorRes.get("R1") > 0 && sensorRes.get("R1") <= RobotConstants.CAMERA_MAX)
                 || (sensorRes.get("R2") > 0 && sensorRes.get("R2") <= RobotConstants.CAMERA_MAX)) {
             if (!isRightHuggingWall()) {
                 sendRPI = true;
+
             }
         }
 //        }
         // else check for middle obstacles
         else {
 //            LOGGER.info("In else");
-            for (int i = RobotConstants.CAMERA_MIN; i <= RobotConstants.CAMERA_MAX; i++) {
-                temp_row = camera_row + rowInc * i;
-                temp_col = camera_col + colInc * i;
+            for (camInc = RobotConstants.CAMERA_MIN; camInc <= RobotConstants.CAMERA_MAX; camInc++) {
+                temp_row = camera_row + rowInc * camInc;
+                temp_col = camera_col + colInc * camInc;
 
                 if (exploredMap.checkValidCell(temp_row, temp_col)) {
                     Cell temp_cell = exploredMap.getCell(temp_row, temp_col);
                     if (temp_cell.isExplored() && temp_cell.isObstacle()) {
                         // send to RPI to do image recognition
                         sendRPI = true;
+                        hasObsAtCamAxis = true;
                         break;
                     }
                 }
@@ -583,12 +591,35 @@ public class Robot {
             imageCount = 0;
         }
 
+        ArrayList<ObsSurface> surfaceTakenList = new ArrayList<ObsSurface>();
+        ObsSurface tempObsSurface;
+
         if (sendRPI) {
             if (imageCount == 0) {
                 String to_send = String.format("I%d|%d|%s", camera_col + 1, camera_row + 1, Direction.getClockwise(dir).toString());
                 if (!imageHashSet.contains(to_send)) {
                     imageHashSet.add(to_send);
                     NetMgr.getInstance().send(to_send);
+
+                    // update surfaceTaken
+                    // R1
+                    tempObsSurface = addToSurfaceTaken("R1", rowInc, colInc);
+                    if (tempObsSurface != null) {
+                        surfaceTakenList.add(tempObsSurface);
+                    }
+                    // R2
+                    tempObsSurface = addToSurfaceTaken("R2", rowInc, colInc);
+                    if (tempObsSurface != null) {
+                        surfaceTakenList.add(tempObsSurface);
+                    }
+                    // camera
+                    if (hasObsAtCamAxis) {
+                        tempObsSurface = internalAddToSurfaceTaken(camera_row, camera_col, rowInc, colInc, camInc);
+                        if (tempObsSurface != null) {
+                            surfaceTakenList.add(tempObsSurface);
+                        }
+                    }
+
                 }
             }
             imageCount = (imageCount + 1) % 3;
@@ -598,6 +629,36 @@ public class Robot {
         }
         LOGGER.info(Boolean.toString(sendRPI));
         LOGGER.info(String.format("imageCount: %d", imageCount));
+        return surfaceTakenList;
+    }
+
+    public ObsSurface addToSurfaceTaken(String sensorName, int rowInc, int colInc) {
+        int tempSensorRow, tempSensorCol, tempSensorReading;
+
+        tempSensorReading = sensorRes.get(sensorName);
+        if (tempSensorReading > 0 && tempSensorReading <= RobotConstants.CAMERA_MAX) {
+            tempSensorRow = sensorMap.get(sensorName).getRow();
+            tempSensorCol = sensorMap.get(sensorName).getCol();
+            ObsSurface tempObsSurface = internalAddToSurfaceTaken(tempSensorRow, tempSensorCol, rowInc, colInc, tempSensorReading);
+            return tempObsSurface;
+        }
+        else {
+            return null;
+        }
+
+    }
+
+    public ObsSurface internalAddToSurfaceTaken(int tempRow, int tempCol, int rowInc, int colInc, int incStep) {
+        int tempObsRow, tempObsCol;
+        ArrayList<ObsSurface> surfaceTakenList = new ArrayList<ObsSurface>();
+        ObsSurface tempObsSurface;
+        Direction tempSurface;
+        tempObsRow = tempRow + rowInc * incStep;
+        tempObsCol = tempCol + colInc * incStep;
+        tempSurface = Direction.getClockwise(dir);
+        tempObsSurface = new ObsSurface(tempObsRow, tempObsCol, tempSurface);
+        surfaceTaken.put(tempObsSurface.toString(), tempObsSurface);
+        return tempObsSurface;
     }
 
     /** TODO

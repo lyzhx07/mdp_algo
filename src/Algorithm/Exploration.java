@@ -4,6 +4,7 @@ import Map.Map;
 import Map.Cell;
 import Map.Direction;
 import Map.MapConstants;
+import Map.ObsSurface;
 import Network.NetMgr;
 import Network.NetworkConstants;
 import Robot.Robot;
@@ -13,6 +14,7 @@ import Robot.RobotConstants;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.logging.Logger;
 
 import Helper.*;
@@ -74,6 +76,8 @@ public class Exploration {
 
     public void imageExploration(Point start) throws InterruptedException {
         int exp_timing = exploration(start);
+        HashMap<String, ObsSurface> allPossibleSurfaces;
+        HashMap<String, ObsSurface> notYetTaken;
 
         // if fastest than previous leaderboard timing -- return to stop (do not go out)
         if (exp_timing < RobotConstants.BEST_EXP_TIMING) {
@@ -82,8 +86,47 @@ public class Exploration {
         else {
             // algo for image
 
+            // calibrate and let the robot face up
+            calibrate_before_going_out_for_image();
+            // get all untaken surfaces
+            notYetTaken = getUntakenSurfaces();
+
         }
 
+    }
+
+    private HashMap<String, ObsSurface> getUntakenSurfaces() {
+        HashMap<String, ObsSurface> notYetTaken;
+
+        // get all surfaces possilbe
+        notYetTaken = getAllObsSurfaces();
+        for (String tempObsSurfaceStr : robot.getSurfaceTaken().keySet()) {
+            if (!notYetTaken.containsKey(tempObsSurfaceStr)) {
+                LOGGER.warning("Surface taken not in all possible surfaces. Please check. \n\n\n");
+            }
+            else {
+                notYetTaken.remove(tempObsSurfaceStr);
+            }
+        }
+
+        return notYetTaken;
+    }
+
+    private HashMap<String, ObsSurface> getAllObsSurfaces() {
+        // TODO
+        return null;
+    }
+
+    private void calibrate_before_going_out_for_image() throws InterruptedException {
+        String calibrationCmd = robot.getCommand(Command.INITIAL_CALIBERATE, 1);    // steps 1 for consistency
+        NetMgr.getInstance().send(NetworkConstants.ARDUINO + calibrationCmd);
+
+        // Orient the robot on laptop to face lap as after caliberation, it will face up
+        // need to turn after setFindingFP(true) as it will not send command to arduino
+        robot.setFindingFP(true);
+        robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+        robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+        robot.setFindingFP(false);
     }
 
 
