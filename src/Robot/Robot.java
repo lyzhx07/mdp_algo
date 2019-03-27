@@ -564,27 +564,26 @@ public class Robot {
             }
         }
 //        }
-        // else check for middle obstacles
-        else {
+        // else check for middle obstacles - removing else for image
 //            LOGGER.info("In else");
-            for (camInc = RobotConstants.CAMERA_MIN; camInc <= RobotConstants.CAMERA_MAX; camInc++) {
-                temp_row = camera_row + rowInc * camInc;
-                temp_col = camera_col + colInc * camInc;
 
-                if (exploredMap.checkValidCell(temp_row, temp_col)) {
-                    Cell temp_cell = exploredMap.getCell(temp_row, temp_col);
-                    if (temp_cell.isExplored() && temp_cell.isObstacle()) {
-                        // send to RPI to do image recognition
-                        sendRPI = true;
-                        hasObsAtCamAxis = true;
-                        break;
-                    }
-                }
-                else {      // invalid cell
+        for (camInc = RobotConstants.CAMERA_MIN; camInc <= RobotConstants.CAMERA_MAX; camInc++) {
+            temp_row = camera_row + rowInc * camInc;
+            temp_col = camera_col + colInc * camInc;
+
+            if (exploredMap.checkValidCell(temp_row, temp_col)) {
+                Cell temp_cell = exploredMap.getCell(temp_row, temp_col);
+                if (temp_cell.isExplored() && temp_cell.isObstacle()) {
+                    // send to RPI to do image recognition
+                    sendRPI = true;
+                    hasObsAtCamAxis = true;
                     break;
                 }
+            } else {      // invalid cell
+                break;
             }
         }
+
 
         // imageCount reset to 0 if preMov is turning but not the turning in turnRightAndAlign
         if (!hasTurnAndAlign && (preMove == Command.TURN_LEFT || preMove == Command.TURN_RIGHT)) {
@@ -612,7 +611,7 @@ public class Robot {
                     if (tempObsSurface != null) {
                         surfaceTakenList.add(tempObsSurface);
                     }
-                    // camera
+                    // camera //TODO
                     if (hasObsAtCamAxis) {
                         tempObsSurface = internalAddToSurfaceTaken(camera_row, camera_col, rowInc, colInc, camInc);
                         if (tempObsSurface != null) {
@@ -655,7 +654,7 @@ public class Robot {
         Direction tempSurface;
         tempObsRow = tempRow + rowInc * incStep;
         tempObsCol = tempCol + colInc * incStep;
-        tempSurface = Direction.getClockwise(dir);
+        tempSurface = Direction.getAntiClockwise(dir);
         tempObsSurface = new ObsSurface(tempObsRow, tempObsCol, tempSurface);
         surfaceTaken.put(tempObsSurface.toString(), tempObsSurface);
         return tempObsSurface;
@@ -697,7 +696,8 @@ public class Robot {
      * @param exploredMap
      * @param realMap
      */
-    public void sense(Map exploredMap, Map realMap) {
+    public ArrayList<ObsSurface> sense(Map exploredMap, Map realMap) {
+        ArrayList<ObsSurface> surfTaken = new ArrayList<ObsSurface>();
         HashMap<String, Integer> sensorResult = completeUpdateSensorResult(exploredMap, realMap);
         updateMap(exploredMap, realMap, sensorResult);
 
@@ -735,8 +735,24 @@ public class Robot {
                 }
             }
             // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
-            imageRecognitionRight(exploredMap);
+            surfTaken = imageRecognitionRight(exploredMap);
         }
+        return surfTaken;
+    }
+
+    /** TODO: want alignment for image?
+     * Update sensorRes but not the map. No alignment as well. Send image as well.
+     * @param exploredMap
+     * @param realMap
+     */
+    public void senseWithoutMapUpdateAndAlignment(Map exploredMap, Map realMap) {
+
+        HashMap<String, Integer> sensorResult = completeUpdateSensorResult(exploredMap, realMap);
+        // send to Android
+        if (!sim && !findingFP) {
+            send_android(exploredMap);
+        }
+
     }
 
 
@@ -745,17 +761,48 @@ public class Robot {
      * @param exploredMap
      * @param realMap
      */
-    public void senseWithoutMapUpdate(Map exploredMap, Map realMap) {
+    public ArrayList<ObsSurface> senseWithoutMapUpdate(Map exploredMap, Map realMap) {
 
         HashMap<String, Integer> sensorResult = completeUpdateSensorResult(exploredMap, realMap);
-
+        ArrayList<ObsSurface> surfTaken = new ArrayList<ObsSurface>();
         // send to Android
         if (!sim && !findingFP) {
             send_android(exploredMap);
 
+            // Realignment for right
+            if (alignCount > RobotConstants.CALIBRATE_AFTER) {
+                // TODO: Alignment
+//                align_front(exploredMap, realMap);    // unnecessary, align_front is already added when front not movable
+                align_right(exploredMap, realMap);
+            }
+
+            // Realignment for front - turn right and align when it is not hugging the wall but R1 and R2 == 1 and turnAndAlignCount > CalibrationConstant
+            if (isRightHuggingWall()) {
+                turnAndAlignCount = 0;
+            }
+            else {
+                turnAndAlignCount++;
+            }
+            if (hasTurnAndAlign) {
+                hasTurnAndAlign = false;
+            }
+
+            if ((turnAndAlignCount > RobotConstants.TURN_AND_CALIBRATE) &&
+                    (sensorRes.get("R1") == 1 && sensorRes.get("R2") == 1)) {
+
+                try {
+                    turnRightAndAlignMethod(exploredMap, realMap);
+
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
             // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
-            imageRecognitionRight(exploredMap);
+            surfTaken = imageRecognitionRight(exploredMap);
+
         }
+        // TODO: add alignment
+        return surfTaken;
     }
 
     /**

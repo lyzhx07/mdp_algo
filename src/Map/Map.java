@@ -6,6 +6,7 @@ import Robot.RobotConstants;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class Map {
 
@@ -195,6 +196,42 @@ public class Map {
     }
 
     /**
+     * Get all movable neighbours Direction and Cell object
+     * @param c cell of current position
+     * @return neighbours HashMap<Direction, Cell>
+     */
+    public HashMap<Direction, Cell> getNeighboursMap(Cell c) {
+
+        HashMap<Direction, Cell> neighbours = new HashMap<Direction, Cell>();
+        Point up = new Point(c.getPos().x , c.getPos().y + 1);
+        Point down = new Point(c.getPos().x , c.getPos().y - 1);
+        Point left = new Point(c.getPos().x - 1 , c.getPos().y );
+        Point right = new Point(c.getPos().x + 1 , c.getPos().y );
+
+        // UP
+        if (checkValidCell(up.y, up.x)){
+            neighbours.put(Direction.UP, getCell(up));
+        }
+
+        // DOWN
+        if (checkValidCell(down.y, down.x)) {
+            neighbours.put(Direction.DOWN, getCell(down));
+        }
+
+        // LEFT
+        if (checkValidCell(left.y, left.x)){
+            neighbours.put(Direction.LEFT, getCell(left));
+        }
+
+        // RIGHT
+        if (checkValidCell(right.y, right.x)){
+            neighbours.put(Direction.RIGHT, getCell(right));
+        }
+
+        return neighbours;
+    }
+
+    /**
      * Check if wayPoint is valid to move there cannot move to virtual wall
      * @param row
      * @param col
@@ -241,6 +278,111 @@ public class Map {
         }
         return nearest;
     }
+
+    public ObsSurface nearestObsSurface(Point loc, HashMap<String, ObsSurface> notYetTaken) {
+        double dist = 1000, tempDist;
+        Point tempPos;
+        ObsSurface nearest = null;
+
+        for (ObsSurface obstacle: notYetTaken.values()) {
+            tempPos = obstacle.getPos();
+            tempDist = loc.distance(tempPos);
+            if (tempDist < dist) {
+                dist = tempDist;
+                nearest = obstacle;
+            }
+        }
+        return nearest;
+    }
+
+
+    public Cell nearestMovable(ObsSurface obsSurface) {
+        double distance = 1000, tempDist;
+        Cell nearest = null;
+        Cell tempCell;
+        int rowInc = 0, colInc = 0;
+        int obsRow = obsSurface.getRow();
+        int obsCol = obsSurface.getCol();
+        switch (obsSurface.getSurface()) {
+            case UP:
+                rowInc = 1;
+                colInc = 0;
+                break;
+            case DOWN:
+                rowInc = -1;
+                colInc = 0;
+                break;
+            case LEFT:
+                colInc = -1;
+                rowInc = 0;
+                break;
+            case RIGHT:
+                colInc = 1;
+                rowInc = 0;
+                break;
+        }
+
+        // up or down
+        if (rowInc != 0) {
+            for (int row = obsRow + 2 * rowInc; row <= obsRow + 3 * rowInc; row++) {
+                for (int col = obsCol - 1; col <= obsCol + 1; col++) {
+                    if (checkValidMove(row, col)) {
+                        tempCell = grid[row][col];
+                        tempDist = obsSurface.getPos().distance(tempCell.getPos());
+                        if (distance > tempDist) {
+                            nearest = tempCell;
+                            distance = tempDist;
+                        }
+                    }
+                }
+            }
+        }
+
+        else if (colInc != 0) {
+            for (int col = obsCol + 2 * colInc; col <= obsCol + 3 * colInc; col++) {
+                for (int row = obsRow - 1; row <= obsRow + 1; row++) {
+                    if (checkValidMove(row, col)) {
+                        tempCell = grid[row][col];
+                        tempDist = obsSurface.getPos().distance(tempCell.getPos());
+                        if (distance > tempDist) {
+                            nearest = tempCell;
+                            distance = tempDist;
+                        }
+                    }
+                }
+            }
+        }
+        return nearest;
+    }
+
+
+    public Cell nearestMovableOld(Point obsLoc) {
+        double distance = 1000, tempDist;
+        Cell nearest = null;
+        Cell tempCell;
+
+        int obsRow = obsLoc.y;
+        int obsCol = obsLoc.x;
+
+        for (int row = obsRow - 2; row <= obsRow + 2; row++) {
+            for (int col = obsCol - 3; col <= obsCol + 3; col++) {
+                if (checkValidCell(row, col)) {
+                    tempCell = grid[row][col];
+                    if (checkValidMove(row, col) && clearForRobot(row, col)) {
+//                    if ((distance > obsLoc.distance(tempCell.getPos()) && tempCell.getPos().distance(botLoc) > 0)) {       // actually no need to check for botLoc
+                        if (distance > obsLoc.distance(tempCell.getPos())) {       // actually no need to check for botLoc
+                            nearest = tempCell;
+                            distance = obsLoc.distance(tempCell.getPos());
+                        }
+                    }
+                }
+
+            }
+        }
+        return nearest;
+    }
+
+
 
     /**
      * Return the nearest explored but not move through cell given the nearest unexplored cell

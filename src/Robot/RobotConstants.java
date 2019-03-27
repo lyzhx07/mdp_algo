@@ -19,13 +19,13 @@ public class RobotConstants {
     public static final int TARGETED_COVERAGE = 97;
 
     // best exploration timing for leaderboard in seconds
-    public static final int BEST_EXP_TIMING = 126;
+    public static final int BEST_EXP_TIMING = 1;
 
     // To be adjusted
     public static final int MOVE_STEPS = 1;
     public static final long WAIT_TIME = 1000;    //Time waiting before retransmitting in milliseconds
     public static final short CAMERA_RANGE = 4;
-    public static final int STEP_PER_SECOND = 30;  // 30; // default large step per second to avoid any delay
+    public static final int STEP_PER_SECOND = 10;  // 30; // default large step per second to avoid any delay
 
     // Sensors default range (In grids)
     public static final int SHORT_MIN = 1;
