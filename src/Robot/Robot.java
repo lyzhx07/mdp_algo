@@ -637,8 +637,8 @@ public class Robot {
      * @param realMap
      */
     public void sense(Map exploredMap, Map realMap) {
-
-        updateMap(exploredMap, realMap);
+        HashMap<String, Integer> sensorResult = completeUpdateSensorResult(exploredMap, realMap);
+        updateMap(exploredMap, realMap, sensorResult);
 
         // send to Android
         if (!sim && !findingFP) {
@@ -678,6 +678,25 @@ public class Robot {
         }
     }
 
+
+    /** TODO: want alignment for image?
+     * Update sensorRes but not the map. No alignment as well. Send image as well.
+     * @param exploredMap
+     * @param realMap
+     */
+    public void senseWithoutMapUpdate(Map exploredMap, Map realMap) {
+
+        HashMap<String, Integer> sensorResult = completeUpdateSensorResult(exploredMap, realMap);
+
+        // send to Android
+        if (!sim && !findingFP) {
+            send_android(exploredMap);
+
+            // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
+            imageRecognitionRight(exploredMap);
+        }
+    }
+
     /**
      * Turn right, align front, turn left, align right
      * Condition checking is not in the method
@@ -703,8 +722,8 @@ public class Robot {
      * @param realMap
      */
     public void senseWithoutAlign(Map exploredMap, Map realMap) {
-
-        updateMap(exploredMap, realMap);
+        HashMap<String, Integer> sensorResult = completeUpdateSensorResult(exploredMap, realMap);
+        updateMap(exploredMap, realMap,sensorResult);
 
         // send to Android
         if (!sim && !findingFP) {
@@ -717,9 +736,7 @@ public class Robot {
         }
     }
 
-    public void updateMap(Map exploredMap, Map realMap) {
-        int obsBlock;
-        int rowInc=0, colInc=0, row, col;
+    public HashMap<String, Integer> completeUpdateSensorResult(Map exploredMap, Map realMap) {
         HashMap<String, Integer> sensorResult;
 
         if(sim) {
@@ -737,10 +754,6 @@ public class Robot {
 //
 //            }
             sensorResult = updateSensorRes(msg);
-            if(sensorResult == null) {
-                LOGGER.warning("Invalid msg. Map not updated");
-                return;
-            }
 
             // TODO: Camera facing front - check whether img is needed to be detected and send RPI if needed
 //            imageRecognitionFront();
@@ -749,6 +762,17 @@ public class Robot {
 //            } catch (Exception e) {
 //                e.printStackTrace();
 //            }
+        }
+        return sensorResult;
+    }
+
+    public void updateMap(Map exploredMap, Map realMap, HashMap<String, Integer> sensorResult) {
+        int obsBlock;
+        int rowInc=0, colInc=0, row, col;
+
+        if(sensorResult == null) {
+            LOGGER.warning("Invalid msg. Map not updated");
+            return;
         }
 
         for(String sname: sensorList) {

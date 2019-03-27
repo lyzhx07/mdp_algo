@@ -72,61 +72,23 @@ public class Exploration {
     }
 
 
-    public void checklist_straightLine() throws InterruptedException {
-        int startPosX = robot.getPos().x;
-        Direction preDir = robot.getDir();
+    public void imageExploration(Point start) throws InterruptedException {
+        int exp_timing = exploration(start);
 
-        while(movable(robot.getDir())) {
-            robot.move(Command.FORWARD, 1, exploredMap, stepPerSecond);
-            robot.sense(exploredMap, realMap);
+        // if fastest than previous leaderboard timing -- return to stop (do not go out)
+        if (exp_timing < RobotConstants.BEST_EXP_TIMING) {
+            return;
         }
+        else {
+            // algo for image
 
-        // if encounter an obstacle
-        robot.turn(Command.TURN_LEFT, stepPerSecond);
-        robot.sense(exploredMap, realMap);
-
-
-        // move forward until able to turn left
-        while(!movable(Direction.getClockwise(robot.getDir()))) {
-            robot.move(Command.FORWARD, 1, exploredMap, stepPerSecond);
-            robot.sense(exploredMap, realMap);
-
-        }
-
-        robot.turn(Command.TURN_RIGHT, stepPerSecond);
-        robot.sense(exploredMap, realMap);
-
-
-        // move forward until able to turn right again
-        do {
-            robot.move(Command.FORWARD, 1, exploredMap, stepPerSecond);
-            robot.sense(exploredMap, realMap);
-        }
-        while(!movable(Direction.getClockwise(robot.getDir())));
-
-        // return to original line
-        robot.turn(Command.TURN_RIGHT, stepPerSecond);
-        robot.sense(exploredMap, realMap);
-
-        while(robot.getPos().x != startPosX) {
-            robot.move(Command.FORWARD, 1, exploredMap, stepPerSecond);
-            robot.sense(exploredMap, realMap);
-        }
-
-
-        robot.turn(Command.TURN_LEFT, stepPerSecond);
-        robot.sense(exploredMap, realMap);
-
-        while(movable(robot.getDir())) {
-            robot.move(Command.FORWARD, 1, exploredMap, stepPerSecond);
-            robot.sense(exploredMap, realMap);
         }
 
     }
 
 
     //TODO clean this
-    public void exploration(Point start) throws InterruptedException {
+    public int exploration(Point start) throws InterruptedException {
         areaExplored = exploredMap.getExploredPercentage();
         startTime = System.currentTimeMillis();
         endTime = startTime + timeLimit;
@@ -158,10 +120,11 @@ public class Exploration {
             LOGGER.info(Double.toString(areaExplored));
 //            LOGGER.info(Integer.toString(moves));
 
-            // TODO: for week 8 only, do not go out again if returning to start and areaExplored > target percentage
-            if (robot.getPos().distance(start) == 0 && areaExplored > RobotConstants.TARGETED_COVERAGE) {
-                break outer;
-            }
+//            // for week 8 only, do not go out again if returning to start and areaExplored > target percentage
+//            // disable after week 9
+//            if (robot.getPos().distance(start) == 0 && areaExplored > RobotConstants.TARGETED_COVERAGE) {
+//                break outer;
+//            }
 
             if (moves % checkingStep == 0 || right_move > 3) {      // prevent from keep turning right and forward
 //            if (moves % checkingStep == 0 || robot.getPos().distance(start)==0) {     // original
@@ -183,7 +146,10 @@ public class Exploration {
         endTime = System.currentTimeMillis();
         int seconds = (int)((endTime - startTime)/1000%60);
         int minutes = (int)((endTime - startTime)/1000/60);
+        int total_in_seconds = (int)((endTime - startTime)/1000);
+        System.out.println("Total Time: "+total_in_seconds+" seconds");
         System.out.println("Total Time: "+minutes+"mins "+seconds+"seconds");
+        return total_in_seconds;
     }
 
 
@@ -274,23 +240,9 @@ public class Exploration {
             // try to turn right, align front, turn left, align front and right if possible before and after turning left
 //            LOGGER.info("Right and front not movable, try to align.");
 
-            if ((robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) &&
-                    (!robot.getHasTurnAndAlign()) &&
-                    (!sim)) {
-                robot.turnRightAndAlignMethod(exploredMap, realMap);
-            }
-            else if (robot.getHasTurnAndAlign()) {
-                robot.setHasTurnAndAlign(false);
-            }
+            turnRightAndAlignBeforeTurnLeft();
 
-            if (!sim) {
-                robot.align_front(exploredMap, realMap);
-                robot.align_right(exploredMap, realMap);
-            }
-
-            // before turn left, take image just in case
-            robot.setImageCount(0);
-            robot.imageRecognitionRight(exploredMap);
+            alignAndImageRecBeforeLeftTurn();
 
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
@@ -310,33 +262,15 @@ public class Exploration {
 
             // Option1. Turn left twice with alignment
             // if R1 and R2 == 1, turn right and align first
-            if ((robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) &&
-                    (!robot.getHasTurnAndAlign()) &&
-                    (!sim)) {
-                robot.turnRightAndAlignMethod(exploredMap, realMap);
-            }
-            else if (robot.getHasTurnAndAlign()) {
-                robot.setHasTurnAndAlign(false);
-            }
+            turnRightAndAlignBeforeTurnLeft();
 
-            if (!sim) {
-                robot.align_front(exploredMap, realMap);
-                robot.align_right(exploredMap, realMap);
-            }
-
-            // before turn left, take image just in case
-            robot.setImageCount(0);
-            robot.imageRecognitionRight(exploredMap);
+            alignAndImageRecBeforeLeftTurn();
 
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
 
-            if (!sim) {
-                robot.align_front(exploredMap, realMap);
-                robot.align_right(exploredMap, realMap);
-            }
-            robot.setImageCount(0);
-            robot.imageRecognitionRight(exploredMap);
+            alignAndImageRecBeforeLeftTurn();
+
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             robot.sense(exploredMap, realMap);
             if (!sim) {
@@ -391,6 +325,35 @@ public class Exploration {
 //            }
         }
 
+    }
+
+    /**
+     * Turn right, align front, turn left, align front and right if possible before and after turning left
+     * Avoid turning twice with turnAndAlignCount in Robot class
+     * @throws InterruptedException
+     */
+    private void turnRightAndAlignBeforeTurnLeft() throws InterruptedException {
+        if ((robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) &&
+                (!robot.getHasTurnAndAlign()) &&
+                (!sim)) {
+            robot.turnRightAndAlignMethod(exploredMap, realMap);
+        }
+        else if (robot.getHasTurnAndAlign()) {
+            robot.setHasTurnAndAlign(false);
+        }
+    }
+
+    /**
+     * Align front, align right and do image recognition before turning left
+     */
+    private void alignAndImageRecBeforeLeftTurn() {
+        if (!sim) {
+            robot.align_front(exploredMap, realMap);
+            robot.align_right(exploredMap, realMap);
+            // before turn left, take image just in case
+            robot.setImageCount(0);
+            robot.imageRecognitionRight(exploredMap);
+        }
     }
 
     /**
@@ -449,19 +412,34 @@ public class Exploration {
         LOGGER.info(robot.getStatus());
         // TODO: now ignore robot already at start
         if (robot.getPos().equals(start) && loc.equals(start)) {
-            while (robot.getDir() != Direction.UP) {
-//                if (sim) {
-//                    try {
-//                        TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-                robot.sense(exploredMap, realMap);
-                robot.turn(Command.TURN_RIGHT, stepPerSecond);
-                // hx: to be changed to turn right  / left
+            while (robot.getDir() != Direction.DOWN) {
+                robot.turn(Command.TURN_LEFT, stepPerSecond);
+                System.out.println(robot.getDir());
+                if (sim) {
+                    robot.sense(exploredMap, realMap);
+                }
+                else {
+                    NetMgr.getInstance().receive();
+                }
+
             }
-            return false;
+            return true;
+
+
+            // old
+//            while (robot.getDir() != Direction.UP) {
+////                if (sim) {
+////                    try {
+////                        TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
+////                    } catch (InterruptedException e) {
+////                        e.printStackTrace();
+////                    }
+////                }
+//                robot.sense(exploredMap, realMap);
+//                robot.turn(Command.TURN_RIGHT, stepPerSecond);
+//                // hx: to be changed to turn right  / left
+//            }
+//            return false;
         }
 
         ArrayList<Command> commands = new ArrayList<Command>();
@@ -575,9 +553,19 @@ public class Exploration {
 //
 //                }
 
-                if ((c == Command.FORWARD) && !movable(robot.getDir())) {
-                    // System.out.println("moves "+moves);
+//                if ((c == Command.FORWARD) && !movable(robot.getDir())) {
+                // checking sensorRes reading instead since only sensorRes is updated
+                if ((c == Command.FORWARD) &&
+                        (robot.getSensorRes().get("F1") == 1 ||
+                                robot.getSensorRes().get("F2") == 1 ||
+                                robot.getSensorRes().get("F3") == 1)
+                    ) {
+
+                // System.out.println("moves "+moves);
                     System.out.println("Not Executing Forward Not Movable");
+                    // update map (sensorRes is updated)
+                    robot.updateMap(exploredMap, realMap, robot.getSensorRes());
+                    goToPoint(loc);
                     break;
                 } else {
                     if (c == Command.FORWARD && moves < 1) {
@@ -586,24 +574,13 @@ public class Exploration {
                         // If last command
                         if (i == (commands.size() - 1)) {
                             robot.move(c, moves, exploredMap, stepPerSecond);
-                            if (sim) {
-                                robot.sense(exploredMap, realMap);
-                            }
-                            else {
-                                NetMgr.getInstance().receive();
-                                robot.send_android(exploredMap);
-                            }
+                            robot.senseWithoutMapUpdate(exploredMap, realMap);
                         }
                     } else {
                         if (moves > 0) {
                             robot.move(Command.FORWARD, moves, exploredMap, stepPerSecond);
-                            if (sim) {
-                                robot.sense(exploredMap, realMap);
-                            }
-                            else {
-                                NetMgr.getInstance().receive();
-                                robot.send_android(exploredMap);
-                            }
+                            robot.senseWithoutMapUpdate(exploredMap, realMap);
+
 
                         }
                         if (c == Command.TURN_RIGHT || c == Command.TURN_LEFT) {
@@ -611,13 +588,7 @@ public class Exploration {
                         } else {
                             robot.move(c, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
                         }
-                        if (sim) {
-                            robot.sense(exploredMap, realMap);
-                        }
-                        else {
-                            NetMgr.getInstance().receive();
-                            robot.send_android(exploredMap);
-                        }
+                        robot.senseWithoutMapUpdate(exploredMap, realMap);
                         moves = 0;
                     }
                 }

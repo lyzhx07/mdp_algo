@@ -18,6 +18,9 @@ public class RobotConstants {
     // targeted coverage
     public static final int TARGETED_COVERAGE = 97;
 
+    // best exploration timing for leaderboard in seconds
+    public static final int BEST_EXP_TIMING = 126;
+
     // To be adjusted
     public static final int MOVE_STEPS = 1;
     public static final long WAIT_TIME = 1000;    //Time waiting before retransmitting in milliseconds
