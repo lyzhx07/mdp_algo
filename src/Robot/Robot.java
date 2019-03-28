@@ -623,7 +623,9 @@ public class Robot {
 
                 }
             }
-            imageCount = (imageCount + 1) % 3;
+//            imageCount = (imageCount + 1) % 3;
+            imageCount = (imageCount + 1) % 2;
+
         }
         else {
             imageCount = 0;
