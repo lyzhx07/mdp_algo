@@ -757,7 +757,7 @@ public class Robot {
 
 
     /** TODO: want alignment for image?
-     * Update sensorRes but not the map. No alignment as well. Send image as well.
+     * Update sensorRes but not the map. No alignment as well. Send image as well. // alignment not updating the map
      * @param exploredMap
      * @param realMap
      */
@@ -791,7 +791,7 @@ public class Robot {
                     (sensorRes.get("R1") == 1 && sensorRes.get("R2") == 1)) {
 
                 try {
-                    turnRightAndAlignMethod(exploredMap, realMap);
+                    turnRightAndAlignMethodWithoutMapUpdate(exploredMap, realMap);
 
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -818,6 +818,25 @@ public class Robot {
         align_front(exploredMap, realMap);
         turn(Command.TURN_LEFT, RobotConstants.STEP_PER_SECOND);
         senseWithoutAlign(exploredMap, realMap);
+        align_right(exploredMap, realMap);
+//        imageRecognitionRight(exploredMap);   // try to do before alignment, if cannot, see how
+        hasTurnAndAlign = true;
+        turnAndAlignCount = 0;
+    }
+
+    /**
+     * Turn right, align front, turn left, align right
+     * Condition checking is not in the method
+     * @param exploredMap
+     * @param realMap
+     * @throws InterruptedException
+     */
+    public void turnRightAndAlignMethodWithoutMapUpdate(Map exploredMap, Map realMap) throws InterruptedException {
+        turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+        senseWithoutMapUpdateAndAlignment(exploredMap, realMap);
+        align_front(exploredMap, realMap);
+        turn(Command.TURN_LEFT, RobotConstants.STEP_PER_SECOND);
+        senseWithoutMapUpdateAndAlignment(exploredMap, realMap);
         align_right(exploredMap, realMap);
 //        imageRecognitionRight(exploredMap);   // try to do before alignment, if cannot, see how
         hasTurnAndAlign = true;

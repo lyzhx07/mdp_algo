@@ -531,9 +531,10 @@ public class Exploration {
             // try to turn right, align front, turn left, align front and right if possible before and after turning left
 //            LOGGER.info("Right and front not movable, try to align.");
 
-            turnRightAndAlignBeforeTurnLeft();
+            turnRightAndAlignBeforeTurnLeft(doingImage);
 
-            alignAndImageRecBeforeLeftTurn();
+            alignAndImageRecBeforeLeftTurn(doingImage);
+
 
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             if (doingImage) {
@@ -559,9 +560,9 @@ public class Exploration {
 
             // Option1. Turn left twice with alignment
             // if R1 and R2 == 1, turn right and align first
-            turnRightAndAlignBeforeTurnLeft();
+            turnRightAndAlignBeforeTurnLeft(doingImage);
 
-            alignAndImageRecBeforeLeftTurn();
+            alignAndImageRecBeforeLeftTurn(doingImage);
 
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             if (doingImage) {
@@ -572,7 +573,8 @@ public class Exploration {
                 robot.sense(exploredMap, realMap);
             }
 
-            alignAndImageRecBeforeLeftTurn();
+            alignAndImageRecBeforeLeftTurn(doingImage);
+
 
             robot.turn(Command.TURN_LEFT, stepPerSecond);
             if (doingImage) {
@@ -641,11 +643,16 @@ public class Exploration {
      * Avoid turning twice with turnAndAlignCount in Robot class
      * @throws InterruptedException
      */
-    private void turnRightAndAlignBeforeTurnLeft() throws InterruptedException {
+    private void turnRightAndAlignBeforeTurnLeft(boolean doingImage) throws InterruptedException {
         if ((robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) &&
                 (!robot.getHasTurnAndAlign()) &&
                 (!sim)) {
-            robot.turnRightAndAlignMethod(exploredMap, realMap);
+            if (doingImage) {
+                robot.turnRightAndAlignMethodWithoutMapUpdate(exploredMap, realMap);
+            }
+            else {
+                robot.turnRightAndAlignMethod(exploredMap, realMap);
+            }
         }
         else if (robot.getHasTurnAndAlign()) {
             robot.setHasTurnAndAlign(false);
@@ -655,13 +662,16 @@ public class Exploration {
     /**
      * Align front, align right and do image recognition before turning left
      */
-    private void alignAndImageRecBeforeLeftTurn() {
+    private void alignAndImageRecBeforeLeftTurn(boolean doingImage) {
         if (!sim) {
             robot.align_front(exploredMap, realMap);
             robot.align_right(exploredMap, realMap);
             // before turn left, take image just in case
             robot.setImageCount(0);
-            robot.imageRecognitionRight(exploredMap);
+            ArrayList<ObsSurface> surfTaken = robot.imageRecognitionRight(exploredMap);
+            if (doingImage) {
+                updateNotYetTaken(surfTaken);
+            }
         }
     }
 
@@ -784,7 +794,7 @@ public class Exploration {
                             (c == Command.TURN_RIGHT && !movable(Direction.getClockwise(robot.getDir())))) && commands.indexOf(c) == commands.size()-1)
                         continue;
                     if (c == Command.TURN_LEFT || c == Command.TURN_RIGHT){
-                        alignAndImageRecBeforeLeftTurn();
+                        alignAndImageRecBeforeLeftTurn(false);
                         robot.turn(c, stepPerSecond);
                     }
                     else {
