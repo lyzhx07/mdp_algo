@@ -13,13 +13,13 @@ public class RobotConstants {
     public static final int TURN_AND_CALIBRATE = 2;
 
     // max move
-    public static final int MAX_MOVE = 7;   //9
+    public static final int MAX_MOVE = 9;   //9
 
     // targeted coverage
     public static final int TARGETED_COVERAGE = 97;
 
     // best exploration timing for leaderboard in seconds
-    public static final int BEST_EXP_TIMING = 126;
+    public static final int BEST_EXP_TIMING = 1;
 
     // To be adjusted
     public static final int MOVE_STEPS = 1;

@@ -4,6 +4,7 @@ import Map.Map;
 import Map.Cell;
 import Map.Direction;
 import Map.MapConstants;
+import Map.ObsSurface;
 import Network.NetMgr;
 import Network.NetworkConstants;
 import Robot.Robot;
@@ -13,6 +14,7 @@ import Robot.RobotConstants;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.logging.Logger;
 
 import Helper.*;
@@ -32,6 +34,9 @@ public class Exploration {
     private long startTime;
     private long endTime;
     private Point start;
+
+    // for image
+    HashMap<String, ObsSurface> notYetTaken;
 
     private int right_move = 0;     // checking for four consecutive right + forward move
 
@@ -73,7 +78,9 @@ public class Exploration {
 
 
     public void imageExploration(Point start) throws InterruptedException {
-        int exp_timing = exploration(start);
+        long imageStartTime = System.currentTimeMillis();
+        int exp_timing = explorationAllRightWallHug(start);
+        HashMap<String, ObsSurface> allPossibleSurfaces;
 
         // if fastest than previous leaderboard timing -- return to stop (do not go out)
         if (exp_timing < RobotConstants.BEST_EXP_TIMING) {
@@ -81,11 +88,278 @@ public class Exploration {
         }
         else {
             // algo for image
-
+            notYetTaken = getUntakenSurfaces();
+            if (notYetTaken.size() == 0) {
+                return;
+            }
+            // calibrate and let the robot face up
+            calibrate_at_start_before_going_out();
+            // get all untaken surfaces
+            System.out.println("DEBUG " + notYetTaken);
+            while (notYetTaken.size() > 0) {
+                imageLoop();
+                // TODO
+            }
+            goToPoint(start);
         }
 
     }
 
+    private void imageLoop() throws InterruptedException {
+        boolean doingImage = true;
+        ArrayList<ObsSurface> surfTaken;
+        ObsSurface nearestObstacle;
+        Cell nearestCell;
+        boolean success;
+        nearestObstacle = exploredMap.nearestObsSurface(robot.getPos(), notYetTaken);
+        System.out.println("DEBUG nearestObstacle " + nearestObstacle.toString());
+        nearestCell = exploredMap.nearestMovable(nearestObstacle);
+        System.out.println("DEBUG nearestCell is null:" + (nearestCell == null));
+
+        if (nearestCell != null) {
+            System.out.println("DEBUG nearestCell " + nearestCell.toString());
+
+            // go to nearest cell
+            success = goToPointForImage(nearestCell.getPos(), nearestObstacle);
+            if (success) {
+                System.out.println("DEBUG cell pos " + nearestCell.getPos().toString());
+                do {
+                    robot.setImageCount(0);
+                    surfTaken = robot.imageRecognitionRight(exploredMap);
+                    updateNotYetTaken(surfTaken);
+                    rightWallHug(doingImage);
+                    // TODO
+                    System.out.println("DEBUG robot pos " + robot.getPos().toString());
+                } while (!robot.getPos().equals(nearestCell.getPos()) && !robot.isRightHuggingWall());
+            }
+            else {
+                System.out.println("DEBUG in inner else");
+                removeFromNotYetTaken(nearestObstacle);
+            }
+
+        }
+        else {
+            System.out.println("DEBUG in outer else");
+            removeFromNotYetTaken(nearestObstacle);
+            System.out.println("DEBUG after removing in outer else");
+        }
+    }
+
+    private void updateNotYetTaken(ArrayList<ObsSurface> surfTaken) {
+        for (ObsSurface obsSurface : surfTaken) {
+            if (notYetTaken.containsKey(obsSurface.toString())) {
+                notYetTaken.remove(obsSurface.toString());
+                LOGGER.info("Remove from not yet taken: " + obsSurface);
+            }
+        }
+    }
+
+    private void removeFromNotYetTaken(ObsSurface obsSurface) {
+        notYetTaken.remove(obsSurface.toString());
+        LOGGER.info("Remove from not yet taken: " + obsSurface.toString());
+
+    }
+
+    private boolean goToPointForImage(Point loc, ObsSurface obsSurface) throws InterruptedException {
+        ArrayList<ObsSurface> surfTaken = new ArrayList<ObsSurface>();
+        robot.setStatus("Go to point: " + loc.toString());
+        LOGGER.info(robot.getStatus());
+        ArrayList<Command> commands = new ArrayList<Command>();
+        ArrayList<Cell> path = new ArrayList<Cell>();
+        FastestPath fp = new FastestPath(exploredMap, robot, sim);
+        path = fp.runAStar(robot.getPos(), loc, robot.getDir());
+        if (path == null) {
+            return false;
+        }
+
+        fp.displayFastestPath(path, true);
+        commands = fp.getPathCommands(path);
+        System.out.println("Exploration Fastest Commands: "+commands);
+
+        for (Command c : commands) {
+            System.out.println("Command: "+c);
+            if ((c == Command.FORWARD) && !movable(robot.getDir())) {
+                System.out.println("Not Executing Forward Not Movable");
+                // TODO
+                goToPointForImage(loc, obsSurface);
+                break;
+            } else{
+                if(((c == Command.TURN_LEFT && !movable(Direction.getAntiClockwise(robot.getDir())))||
+                        (c == Command.TURN_RIGHT && !movable(Direction.getClockwise(robot.getDir())))) && commands.indexOf(c) == commands.size()-1)
+                    goToPointForImage(loc, obsSurface);
+                if (c == Command.TURN_LEFT || c == Command.TURN_RIGHT){
+                    robot.turn(c, stepPerSecond);
+                }
+                else {
+                    robot.move(c, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
+                }
+
+                surfTaken = robot.senseWithoutMapUpdate(exploredMap, realMap);
+                updateNotYetTaken(surfTaken);
+
+            }
+        }
+
+
+        // Orient the robot to make its right side hug the wall
+        // if right movable
+
+        Direction desiredDir = Direction.getClockwise(obsSurface.getSurface());
+        if (desiredDir == robot.getDir()) {
+            return true;
+        }
+        else if (desiredDir == Direction.getClockwise(robot.getDir())) {
+            robot.turn(Command.TURN_RIGHT, stepPerSecond);
+            surfTaken = robot.senseWithoutMapUpdate(exploredMap, realMap);
+            updateNotYetTaken(surfTaken);
+        }
+        else if (desiredDir == Direction.getAntiClockwise(robot.getDir())) {
+            robot.turn(Command.TURN_LEFT, stepPerSecond);
+            surfTaken = robot.senseWithoutMapUpdate(exploredMap, realMap);
+            updateNotYetTaken(surfTaken);
+        }
+        // opposite
+        else {
+            robot.turn(Command.TURN_LEFT, stepPerSecond);
+            surfTaken = robot.senseWithoutMapUpdate(exploredMap, realMap);
+            updateNotYetTaken(surfTaken);
+            robot.turn(Command.TURN_LEFT, stepPerSecond);
+            surfTaken = robot.senseWithoutMapUpdate(exploredMap, realMap);
+            updateNotYetTaken(surfTaken);
+        }
+
+        return true;
+    }
+
+    private HashMap<String, ObsSurface> getUntakenSurfaces() {
+        HashMap<String, ObsSurface> notYetTaken;
+
+        // get all surfaces possilbe
+        notYetTaken = getAllObsSurfaces();
+        for (String tempObsSurfaceStr : robot.getSurfaceTaken().keySet()) {
+            if (!notYetTaken.containsKey(tempObsSurfaceStr)) {
+                LOGGER.warning("Surface taken not in all possible surfaces. Please check. \n\n\n");
+            }
+            else {
+                notYetTaken.remove(tempObsSurfaceStr);
+            }
+        }
+
+        return notYetTaken;
+    }
+
+    private HashMap<String, ObsSurface> getAllObsSurfaces() {
+        // TODO
+        Cell tempCell;
+        Cell temp;
+        ObsSurface tempObsSurface;
+        HashMap<Direction, Cell> tempNeighbours;
+        HashMap<String, ObsSurface> allPossibleSurfaces = new HashMap<String, ObsSurface>();
+        for (int row = 0; row < MapConstants.MAP_HEIGHT; row++) {
+            for (int col = 0; col < MapConstants.MAP_WIDTH; col++) {
+                tempCell = exploredMap.getCell(row, col);
+
+                if (tempCell.isObstacle()) {
+                    // check neighbouring
+                    tempNeighbours = exploredMap.getNeighboursMap(tempCell);
+
+                    for (Direction neighbourDir: tempNeighbours.keySet()) {
+                        temp = tempNeighbours.get(neighbourDir);
+
+                        if (!temp.isObstacle()) {
+                            tempObsSurface = new ObsSurface(tempCell.getPos(), neighbourDir);
+                            allPossibleSurfaces.put(tempObsSurface.toString(), tempObsSurface);
+                        }
+                    }
+                }
+
+            }
+        }
+        System.out.println();
+        return allPossibleSurfaces;
+    }
+
+    private void calibrate_at_start_before_going_out() throws InterruptedException {
+        String calibrationCmd = robot.getCommand(Command.INITIAL_CALIBERATE, 1);    // steps 1 for consistency
+        NetMgr.getInstance().send(NetworkConstants.ARDUINO + calibrationCmd);
+
+        // Orient the robot on laptop to face lap as after caliberation, it will face up
+        // need to turn after setFindingFP(true) as it will not send command to arduino
+        robot.setFindingFP(true);
+        robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+        robot.turn(Command.TURN_RIGHT, RobotConstants.STEP_PER_SECOND);
+        robot.setFindingFP(false);
+    }
+
+
+    //TODO clean this
+    public int explorationAllRightWallHug(Point start) throws InterruptedException {
+        boolean doingImage = false;
+        areaExplored = exploredMap.getExploredPercentage();
+        startTime = System.currentTimeMillis();
+        endTime = startTime + timeLimit;
+        double prevArea = exploredMap.getExploredPercentage();
+        int moves = 1;
+        int checkingStep = RobotConstants.CHECKSTEPS;
+        this.start = start;
+//        this.firstMove = true;
+
+        // Loop to explore the map
+        outer:
+        do {
+            prevArea = areaExplored;
+            if(areaExplored >= 100)
+                break;
+            try {
+                rightWallHug(doingImage);
+
+            } catch (InterruptedException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+            areaExplored = exploredMap.getExploredPercentage();
+            if (prevArea == areaExplored)
+                moves++;
+            else
+                moves=1;
+
+            LOGGER.info(Double.toString(areaExplored));
+            if (moves % checkingStep == 0 || right_move > 3 || (robot.getPos().distance(start)==0 && areaExplored < 100.00)) {      // prevent from keep turning right and forward
+//            if (moves % checkingStep == 0 || robot.getPos().distance(start)==0) {     // original
+//            if (moves % checkingStep == 0) {
+                do{
+                    if (robot.getPos().equals(start)) {
+                        goToPoint(start);
+                        calibrate_at_start_before_going_out();
+                    }
+                    prevArea = areaExplored;
+                    if(!goToUnexplored())
+                        break outer;
+                    areaExplored = exploredMap.getExploredPercentage();
+                }while(prevArea == areaExplored);
+                moves = 1;
+                checkingStep = RobotConstants.CHECKSTEPS;
+            }
+        } while (areaExplored < coverageLimit && System.currentTimeMillis() < endTime);
+        if (sim) {  // for actual run, just let the timer run
+            Main.SimulatorNew.displayTimer.stop();
+        }
+        moves = 0;
+        while (!robot.getPos().equals(start) && moves < 18) {
+            rightWallHug(doingImage);
+            moves++;
+        }
+        robot.setImageCount(0);
+        robot.imageRecognitionRight(exploredMap);
+        goToPoint(start);   // orient the robot
+        endTime = System.currentTimeMillis();
+        int seconds = (int)((endTime - startTime)/1000%60);
+        int minutes = (int)((endTime - startTime)/1000/60);
+        int total_in_seconds = (int)((endTime - startTime)/1000);
+        System.out.println("Total Time: "+total_in_seconds+" seconds");
+        System.out.println("Total Time: "+minutes+"mins "+seconds+"seconds");
+        return total_in_seconds;
+    }
 
     //TODO clean this
     public int exploration(Point start) throws InterruptedException {
@@ -105,7 +379,7 @@ public class Exploration {
             if(areaExplored >= 100)
                 break;
             try {
-                rightWallHug();
+                rightWallHug(false);
 
             } catch (InterruptedException e1) {
                 // TODO Auto-generated catch block
@@ -126,10 +400,14 @@ public class Exploration {
 //                break outer;
 //            }
 
-            if (moves % checkingStep == 0 || right_move > 3) {      // prevent from keep turning right and forward
+            if (moves % checkingStep == 0 || right_move > 3 || (robot.getPos().distance(start)==0 && areaExplored < 100.00)) {      // prevent from keep turning right and forward
 //            if (moves % checkingStep == 0 || robot.getPos().distance(start)==0) {     // original
 //            if (moves % checkingStep == 0) {
                 do{
+                    if (robot.getPos().equals(start)) {
+                        goToPoint(start);
+                        calibrate_at_start_before_going_out();
+                    }
                     prevArea = areaExplored;
                     if(!goToUnexplored())
                         break outer;
@@ -185,9 +463,10 @@ public class Exploration {
     /**
      * Basic right wall hugging algo
      */
-    public void rightWallHug() throws InterruptedException {
+    public void rightWallHug(boolean doingImage) throws InterruptedException {
         HashMap<String, Integer> sensorRes;
         Direction robotDir = robot.getDir();
+        ArrayList<ObsSurface> surfTaken;
 //
 //        if (sim) {
 //            TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
@@ -203,8 +482,14 @@ public class Exploration {
             }
 
             robot.turn(Command.TURN_RIGHT, stepPerSecond);
-            robot.sense(exploredMap, realMap);
-            
+            if (doingImage) {
+                surfTaken = robot.senseWithoutMapUpdate(exploredMap, realMap);
+                updateNotYetTaken(surfTaken);
+            }
+            else {
+                robot.sense(exploredMap, realMap);
+            }
+
             // if firstMove, align right
 //            if (firstMove) {
 //                LOGGER.info("First Move, align right.");
@@ -213,7 +498,7 @@ public class Exploration {
 //            }
 
 
-            moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
+            moveForward(RobotConstants.MOVE_STEPS, stepPerSecond, doingImage);
             right_move++;
         }
 
@@ -228,7 +513,13 @@ public class Exploration {
 //            }
 
             robot.move(Command.FORWARD, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
-            robot.sense(exploredMap, realMap);
+            if (doingImage) {
+                surfTaken = robot.senseWithoutMapUpdate(exploredMap, realMap);
+                updateNotYetTaken(surfTaken);
+            }
+            else {
+                robot.sense(exploredMap, realMap);
+            }
             right_move = 0;
 
         }
@@ -240,18 +531,25 @@ public class Exploration {
             // try to turn right, align front, turn left, align front and right if possible before and after turning left
 //            LOGGER.info("Right and front not movable, try to align.");
 
-            turnRightAndAlignBeforeTurnLeft();
+            turnRightAndAlignBeforeTurnLeft(doingImage);
 
-            alignAndImageRecBeforeLeftTurn();
+            alignAndImageRecBeforeLeftTurn(doingImage);
+
 
             robot.turn(Command.TURN_LEFT, stepPerSecond);
-            robot.sense(exploredMap, realMap);
+            if (doingImage) {
+                surfTaken = robot.senseWithoutMapUpdate(exploredMap, realMap);
+                updateNotYetTaken(surfTaken);
+            }
+            else {
+                robot.sense(exploredMap, realMap);
+            }
 
             if (!sim) {
                 robot.align_right(exploredMap, realMap);
             }
 
-            moveForward(RobotConstants.MOVE_STEPS, stepPerSecond);
+            moveForward(RobotConstants.MOVE_STEPS, stepPerSecond, doingImage);
             right_move = 0;
 
         }
@@ -262,17 +560,30 @@ public class Exploration {
 
             // Option1. Turn left twice with alignment
             // if R1 and R2 == 1, turn right and align first
-            turnRightAndAlignBeforeTurnLeft();
+            turnRightAndAlignBeforeTurnLeft(doingImage);
 
-            alignAndImageRecBeforeLeftTurn();
-
-            robot.turn(Command.TURN_LEFT, stepPerSecond);
-            robot.sense(exploredMap, realMap);
-
-            alignAndImageRecBeforeLeftTurn();
+            alignAndImageRecBeforeLeftTurn(doingImage);
 
             robot.turn(Command.TURN_LEFT, stepPerSecond);
-            robot.sense(exploredMap, realMap);
+            if (doingImage) {
+                surfTaken = robot.senseWithoutMapUpdate(exploredMap, realMap);
+                updateNotYetTaken(surfTaken);
+            }
+            else {
+                robot.sense(exploredMap, realMap);
+            }
+
+            alignAndImageRecBeforeLeftTurn(doingImage);
+
+
+            robot.turn(Command.TURN_LEFT, stepPerSecond);
+            if (doingImage) {
+                surfTaken = robot.senseWithoutMapUpdate(exploredMap, realMap);
+                updateNotYetTaken(surfTaken);
+            }
+            else {
+                robot.sense(exploredMap, realMap);
+            }
             if (!sim) {
                 robot.align_right(exploredMap, realMap);
             }
@@ -332,11 +643,16 @@ public class Exploration {
      * Avoid turning twice with turnAndAlignCount in Robot class
      * @throws InterruptedException
      */
-    private void turnRightAndAlignBeforeTurnLeft() throws InterruptedException {
+    private void turnRightAndAlignBeforeTurnLeft(boolean doingImage) throws InterruptedException {
         if ((robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) &&
                 (!robot.getHasTurnAndAlign()) &&
                 (!sim)) {
-            robot.turnRightAndAlignMethod(exploredMap, realMap);
+            if (doingImage) {
+                robot.turnRightAndAlignMethodWithoutMapUpdate(exploredMap, realMap);
+            }
+            else {
+                robot.turnRightAndAlignMethod(exploredMap, realMap);
+            }
         }
         else if (robot.getHasTurnAndAlign()) {
             robot.setHasTurnAndAlign(false);
@@ -346,13 +662,16 @@ public class Exploration {
     /**
      * Align front, align right and do image recognition before turning left
      */
-    private void alignAndImageRecBeforeLeftTurn() {
+    private void alignAndImageRecBeforeLeftTurn(boolean doingImage) {
         if (!sim) {
             robot.align_front(exploredMap, realMap);
             robot.align_right(exploredMap, realMap);
             // before turn left, take image just in case
             robot.setImageCount(0);
-            robot.imageRecognitionRight(exploredMap);
+            ArrayList<ObsSurface> surfTaken = robot.imageRecognitionRight(exploredMap);
+            if (doingImage) {
+                updateNotYetTaken(surfTaken);
+            }
         }
     }
 
@@ -360,7 +679,7 @@ public class Exploration {
      * Move forward if movable
      * @param steps
      */
-    private void moveForward(int steps, int stepPerSecond) throws InterruptedException {
+    private void moveForward(int steps, int stepPerSecond, boolean doingImage) throws InterruptedException {
         if (movable(robot.getDir())) {       // for actual, double check in case of previous sensing error
 
 //            if (sim) {
@@ -368,7 +687,13 @@ public class Exploration {
 //            }
 
             robot.move(Command.FORWARD, steps, exploredMap, stepPerSecond);
-            robot.sense(exploredMap, realMap);
+            if (doingImage) {
+                ArrayList<ObsSurface> surfTaken = robot.senseWithoutMapUpdate(exploredMap, realMap);
+                updateNotYetTaken(surfTaken);
+            }
+            else {
+                robot.sense(exploredMap, realMap);
+            }
         }
     }
 
@@ -469,6 +794,7 @@ public class Exploration {
                             (c == Command.TURN_RIGHT && !movable(Direction.getClockwise(robot.getDir())))) && commands.indexOf(c) == commands.size()-1)
                         continue;
                     if (c == Command.TURN_LEFT || c == Command.TURN_RIGHT){
+                        alignAndImageRecBeforeLeftTurn(false);
                         robot.turn(c, stepPerSecond);
                     }
                     else {
@@ -574,12 +900,12 @@ public class Exploration {
                         // If last command
                         if (i == (commands.size() - 1)) {
                             robot.move(c, moves, exploredMap, stepPerSecond);
-                            robot.senseWithoutMapUpdate(exploredMap, realMap);
+                            robot.senseWithoutMapUpdateAndAlignment(exploredMap, realMap);
                         }
                     } else {
                         if (moves > 0) {
                             robot.move(Command.FORWARD, moves, exploredMap, stepPerSecond);
-                            robot.senseWithoutMapUpdate(exploredMap, realMap);
+                            robot.senseWithoutMapUpdateAndAlignment(exploredMap, realMap);
 
 
                         }
@@ -588,7 +914,7 @@ public class Exploration {
                         } else {
                             robot.move(c, RobotConstants.MOVE_STEPS, exploredMap, stepPerSecond);
                         }
-                        robot.senseWithoutMapUpdate(exploredMap, realMap);
+                        robot.senseWithoutMapUpdateAndAlignment(exploredMap, realMap);
                         moves = 0;
                     }
                 }
