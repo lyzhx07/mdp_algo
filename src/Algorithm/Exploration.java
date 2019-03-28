@@ -87,6 +87,7 @@ public class Exploration {
             return;
         }
         else {
+            robot.setDoingImage(true);
             // algo for image
             notYetTaken = getUntakenSurfaces();
             if (notYetTaken.size() == 0) {
