@@ -55,6 +55,8 @@ public class Robot {
     private int turnAndAlignCount = 0;
     private boolean hasTurnAndAlign = false;
 
+    private boolean doingImage = false;
+
 
     public Robot(boolean sim, boolean findingFP, int row, int col, Direction dir) {
         this.sim = sim;
@@ -621,7 +623,9 @@ public class Robot {
 
                 }
             }
-            imageCount = (imageCount + 1) % 3;
+//            imageCount = (imageCount + 1) % 3;
+            imageCount = (imageCount + 1) % 2;
+
         }
         else {
             imageCount = 0;
@@ -1036,7 +1040,12 @@ public class Robot {
 //            alignCount = 0;
             status = "Aligning Front\n";
             LOGGER.info(status);
-            senseWithoutAlign(exploredMap, realMap);
+            if (doingImage) {
+                senseWithoutMapUpdateAndAlignment(exploredMap, realMap);
+            }
+            else {
+                senseWithoutAlign(exploredMap, realMap);
+            }
             turnAndAlignCount = 0;
         }
 
@@ -1070,7 +1079,12 @@ public class Robot {
             alignCount = 0;
             status = String.format("Aligning Right: %d\n", aligning_index);
             LOGGER.info(status);
-            senseWithoutAlign(exploredMap, realMap);
+            if (doingImage) {
+                senseWithoutMapUpdateAndAlignment(exploredMap, realMap);
+            }
+            else {
+                senseWithoutAlign(exploredMap, realMap);
+            }
         }
 
     }
@@ -1171,6 +1185,14 @@ public class Robot {
         cmdStr.append('|');
 
         return cmdStr.toString();
+    }
+
+    public boolean isDoingImage() {
+        return doingImage;
+    }
+
+    public void setDoingImage(boolean img) {
+        this.doingImage = img;
     }
 
     public static void main(String[] args) throws InterruptedException{
