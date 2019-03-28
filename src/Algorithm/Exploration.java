@@ -93,7 +93,7 @@ public class Exploration {
                 return;
             }
             // calibrate and let the robot face up
-            calibrate_before_going_out_for_image();
+            calibrate_at_start_before_going_out();
             // get all untaken surfaces
             System.out.println("DEBUG " + notYetTaken);
             while (notYetTaken.size() > 0) {
@@ -279,7 +279,7 @@ public class Exploration {
         return allPossibleSurfaces;
     }
 
-    private void calibrate_before_going_out_for_image() throws InterruptedException {
+    private void calibrate_at_start_before_going_out() throws InterruptedException {
         String calibrationCmd = robot.getCommand(Command.INITIAL_CALIBERATE, 1);    // steps 1 for consistency
         NetMgr.getInstance().send(NetworkConstants.ARDUINO + calibrationCmd);
 
@@ -324,10 +324,14 @@ public class Exploration {
                 moves=1;
 
             LOGGER.info(Double.toString(areaExplored));
-            if (moves % checkingStep == 0 || right_move > 3) {      // prevent from keep turning right and forward
+            if (moves % checkingStep == 0 || right_move > 3 || (robot.getPos().distance(start)==0 && areaExplored < 100.00)) {      // prevent from keep turning right and forward
 //            if (moves % checkingStep == 0 || robot.getPos().distance(start)==0) {     // original
 //            if (moves % checkingStep == 0) {
                 do{
+                    if (robot.getPos().equals(start)) {
+                        goToPoint(start);
+                        calibrate_at_start_before_going_out();
+                    }
                     prevArea = areaExplored;
                     if(!goToUnexplored())
                         break outer;
@@ -336,15 +340,14 @@ public class Exploration {
                 moves = 1;
                 checkingStep = RobotConstants.CHECKSTEPS;
             }
-            if (areaExplored >= 100.00 && moves > 35) {
-                break;
-            }
         } while (areaExplored < coverageLimit && System.currentTimeMillis() < endTime);
         if (sim) {  // for actual run, just let the timer run
             Main.SimulatorNew.displayTimer.stop();
         }
-        while (!robot.getPos().equals(start)) {
+        moves = 0;
+        while (!robot.getPos().equals(start) && moves < 18) {
             rightWallHug(doingImage);
+            moves++;
         }
         robot.setImageCount(0);
         robot.imageRecognitionRight(exploredMap);
@@ -397,10 +400,14 @@ public class Exploration {
 //                break outer;
 //            }
 
-            if (moves % checkingStep == 0 || right_move > 3) {      // prevent from keep turning right and forward
+            if (moves % checkingStep == 0 || right_move > 3 || (robot.getPos().distance(start)==0 && areaExplored < 100.00)) {      // prevent from keep turning right and forward
 //            if (moves % checkingStep == 0 || robot.getPos().distance(start)==0) {     // original
 //            if (moves % checkingStep == 0) {
                 do{
+                    if (robot.getPos().equals(start)) {
+                        goToPoint(start);
+                        calibrate_at_start_before_going_out();
+                    }
                     prevArea = areaExplored;
                     if(!goToUnexplored())
                         break outer;
@@ -777,6 +784,7 @@ public class Exploration {
                             (c == Command.TURN_RIGHT && !movable(Direction.getClockwise(robot.getDir())))) && commands.indexOf(c) == commands.size()-1)
                         continue;
                     if (c == Command.TURN_LEFT || c == Command.TURN_RIGHT){
+                        alignAndImageRecBeforeLeftTurn();
                         robot.turn(c, stepPerSecond);
                     }
                     else {

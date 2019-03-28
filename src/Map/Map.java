@@ -231,6 +231,7 @@ public class Map {
         return neighbours;
     }
 
+
     /**
      * Check if wayPoint is valid to move there cannot move to virtual wall
      * @param row
@@ -279,13 +280,42 @@ public class Map {
         return nearest;
     }
 
+    /**
+     * Get all movable neighbours Direction and Cell object
+     * @param pos position of the obstacle
+     * @param surfDir Surface direction
+     * @return neighbour cell point of that surfDir
+     */
+    public Point getNeighbour(Point pos, Direction surfDir) {
+
+        Point n = null;
+
+        switch (surfDir) {
+            case UP:
+                n = new Point(pos.x , pos.y + 1);
+                break;
+            case DOWN:
+                n = new Point(pos.x, pos.y - 1);
+                break;
+            case LEFT:
+                n = new Point(pos.x - 1, pos.y);
+                break;
+            case RIGHT:
+                n = new Point(pos.x + 1, pos.y);
+                break;
+        }
+        return n;
+    }
+
     public ObsSurface nearestObsSurface(Point loc, HashMap<String, ObsSurface> notYetTaken) {
         double dist = 1000, tempDist;
         Point tempPos;
         ObsSurface nearest = null;
 
         for (ObsSurface obstacle: notYetTaken.values()) {
-            tempPos = obstacle.getPos();
+//            tempPos = obstacle.getPos();
+            // neighbour cell of that surface
+            tempPos = getNeighbour(obstacle.getPos(), obstacle.getSurface());
             tempDist = loc.distance(tempPos);
             if (tempDist < dist) {
                 dist = tempDist;
