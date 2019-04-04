@@ -895,7 +895,8 @@ public class Exploration {
                     goToPoint(loc);
                     break;
                 } else {
-                    if (c == Command.FORWARD && moves < 1) {
+                    // Change to max moves 9
+                    if (c == Command.FORWARD && moves < 9) {
 //                    if (c == Command.FORWARD && moves < RobotConstants.MAX_MOVE) {
                         moves++;
                         // If last command
