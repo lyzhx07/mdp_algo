@@ -1041,10 +1041,10 @@ public class SimulatorNew extends Application {
             // reset to unexplored map
             exploredMap.resetMap();
             map = null;
-            robot.setStartPos(1, 1, exploredMap);
             netMgr.initConn();
             String msg;
             wayPoint = null;
+            startPos = null;
             // receive start exploration command from android
             if (!sim) {
                 do {
@@ -1054,7 +1054,13 @@ public class SimulatorNew extends Application {
                         wayPoint = robot.parseWayPointJson(msg);
                         setWayPoint(wayPoint.y, wayPoint.x);
                     }
-                } while (!msg.equals(NetworkConstants.START_EXP) || wayPoint == null);
+                    // set startPos
+                    if (msg.contains(NetworkConstants.START_POINT_KEY)) {
+                        startPos = robot.parseStartPointJson(msg);
+                        robot.setStartPos(startPos.y, startPos.x, exploredMap);
+                    }
+
+                } while (!msg.equals(NetworkConstants.START_EXP) || wayPoint == null || startPos == null);
 
                 LOGGER.info("Receiving command to start exploration: " + msg);
                 displayTimer.start();
