@@ -380,6 +380,7 @@ public class Exploration {
             if(areaExplored >= 100)
                 break;
             try {
+                System.out.println("DEBUG");
                 rightWallHug(false);
 
             } catch (InterruptedException e1) {
@@ -407,7 +408,11 @@ public class Exploration {
                 do{
                     if (robot.getPos().equals(start)) {
                         goToPoint(start);
-                        calibrate_at_start_before_going_out();
+                        if (!sim) {
+                            robot.turnRightAndAlignMethodWithoutMapUpdate(exploredMap, realMap);
+                            robot.align_front(exploredMap, realMap);
+                            robot.align_right(exploredMap, realMap);
+                        }
                     }
                     prevArea = areaExplored;
                     if(!goToUnexplored())
