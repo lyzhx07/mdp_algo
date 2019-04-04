@@ -532,7 +532,7 @@ public class Exploration {
             // try to turn right, align front, turn left, align front and right if possible before and after turning left
 //            LOGGER.info("Right and front not movable, try to align.");
 
-//            turnRightAndAlignBeforeTurnLeft(doingImage);
+            turnRightAndAlignBeforeTurnLeft(doingImage);
 
             alignAndImageRecBeforeLeftTurn(doingImage);
 
