@@ -126,8 +126,8 @@ public class Exploration {
                 System.out.println("DEBUG cell pos " + nearestCell.getPos().toString());
                 do {
                     robot.setImageCount(0);
-                    surfTaken = robot.imageRecognitionRight(exploredMap);
-                    updateNotYetTaken(surfTaken);
+//                    surfTaken = robot.imageRecognitionRight(exploredMap);
+//                    updateNotYetTaken(surfTaken);
                     rightWallHug(doingImage);
                     // TODO
                     System.out.println("DEBUG robot pos " + robot.getPos().toString());
@@ -350,8 +350,8 @@ public class Exploration {
             rightWallHug(doingImage);
             moves++;
         }
-        robot.setImageCount(0);
-        robot.imageRecognitionRight(exploredMap);
+//        robot.setImageCount(0);
+//        robot.imageRecognitionRight(exploredMap);
         goToPoint(start);   // orient the robot
         endTime = System.currentTimeMillis();
         int seconds = (int)((endTime - startTime)/1000%60);
@@ -669,10 +669,10 @@ public class Exploration {
             robot.align_right(exploredMap, realMap);
             // before turn left, take image just in case
             robot.setImageCount(0);
-            ArrayList<ObsSurface> surfTaken = robot.imageRecognitionRight(exploredMap);
-            if (doingImage) {
-                updateNotYetTaken(surfTaken);
-            }
+//            ArrayList<ObsSurface> surfTaken = robot.imageRecognitionRight(exploredMap);
+//            if (doingImage) {
+//                updateNotYetTaken(surfTaken);
+//            }
         }
     }
 

@@ -739,7 +739,7 @@ public class Robot {
                 }
             }
             // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
-            surfTaken = imageRecognitionRight(exploredMap);
+//            surfTaken = imageRecognitionRight(exploredMap);
         }
         return surfTaken;
     }
@@ -802,7 +802,7 @@ public class Robot {
                 }
             }
             // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
-            surfTaken = imageRecognitionRight(exploredMap);
+//            surfTaken = imageRecognitionRight(exploredMap);
 
         }
         // TODO: add alignment
