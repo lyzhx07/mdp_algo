@@ -423,18 +423,21 @@ public class Map {
     public Cell nearestExplored(Point loc, Point botLoc) {
         Cell cell, nearest = null;
         double distance = 1000;
+        double botDistance = 1000;
 
         for (int row = 0; row < MapConstants.MAP_HEIGHT; row++) {
             for (int col = 0; col < MapConstants.MAP_WIDTH; col++) {
                 cell = grid[row][col];
                 if (checkValidMove(row, col) && clearForRobot(row, col) && notAreaMoveThru(row, col)) {
-                    if ((distance > loc.distance(cell.getPos()) && cell.getPos().distance(botLoc) > 0)) {       // actually no need to check for botLoc
+                    if ((distance > loc.distance(cell.getPos()) && cell.getPos().distance(botLoc) < botDistance)) {       // actually no need to check for botLoc
                         nearest = cell;
                         distance = loc.distance(cell.getPos());
+                        botDistance = cell.getPos().distance(botLoc);
                     }
                 }
             }
         }
+        System.out.println(nearest);
         return nearest;
     }
 
