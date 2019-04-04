@@ -53,7 +53,7 @@ public class RequestHandler extends Thread {
         realMap = new Map();
         MDF.loadRealMap(realMap, "defaultMap.txt");
         robot = new Robot(true, false, 1, 1, Direction.RIGHT);
-        robot.setStartPos(startPoint.y, startPoint.x, exploredMap);
+        robot.setStartPos(1, 13, exploredMap);
         robot.sense(exploredMap, realMap);
         System.out.println(exploredMap.getExploredPercentage());
         System.out.println(realMap.getExploredPercentage());
@@ -93,6 +93,7 @@ public class RequestHandler extends Thread {
 
             // For exploration
             sendWayPoint();
+            sendStartMsg();
             send(NetworkConstants.START_EXP);
 
 
