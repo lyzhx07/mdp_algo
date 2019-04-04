@@ -563,30 +563,54 @@ public class Exploration {
             // if R1 and R2 == 1, turn right and align first
 //            turnRightAndAlignBeforeTurnLeft(doingImage);
 
-            alignAndImageRecBeforeLeftTurn(doingImage);
+            // if right side can align -- turn right twice
+            if (robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) {
 
-            robot.turn(Command.TURN_LEFT, stepPerSecond);
-            if (doingImage) {
-                surfTaken = robot.senseWithoutMapUpdate(exploredMap, realMap);
-                updateNotYetTaken(surfTaken);
-            }
-            else {
+                if (!sim) {
+                    robot.align_right(exploredMap, realMap);
+                }
+
+                // ignore the image part
+                robot.turn(Command.TURN_RIGHT, stepPerSecond);
                 robot.sense(exploredMap, realMap);
-            }
 
-            alignAndImageRecBeforeLeftTurn(doingImage);
+                if (!sim) {
+                    robot.align_front(exploredMap, realMap);
+                }
 
-
-            robot.turn(Command.TURN_LEFT, stepPerSecond);
-            if (doingImage) {
-                surfTaken = robot.senseWithoutMapUpdate(exploredMap, realMap);
-                updateNotYetTaken(surfTaken);
-            }
-            else {
+                robot.turn(Command.TURN_RIGHT, stepPerSecond);
                 robot.sense(exploredMap, realMap);
+                if (!sim) {
+                    robot.align_right(exploredMap, realMap);
+                }
             }
-            if (!sim) {
-                robot.align_right(exploredMap, realMap);
+
+            // else turn left twice
+            else{
+
+                alignAndImageRecBeforeLeftTurn(doingImage);
+
+                robot.turn(Command.TURN_LEFT, stepPerSecond);
+                if (doingImage) {
+                    surfTaken = robot.senseWithoutMapUpdate(exploredMap, realMap);
+                    updateNotYetTaken(surfTaken);
+                } else {
+                    robot.sense(exploredMap, realMap);
+                }
+
+                alignAndImageRecBeforeLeftTurn(doingImage);
+
+
+                robot.turn(Command.TURN_LEFT, stepPerSecond);
+                if (doingImage) {
+                    surfTaken = robot.senseWithoutMapUpdate(exploredMap, realMap);
+                    updateNotYetTaken(surfTaken);
+                } else {
+                    robot.sense(exploredMap, realMap);
+                }
+                if (!sim) {
+                    robot.align_right(exploredMap, realMap);
+                }
             }
 
 //            // Option2. Move backwards
