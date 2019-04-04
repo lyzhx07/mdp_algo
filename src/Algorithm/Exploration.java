@@ -675,7 +675,6 @@ public class Exploration {
      */
     private void turnRightAndAlignBeforeTurnLeft(boolean doingImage) throws InterruptedException {
         if ((robot.getSensorRes().get("R1") == 1 && robot.getSensorRes().get("R2") == 1) &&
-                (!robot.getHasTurnAndAlign()) &&
                 (!sim)) {
             if (doingImage) {
                 robot.turnRightAndAlignMethodWithoutMapUpdate(exploredMap, realMap);
