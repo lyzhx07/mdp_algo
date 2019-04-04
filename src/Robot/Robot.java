@@ -717,27 +717,27 @@ public class Robot {
                 align_right(exploredMap, realMap);
             }
 
-            // Realignment for front - turn right and align when it is not hugging the wall but R1 and R2 == 1 and turnAndAlignCount > CalibrationConstant
-            if (isRightHuggingWall()) {
-                turnAndAlignCount = 0;
-            }
-            else {
-                turnAndAlignCount++;
-            }
-            if (hasTurnAndAlign) {
-                hasTurnAndAlign = false;
-            }
-
-            if ((turnAndAlignCount > RobotConstants.TURN_AND_CALIBRATE) &&
-                    (sensorRes.get("R1") == 1 && sensorRes.get("R2") == 1)) {
-
-                try {
-                    turnRightAndAlignMethod(exploredMap, realMap);
-
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+//            // Realignment for front - turn right and align when it is not hugging the wall but R1 and R2 == 1 and turnAndAlignCount > CalibrationConstant
+//            if (isRightHuggingWall()) {
+//                turnAndAlignCount = 0;
+//            }
+//            else {
+//                turnAndAlignCount++;
+//            }
+//            if (hasTurnAndAlign) {
+//                hasTurnAndAlign = false;
+//            }
+//
+//            if ((turnAndAlignCount > RobotConstants.TURN_AND_CALIBRATE) &&
+//                    (sensorRes.get("R1") == 1 && sensorRes.get("R2") == 1)) {
+//
+//                try {
+//                    turnRightAndAlignMethod(exploredMap, realMap);
+//
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
             // TODO: Camera facing right - check whether img is needed to be detected and send RPI if needed
 //            surfTaken = imageRecognitionRight(exploredMap);
         }

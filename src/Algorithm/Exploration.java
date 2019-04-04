@@ -532,7 +532,7 @@ public class Exploration {
             // try to turn right, align front, turn left, align front and right if possible before and after turning left
 //            LOGGER.info("Right and front not movable, try to align.");
 
-            turnRightAndAlignBeforeTurnLeft(doingImage);
+//            turnRightAndAlignBeforeTurnLeft(doingImage);
 
             alignAndImageRecBeforeLeftTurn(doingImage);
 
@@ -561,7 +561,7 @@ public class Exploration {
 
             // Option1. Turn left twice with alignment
             // if R1 and R2 == 1, turn right and align first
-            turnRightAndAlignBeforeTurnLeft(doingImage);
+//            turnRightAndAlignBeforeTurnLeft(doingImage);
 
             alignAndImageRecBeforeLeftTurn(doingImage);
 
@@ -668,7 +668,7 @@ public class Exploration {
             robot.align_front(exploredMap, realMap);
             robot.align_right(exploredMap, realMap);
             // before turn left, take image just in case
-            robot.setImageCount(0);
+//            robot.setImageCount(0);
 //            ArrayList<ObsSurface> surfTaken = robot.imageRecognitionRight(exploredMap);
 //            if (doingImage) {
 //                updateNotYetTaken(surfTaken);
