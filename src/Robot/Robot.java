@@ -32,7 +32,7 @@ public class Robot {
     private Direction dir;
     private String status;
 
-    private Command preMove;
+    private Command preMove = Command.FORWARD;
 
     private ArrayList<String> sensorList;
     private HashMap<String, Sensor> sensorMap;
