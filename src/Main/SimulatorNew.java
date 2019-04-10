@@ -511,23 +511,6 @@ public class SimulatorNew extends Application {
                 animateTimer1.start();
             }
         });
-//        setObstacleBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
-//            public void handle(MouseEvent e) {
-//                setObstacle = !setObstacle;
-//                if (!setObstacle) {
-//                    setObstacleBtn.setText("Set Obstacles");
-//                    loadMapBtn.setText("Load Explored Map");
-//                    saveMapBtn.setText("Save Explored Map");
-//                } else {
-//                    setObstacleBtn.setText("Confirm Obstacles");
-//                    loadMapBtn.setText("Load Map");
-//                    saveMapBtn.setText("Save Map");
-//                }
-//                setRobot = false;
-//                setWaypoint = false;
-//                expMapDraw = !setObstacle;
-//            }
-//        });
         loadMapBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
             public void handle(MouseEvent e) {
                 fileChooser.setTitle("Choose file to load Map from");
@@ -574,17 +557,6 @@ public class SimulatorNew extends Application {
         timerTextLbl.setAlignment(Pos.CENTER);
         timerTextLbl.setText(displayTimer.getTimerLbl());
 
-        // Layer 1 (6 Grids)
-        // controlGrid.add(ipLbl, 0, 0, 1, 1);
-        // controlGrid.add(ipTxt, 1, 0, 3, 1);
-        // controlGrid.add(portLbl, 0, 1, 1, 1);
-        // controlGrid.add(portTxt, 1, 1, 3, 1);
-        // controlGrid.add(connectBtn, 0, 2, 4, 1);
-        // Layer 2
-
-//        controlGrid.setGridLinesVisible(true);
-//        grid.setGridLinesVisible(true);
-        //type, colindex, rowindex, colspan, rowspan
         controlGrid.add(genSetLbl, 0, 0, 5, 1);
         controlGrid.add(modeChoiceLbl, 0, 1);
         controlGrid.add(simRB, 1, 1);
@@ -634,33 +606,14 @@ public class SimulatorNew extends Application {
 
         controlGrid.add(resetMapBtn, 0, 12, 5, 1);
 
-//        // Layer 2
-//        controlGrid.add(startBtn, 0, 11, 6, 1);
-//
-//        // Layer 3
-//        controlGrid.add(loadMapBtn, 0, 11, 3, 1);
-//        controlGrid.add(saveMapBtn, 3, 11, 3, 1);
-//        controlGrid.add(resetMapBtn, 0, 11, 6, 1);
-//        // Layer 4
-//        // Layer 5
-//        controlGrid.add(setObstacleBtn, 2, 12, 4, 1);
 
         controlGrid.add(statusLbl, 0, 13, 3, 1);
         controlGrid.add(debugOutput, 0, 14, 3, 1);
 
         controlGrid.add(timerLbl, 3, 13, 2, 1);
         controlGrid.add(timerTextLbl, 3, 14, 2, 1);
-//		controlGrid.setFillWidth(startBtn, true);
-//		controlGrid.setFillWidth(loadMapBtn, true);
-//		controlGrid.setFillWidth(saveMapBtn, true);
-//		controlGrid.setFillWidth(resetMapBtn, true);
-//		controlGrid.setFillWidth(setWaypointBtn, true);
-//		controlGrid.setFillWidth(setRobotBtn, true);
-//		controlGrid.setFillWidth(setObstacleBtn, true);
-        // Button Init
 
         // Choosing where to place components on the Grid
-
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setPercentWidth(40);
         ColumnConstraints col2 = new ColumnConstraints();
@@ -898,22 +851,6 @@ public class SimulatorNew extends Application {
                 if (setRobot)
                     System.out.println(setRobotLocation(selectedRow, selectedCol) ? "Robot Position has changed"
                             : "Unable to put Robot at obstacle or virtual wall!");
-
-//                if (setObstacle) {
-//                    if (event.getButton() == MouseButton.PRIMARY)
-//                        System.out.println(setObstacle(map, selectedRow, selectedCol)
-//                                ? "New Obstacle Added at row: " + selectedRow + " col: " + selectedCol
-//                                : "Obstacle at location alredy exists!");
-//                    else
-//                        System.out.println(removeObstacle(map, selectedRow, selectedCol)
-//                                ? "Obstacle removed at row: " + selectedRow + " col: " + selectedCol
-//                                : "Obstacle at location does not exists!");
-//
-//                }
-//                if (setObstacle)
-//                    expMapDraw = false;
-//                else
-//                    expMapDraw = true;
 
         }
 

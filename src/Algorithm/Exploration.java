@@ -96,7 +96,6 @@ public class Exploration {
             // calibrate and let the robot face up
             calibrate_at_start_before_going_out();
             // get all untaken surfaces
-            System.out.println("DEBUG " + notYetTaken);
             while (notYetTaken.size() > 0) {
                 imageLoop();
                 // TODO
@@ -113,36 +112,27 @@ public class Exploration {
         Cell nearestCell;
         boolean success;
         nearestObstacle = exploredMap.nearestObsSurface(robot.getPos(), notYetTaken);
-        System.out.println("DEBUG nearestObstacle " + nearestObstacle.toString());
         nearestCell = exploredMap.nearestMovable(nearestObstacle);
-        System.out.println("DEBUG nearestCell is null:" + (nearestCell == null));
 
         if (nearestCell != null) {
-            System.out.println("DEBUG nearestCell " + nearestCell.toString());
-
             // go to nearest cell
             success = goToPointForImage(nearestCell.getPos(), nearestObstacle);
             if (success) {
-                System.out.println("DEBUG cell pos " + nearestCell.getPos().toString());
                 do {
                     robot.setImageCount(0);
                     surfTaken = robot.imageRecognitionRight(exploredMap);
                     updateNotYetTaken(surfTaken);
                     rightWallHug(doingImage);
                     // TODO
-                    System.out.println("DEBUG robot pos " + robot.getPos().toString());
                 } while (!robot.getPos().equals(nearestCell.getPos()) && !robot.isRightHuggingWall());
             }
             else {
-                System.out.println("DEBUG in inner else");
                 removeFromNotYetTaken(nearestObstacle);
             }
 
         }
         else {
-            System.out.println("DEBUG in outer else");
             removeFromNotYetTaken(nearestObstacle);
-            System.out.println("DEBUG after removing in outer else");
         }
     }
 
@@ -380,7 +370,6 @@ public class Exploration {
             if(areaExplored >= 100)
                 break;
             try {
-                System.out.println("DEBUG");
                 rightWallHug(false);
 
             } catch (InterruptedException e1) {
@@ -477,7 +466,7 @@ public class Exploration {
 //        if (sim) {
 //            TimeUnit.MILLISECONDS.sleep(RobotConstants.WAIT_TIME / stepPerSecond);
 //        }
-        
+
         // if right movable
         if (movable(Direction.getClockwise(robotDir))) {
 //            LOGGER.info("DEBUG: In right movable");
@@ -831,7 +820,6 @@ public class Exploration {
                 //If not at a virtual wall
                 if (movable(dir))
                 {
-                    System.out.println("ininin");
                     //Orient the robot to face the wall
                     while(dir != robot.getDir()) {
                         //Check the difference in the direction enum
